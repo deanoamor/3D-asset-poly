@@ -27,7 +27,7 @@ await page.evaluate(() => {
 });
 
 const py = (code, ...args) => execFileSync('python3', ['-I', '-c', code, ...args]).toString();
-const matrix = [['unity', 'glb'], ['unity', 'obj'], ['unity', 'package'], ['godot', 'glb'], ['godot', 'package'], ['unreal', 'glb'], ['unreal', 'package'], ['web', 'glb'], ['web', 'gltf'], ['web', 'package'], ['blender', 'glb'], ['blender', 'package'], ['c4d', 'obj'], ['c4d', 'package'], ['maya', 'obj']];
+const matrix = [['unity', 'glb'], ['unity', 'obj'], ['unity', 'package'], ['godot', 'glb'], ['godot', 'package'], ['unreal', 'glb'], ['unreal', 'package'], ['construct', 'glb'], ['construct', 'gltf'], ['construct', 'package'], ['web', 'glb'], ['web', 'gltf'], ['web', 'package'], ['blender', 'glb'], ['blender', 'package'], ['c4d', 'obj'], ['c4d', 'package'], ['maya', 'obj']];
 
 for (const [engine, format] of matrix) {
   console.log(`# ${engine} / ${format}`);
@@ -73,7 +73,7 @@ for (const [engine, format] of matrix) {
       ok(+nf === +nv / 3 && Math.abs(+miny) < 1e-6, `OBJ: ${nv} vertices, ${nf} faces, lowest y ${miny}`);
       ok(+stats[1] === 3, 'MTL has one material per color');
     } else {
-      ok(listing.includes(`IMPORT_${({ c4d: 'CINEMA_4D', maya: 'MAYA_3DS_MAX' })[engine] ?? engine.toUpperCase()}.txt`), 'contains the import guide');
+      ok(listing.includes(`IMPORT_${({ c4d: 'CINEMA_4D', maya: 'MAYA_3DS_MAX', construct: 'CONSTRUCT_3' })[engine] ?? engine.toUpperCase()}.txt`), 'contains the import guide');
       ok(listing.includes('test_chest.glb'), 'contains the .glb');
       if (['unity', 'blender', 'c4d', 'maya'].includes(engine)) ok(listing.includes('obj/test_chest.obj'), 'package also has OBJ');
       const glbBytes = Uint8Array.from(Buffer.from(py("import zipfile,sys,base64;z=zipfile.ZipFile(sys.argv[1]);print(base64.b64encode(z.read('test_chest.glb')).decode())", file).trim(), 'base64'));

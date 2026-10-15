@@ -125,7 +125,7 @@ export function openExportDialog(store: Store): void {
             },
           }, g.label),
         )),
-        h('div', { class: `cards${preset.group === 'engine' ? ' four' : ''}` }, ...Object.values(PRESETS).filter((p) => p.group === preset.group).map((p) =>
+        h('div', { class: `cards${preset.group === 'engine' ? ' five' : ''}` }, ...Object.values(PRESETS).filter((p) => p.group === preset.group).map((p) =>
           h('button', {
             class: `card${doc.enginePreset === p.id ? ' on' : ''}`,
             'data-preset': p.id,

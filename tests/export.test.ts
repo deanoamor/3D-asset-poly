@@ -93,6 +93,9 @@ describe('export', () => {
       expect(importGuide(e, { modelName: 'x', hasObj: true, collision: false, sizeText: '1 x 1 x 1 m', tris: 12 })).toContain('.obj');
     }
     expect(defaultFormat('c4d')).toBe('obj');
+    expect(PRESETS.construct.formats.map((f) => f.id)).toEqual(['glb', 'gltf', 'package']);
+    expect(PRESETS.construct.group).toBe('engine');
+    expect(importGuide('construct', { modelName: 'x', hasObj: false, collision: false, sizeText: '1 x 1 x 1 m', tris: 12 })).toContain('3D Models');
     expect(importGuide('unity', { modelName: 'x', hasObj: true, collision: false, sizeText: '1 x 1 x 1 m', tris: 12 })).toContain('com.unity.cloud.gltfast');
   });
 });

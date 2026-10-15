@@ -91,6 +91,14 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
     formats: [OBJ, GLB, PACKAGE],
     note: 'OBJ imports in Maya, 3ds Max, ZBrush, Modo and most other 3D software. Newer versions also read .glb.',
   },
+  construct: {
+    id: 'construct',
+    group: 'engine',
+    label: 'Construct 3',
+    scale: 1,
+    formats: [GLB, GLTF, PACKAGE],
+    note: 'Construct 3 has an official 3D Model object that loads glTF. Use .glb (everything in one file): drag it into the Layout or import it into the 3D Models folder.',
+  },
   web: {
     id: 'web',
     group: 'engine',
@@ -162,6 +170,15 @@ Pivot: bottom center. Y up, same as Cinema 4D.
 2. Max uses Z up: rotate 90 degrees on X if the model lies on its back.
 
 ZBrush / Modo / others: import the .obj. Colors come from the .mtl as materials.
+`,
+    construct: `Construct 3 (3D Model object):
+1. In the Project Bar, right-click the "3D Models" folder and choose Import > From file, then pick ${o.modelName}.glb.
+   (You can also drag the .glb into the Layout View.) A .glb holds everything in one file, so "From file" is the right choice.
+2. Add a 3D Model object to your layout and choose this model in its properties.
+3. Size: the model is in metres (1 unit = 1 metre), but Construct measures in pixels. Use the Scale property (or the object's width/height/depth) until it looks right, for example 100 for 1 m.
+4. Pivot: the origin is at the bottom center, so Y = 0 is the floor.
+5. Collision: a 3D Model object has no collision of its own. Add a Solid behavior or use a simple 2D/3D Shape object for the hitbox.
+Requires a Construct version that has the 3D Model object (recent releases). If your version does not show it, use the 3D Object add-on with the .glb.
 `,
     web: `three.js:
   import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';

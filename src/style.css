@@ -198,10 +198,12 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .field input[type='text'] { padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; }
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .cards.four { grid-template-columns: repeat(4, 1fr); }
+.cards.five { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 560px) { .cards.five { grid-template-columns: repeat(3, 1fr); } }
 .card { display: flex; flex-direction: column; gap: 2px; text-align: left; border: 1px solid var(--line-strong); background: #fff; border-radius: 10px; padding: 10px 12px; }
 .card span { color: var(--muted); font-size: 12px; line-height: 1.35; }
 .card.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
-.cards.four .card, .export .cards .card { align-items: center; padding: 12px 6px; }
+.cards.four .card, .cards.five .card, .export .cards .card { align-items: center; padding: 12px 6px; }
 .check { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0 14px; line-height: 1.4; }
 .dlg-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 12px; }
 .fmt { margin-right: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); }
