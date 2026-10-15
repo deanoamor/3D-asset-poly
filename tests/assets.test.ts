@@ -99,12 +99,12 @@ describe('asset library', () => {
     expect(car.filter((p) => p.params.taper < 1).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('the kicking leg is one bent piece that reaches forward and down to the boot', () => {
-    const leg = instantiateAsset(ASSETS.find((a) => a.id === 'footballer')!).parts.find((p) => p.name === 'Leg Right')!;
+  it('the ball arm is one bent piece that reaches forward from the shoulder', () => {
+    const leg = instantiateAsset(ASSETS.find((a) => a.id === 'footballer')!).parts.find((p) => p.name === 'Arm Right')!;
     const st = new Store(emptyDoc());
     st.mutate((d) => d.objects.push(leg), false);
     const b = st.worldBounds();
-    expect(b.max.y - b.min.y).toBeGreaterThan(0.5);
-    expect(b.max.z - b.min.z).toBeGreaterThan(0.5);
+    expect(b.max.y - b.min.y).toBeGreaterThan(0.3);
+    expect(b.max.z - b.min.z).toBeGreaterThan(0.3);
   });
 });

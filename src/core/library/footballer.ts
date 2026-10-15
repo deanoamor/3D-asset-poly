@@ -1,7 +1,7 @@
 import type { AssetDef, AssetPart } from '../assets';
 import { bootParts } from './body';
 import { applyStyle } from './kit';
-import { blob, faceOn, headBlob, onSurface, pivotX, plate, ribbon, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
+import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
 
 const RED = '#d64545';
@@ -27,15 +27,15 @@ const HIP_L: Vec3 = [0.105, 0.88, 0.0];
 const KNEE_L: Vec3 = [0.115, 0.52, 0.07];
 const ANKLE_L: Vec3 = [0.115, 0.235, -0.02];
 const HIP_R: Vec3 = [-0.105, 0.88, 0.0];
-const KNEE_R: Vec3 = [-0.15, 0.6, 0.36];
-const ANKLE_R: Vec3 = [-0.17, 0.33, 0.72];
+const KNEE_R: Vec3 = [-0.115, 0.52, 0.07];
+const ANKLE_R: Vec3 = [-0.115, 0.235, -0.02];
 const SH_L: Vec3 = L(1.37, 0.31);
-const EL_L: Vec3 = [0.47, 1.2, 0.2];
-const WR_L: Vec3 = [0.43, 1.34, 0.42];
+const EL_L: Vec3 = [0.385, 1.09, 0.03];
+const WR_L: Vec3 = [0.37, 0.85, 0.07];
 const SH_R: Vec3 = L(1.37, -0.31);
-const EL_R: Vec3 = [-0.43, 1.2, -0.1];
-const WR_R: Vec3 = [-0.37, 0.99, -0.27];
-const BALL: Vec3 = [-0.17, 0.14, 0.93];
+const EL_R: Vec3 = [-0.4, 1.12, 0.1];
+const WR_R: Vec3 = [-0.3, 0.99, 0.36];
+const BALL: Vec3 = [-0.25, 1.02, 0.55];
 
 // body shells
 const torso = sweep([R(L(0.88), [0.2, 0.135]), R(L(0.98), [0.212, 0.14]), R(L(1.14), [0.24, 0.15]), R(L(1.3), [0.275, 0.155]), R(L(1.42), [0.265, 0.14])], { sides: 8, phase: PH });
@@ -47,20 +47,12 @@ const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 12);
 
 // ---- 0 boots ----
 add(...bootParts(0, 1, ANKLE_L, 0, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
-add(...bootParts(0, -1, ANKLE_R, 32, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
-
-// the kicking boot: a collar that follows the shin so the sock ends inside the boot, not beside it
-{
-  const d = vnorm(vsub(ANKLE_R, KNEE_R));
-  const collar = sweep([R(vsub(ANKLE_R, vmul(d, 0.06)), 0.088), R(vsub(ANKLE_R, vmul(d, 0.0)), 0.09), R(vadd(ANKLE_R, vmul(vnorm(vadd(d, vmul(vsub(pivotX(ANKLE_R, 32)([0, 0, 0]), pivotX(ANKLE_R, 32)([0, 1, 0])), 1))), 0.055)), 0.088)], { sides: 8 });
-  add(toPart(0, 'Boot Collar Right', collar, BLACK));
-  add(toPart(0, 'Boot Cuff Right', sweep([R(vsub(ANKLE_R, vmul(d, 0.075)), 0.094), R(vsub(ANKLE_R, vmul(d, 0.05)), 0.094)], { sides: 8 }), GRAY));
-}
+add(...bootParts(0, -1, ANKLE_R, 0, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
 
 // ---- 1 socks, legs and shorts ----
 const legL = [R(HIP_L, 0.12), R(lerp(HIP_L, KNEE_L, 0.5), 0.108), R(KNEE_L, 0.09), R(lerp(KNEE_L, ANKLE_L, 0.5), 0.08), R(ANKLE_L, 0.071), R(vadd(ANKLE_L, [0, -0.1, -0.005]), 0.071)];
 const dirR = vnorm(vsub(ANKLE_R, KNEE_R));
-const legR = [R(HIP_R, 0.12), R(lerp(HIP_R, KNEE_R, 0.5), 0.108), R(KNEE_R, 0.09), R(lerp(KNEE_R, ANKLE_R, 0.5), 0.08), R(vsub(ANKLE_R, vmul(dirR, 0.05)), 0.071), R(vsub(ANKLE_R, vmul(dirR, 0.03)), 0.07)];
+const legR = [R(HIP_R, 0.12), R(lerp(HIP_R, KNEE_R, 0.5), 0.108), R(KNEE_R, 0.09), R(lerp(KNEE_R, ANKLE_R, 0.5), 0.08), R(ANKLE_R, 0.071), R(vadd(ANKLE_R, vmul(dirR, 0.1)), 0.071)];
 for (const [side, leg, hip, knee, ankle] of [['Left', legL, HIP_L, KNEE_L, ANKLE_L], ['Right', legR, HIP_R, KNEE_R, ANKLE_R]] as const) {
   add(toPart(1, `Leg ${side}`, sweep(leg.map((q) => q), { sides: 8 }), SKIN));
   const sockTop = lerp(knee, ankle, 0.16);
@@ -156,18 +148,18 @@ applyStyle(parts, [
 export const FOOTBALLER: AssetDef = {
   id: 'footballer',
   name: 'Football Player',
-  tagline: 'A player mid-kick: posed one-piece limbs, a kit with details, a ball',
+  tagline: 'A player standing with the ball in one hand: one-piece limbs, a kit with details',
   level: 'Detailed',
   thumb: { dir: [0.9, 0.3, 1], zoom: 0.8 },
-  learn: ['Pose a character with bent, one-piece limbs', 'Tilt a boot to match a kick', 'Build a kit from shells, bands and plates', 'Make spiky hair from tapered tubes'],
+  learn: ['Pose a character with bent, one-piece limbs', 'Bend an arm so the hand holds an object', 'Build a kit from shells, bands and plates', 'Make spiky hair from tapered tubes'],
   steps: [
-    { title: 'Boots', text: 'A football boot is one low shape with a white sole and small studs under it. The kicking boot is tilted so the toe points down at the ball. Build the boot first, then tilt it with Rotate (E).', tools: ['Shape: Cylinder or Sphere', 'Edit shape: Pull out (P)', 'Rotate (E)'] },
-    { title: 'Socks, legs and shorts', text: 'A pose is about where the joints are. Each leg is one tube from the hip, through the knee, to the ankle, and it runs into the boot. The standing leg is almost straight and the kicking leg bends forward. The red sock and the white shorts are slightly thicker tubes over the same leg.', tools: ['Cylinder: Top size', 'Edit shape: Pull out, Move (W)', 'Duplicate Ctrl+D'] },
+    { title: 'Boots', text: 'A football boot is one low shape with a white sole and small studs under it. Build one boot, then duplicate and mirror it for the other foot.', tools: ['Shape: Cylinder or Sphere', 'Edit shape: Pull out (P)', 'Rotate (E)'] },
+    { title: 'Socks, legs and shorts', text: 'A pose is about where the joints are. Each leg is one tube from the hip, through the knee, to the ankle, and it runs into the boot. Both legs stand almost straight, a little apart. The red sock and the white shorts are slightly thicker tubes over the same leg.', tools: ['Cylinder: Top size', 'Edit shape: Pull out, Move (W)', 'Duplicate Ctrl+D'] },
     { title: 'Jersey', text: 'The jersey is one shape that is wider at the shoulders than at the waist, leaning forward a little. A white chest band and hem are thin rings around it, the V collar is a curved strip, and the crest and the number 10 are thin plates lying on the front.', tools: ['Edit shape: scale a face (R)', 'Thin boxes for numbers', 'Rotate (E)'] },
-    { title: 'Arms', text: 'Arms swing against the legs: the left arm up in front for balance and the right arm back. Each arm is one tube bent at the elbow, with a thicker red sleeve over its upper half and a white hem. A gold band marks the captain. Hands are rounded with a thumb on the side.', tools: ['Edit shape: Pull out + Move', 'Cylinder: Top size', 'Shape: Sphere'] },
+    { title: 'Arms', text: 'One arm hangs relaxed and the other is bent at the elbow to carry the ball at hip height. Each arm is one tube bent at the elbow, with a thicker red sleeve over its upper half and a white hem. A gold band marks the captain. Hands are rounded with a thumb on the side.', tools: ['Edit shape: Pull out + Move', 'Cylinder: Top size', 'Shape: Sphere'] },
     { title: 'Head and face', text: 'The head is a Sphere with 8 sides and a narrower jaw. Eyes, eyebrows, the nose and the smile are placed on the surface of the head so they never float. Big eyes give it a friendly, cartoon feel.', tools: ['Edit shape: narrow the jaw', 'Mirror for symmetry', 'Shape: Pyramid + Rotate'] },
     { title: 'Hair and headband', text: 'Hair is two flattened spheres plus eight spikes. Each spike is a short tube that starts inside the head and tapers to a point, tilted a different way so they do not look copied. A red headband is a thin ring around the forehead.', tools: ['Cylinder: Top size near 0', 'Rotate (E)', 'Duplicate Ctrl+D'] },
-    { title: 'The ball', text: 'A white Sphere with 10 sides and seven black patches pressed onto its surface. Each patch is turned to face outward, then moved until it sits flat on the ball. The kicking toe touches the ball, and nothing floats. Name every part and group them as Football Player.', tools: ['Shape: Sphere, 10 sides', 'Rotate (E)', 'Group Ctrl+G'] },
+    { title: 'The ball', text: 'A white Sphere with 10 sides and seven black patches pressed onto its surface. Each patch is turned to face outward, then moved until it sits flat on the ball. The hand sits against the ball so it is held, and nothing floats. Name every part and group them as Football Player.', tools: ['Shape: Sphere, 10 sides', 'Rotate (E)', 'Group Ctrl+G'] },
   ],
   challenge: 'Make the goalkeeper: change the kit colors, add gloves by making the hands bigger, and move both arms out to the sides.',
   parts,
