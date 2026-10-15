@@ -1,7 +1,7 @@
 import type { AssetDef, AssetPart } from '../assets';
 import { bootParts } from './body';
 import { applyStyle } from './kit';
-import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
+import { blob, faceOn, headBlob, onSurface, pivotX, plate, ribbon, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
 
 const RED = '#d64545';
@@ -47,12 +47,12 @@ const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 12);
 
 // ---- 0 boots ----
 add(...bootParts(0, 1, ANKLE_L, 0, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
-add(...bootParts(0, -1, ANKLE_R, 42, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
+add(...bootParts(0, -1, ANKLE_R, 32, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
 
 // the kicking boot: a collar that follows the shin so the sock ends inside the boot, not beside it
 {
   const d = vnorm(vsub(ANKLE_R, KNEE_R));
-  const collar = sweep([R(vsub(ANKLE_R, vmul(d, 0.06)), 0.088), R(vsub(ANKLE_R, vmul(d, 0.0)), 0.09), R(vadd(ANKLE_R, vmul(d, 0.05)), 0.088)], { sides: 8 });
+  const collar = sweep([R(vsub(ANKLE_R, vmul(d, 0.06)), 0.088), R(vsub(ANKLE_R, vmul(d, 0.0)), 0.09), R(vadd(ANKLE_R, vmul(vnorm(vadd(d, vmul(vsub(pivotX(ANKLE_R, 32)([0, 0, 0]), pivotX(ANKLE_R, 32)([0, 1, 0])), 1))), 0.055)), 0.088)], { sides: 8 });
   add(toPart(0, 'Boot Collar Right', collar, BLACK));
   add(toPart(0, 'Boot Cuff Right', sweep([R(vsub(ANKLE_R, vmul(d, 0.075)), 0.094), R(vsub(ANKLE_R, vmul(d, 0.05)), 0.094)], { sides: 8 }), GRAY));
 }
