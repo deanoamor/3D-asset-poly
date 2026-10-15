@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "node e2e/run.mjs && node e2e/interact.mjs && node e2e/export.mjs && node e2e/edit.mjs && node e2e/drag.mjs && node e2e/assets.mjs && node e2e/saves.mjs && node e2e/welcome.mjs && node e2e/rig.mjs"
+    "e2e": "node e2e/run.mjs && node e2e/interact.mjs && node e2e/export.mjs && node e2e/edit.mjs && node e2e/drag.mjs && node e2e/assets.mjs && node e2e/saves.mjs && node e2e/welcome.mjs && node e2e/rig.mjs && node e2e/pose.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

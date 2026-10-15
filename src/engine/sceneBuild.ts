@@ -63,7 +63,7 @@ export function applyTransform(obj: THREE.Object3D, o: SceneObject): void {
 }
 
 /** Build a standalone three.js hierarchy for the export (hidden objects are left out). */
-export function buildExportScene(doc: Doc, name: string): THREE.Group {
+export function buildExportScene(doc: Doc, name: string, opts: { bakePose?: boolean } = {}): THREE.Group {
   const geos = new GeometryCache();
   const mats = new MaterialCache();
   const map = new Map(doc.objects.map((o) => [o.id, o]));
@@ -88,6 +88,6 @@ export function buildExportScene(doc: Doc, name: string): THREE.Group {
     if (!node) continue;
     (o.parent ? nodes.get(o.parent) ?? root : root).add(node);
   }
-  attachSkeletons(doc, root, nodes);
+  attachSkeletons(doc, root, nodes, opts);
   return root;
 }

@@ -13,7 +13,7 @@ const RIGID_SIZE = 0.3;
  * a skinned mesh with automatic weights; the joints become Bone nodes under an "Armature" node. Meshes are baked into
  * world space (the glTF rule for skinned meshes), so they sit at the root of the file.
  */
-export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, THREE.Object3D>): void {
+export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, THREE.Object3D>, opts: { bakePose?: boolean } = {}): void {
   if (!doc.rig?.length) return;
   const owners = new Map<string | undefined, Joint[]>();
   for (const j of doc.rig) owners.set(j.owner, [...(owners.get(j.owner) ?? []), j]);
@@ -33,6 +33,7 @@ export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, 
     for (const j of joints) {
       const b = new THREE.Bone();
       b.name = j.name;
+      b.userData.jointId = j.id;
       bones.set(j.id, b);
     }
     const armature = new THREE.Group();
@@ -99,6 +100,12 @@ export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, 
       sm.name = ownerObj ? ownerObj.name : 'Skinned Model';
       root.add(sm);
       sm.bind(skeleton, new THREE.Matrix4());
+      // the pose is baked into the file: the mesh is bent, and the bones are left in that pose
+      if (opts.bakePose !== false && doc.pose) {
+        applyPose(bones, doc);
+        root.updateMatrixWorld(true);
+        bakeSkin(sm);
+      }
     }
     // the character's group is now empty: drop it (and any sub-groups) from the file
     if (ownerObj) for (const id of ids) {
@@ -135,4 +142,51 @@ export function settleSkins(root: THREE.Group): void {
     }
     sm.bind(sm.skeleton, new THREE.Matrix4());
   }
+}
+
+/** Turn the bones to the project's pose (degrees, relative to rest). Joints with no entry go back to rest. */
+export function applyPose(bones: Map<string, THREE.Bone>, doc: Doc): void {
+  for (const [id, b] of bones) {
+    const r = doc.pose?.[id] ?? [0, 0, 0];
+    b.rotation.set(THREE.MathUtils.degToRad(r[0]), THREE.MathUtils.degToRad(r[1]), THREE.MathUtils.degToRad(r[2]));
+  }
+}
+
+/** Move the points of a skinned mesh to where the current bone pose puts them (linear blend skinning on the CPU). */
+export function bakeSkin(sm: THREE.SkinnedMesh): void {
+  const bones = sm.skeleton.bones;
+  const m = bones.map((b, i) => new THREE.Matrix4().multiplyMatrices(b.matrixWorld, sm.skeleton.boneInverses[i]));
+  const pos = sm.geometry.getAttribute('position');
+  const nor = sm.geometry.getAttribute('normal');
+  const idx = sm.geometry.getAttribute('skinIndex');
+  const wgt = sm.geometry.getAttribute('skinWeight');
+  const p = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  const op = new THREE.Vector3();
+  const on = new THREE.Vector3();
+  const rot = new THREE.Matrix3();
+  for (let v = 0; v < pos.count; v++) {
+    op.fromBufferAttribute(pos, v);
+    p.set(0, 0, 0);
+    if (nor) {
+      on.fromBufferAttribute(nor, v);
+      n.set(0, 0, 0);
+    }
+    for (let k = 0; k < 4; k++) {
+      const w = wgt.getComponent(v, k);
+      if (!w) continue;
+      const mat = m[idx.getComponent(v, k)];
+      p.addScaledVector(op.clone().applyMatrix4(mat), w);
+      if (nor) n.addScaledVector(on.clone().applyMatrix3(rot.setFromMatrix4(mat)), w);
+    }
+    pos.setXYZ(v, p.x, p.y, p.z);
+    if (nor) {
+      n.normalize();
+      nor.setXYZ(v, n.x, n.y, n.z);
+    }
+  }
+  pos.needsUpdate = true;
+  if (nor) nor.needsUpdate = true;
+  sm.geometry.computeBoundingBox();
+  sm.geometry.computeBoundingSphere();
 }

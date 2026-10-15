@@ -63,6 +63,8 @@ export interface UiState {
   gridStep: number;
   /** Draw the skeleton's joints and bones over the model. */
   showRig: boolean;
+  /** Pose mode: turn joints and see the character bend. */
+  pose: boolean;
 }
 
 export type StoreEvent = 'rig' | 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
@@ -93,6 +95,7 @@ export class Store {
     preview: false,
     gridStep: 0.25,
     showRig: true,
+    pose: false,
   };
   /** The joint picked in the viewport or the Skeleton list (not saved). */
   selectedJoint: string | null = null;
@@ -301,11 +304,42 @@ export class Store {
         d.rig = d.rig.filter((j) => !j.owner || !kill.has(j.owner));
         if (!d.rig.length) delete d.rig;
       }
+      this.prunePose(d);
     });
     this.fixJointSelection();
   }
 
   // ----- skeleton: joints and bones -----
+
+  /** Forget the pose of joints that no longer exist. */
+  private prunePose(d: Doc): void {
+    if (!d.pose) return;
+    const ids = new Set((d.rig ?? []).map((j) => j.id));
+    for (const k of Object.keys(d.pose)) if (!ids.has(k) || d.pose[k].every((v) => Math.abs(v) < 1e-6)) delete d.pose[k];
+    if (!Object.keys(d.pose).length) delete d.pose;
+  }
+
+  /** Turn a joint (degrees). The bone and everything below it follows. */
+  setJointPose(id: string, rot: Vec3, commit = true): void {
+    if (!this.joint(id)) return;
+    this.mutate((d) => {
+      d.pose = { ...(d.pose ?? {}), [id]: [...rot] as Vec3 };
+      this.prunePose(d);
+    }, commit);
+    this.emit('rig');
+  }
+
+  /** Back to the rest pose: one joint, or all of them. */
+  resetPose(id?: string): void {
+    if (!this.doc.pose) return;
+    this.mutate((d) => {
+      if (id && d.pose) delete d.pose[id];
+      else delete d.pose;
+      this.prunePose(d);
+    });
+    this.emit('rig');
+  }
+
 
   joint(id: string | null | undefined): Joint | undefined {
     return id ? this.doc.rig?.find((j) => j.id === id) : undefined;
@@ -347,6 +381,7 @@ export class Store {
     this.mutate((d) => {
       d.rig = d.rig!.filter((j) => j.owner !== owner);
       if (!d.rig.length) delete d.rig;
+      this.prunePose(d);
     });
     this.fixJointSelection();
   }
@@ -405,6 +440,7 @@ export class Store {
     this.mutate((d) => {
       d.rig = d.rig!.filter((q) => q.id !== id).map((q) => (q.parent === id ? { ...q, parent: j.parent } : q));
       if (!d.rig.length) delete d.rig;
+      this.prunePose(d);
     });
     this.fixJointSelection();
   }

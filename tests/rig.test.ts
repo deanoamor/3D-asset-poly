@@ -164,3 +164,41 @@ describe('export option', () => {
     expect(off.out).not.toContain('Shoulder');
   });
 });
+
+describe('pose', () => {
+  it('turns a joint, forgets zero and unknown joints, and undoes', () => {
+    const st = new Store(emptyDoc());
+    st.addJoints(arm());
+    st.setJointPose('b', [0, 0, 90]);
+    expect(st.doc.pose).toEqual({ b: [0, 0, 90] });
+    st.setJointPose('b', [0, 0, 0]);
+    expect(st.doc.pose).toBeUndefined(); // zero = rest
+    st.setJointPose('b', [10, 0, 0]);
+    st.setJointPose('c', [0, 20, 0]);
+    st.resetPose('b');
+    expect(Object.keys(st.doc.pose!)).toEqual(['c']);
+    st.deleteJoint('c');
+    expect(st.doc.pose).toBeUndefined(); // the joint is gone, so is its pose
+    st.undo();
+    expect(st.doc.pose).toEqual({ c: [0, 20, 0] });
+    st.resetPose();
+    expect(st.doc.pose).toBeUndefined();
+  });
+
+  it('the pose is baked into the exported mesh: the forearm swings out sideways', async () => {
+    const { prepareExport } = await import('../src/engine/exporter');
+    const st = new Store(emptyDoc('Posed'));
+    st.addShape('cylinder', { name: 'Arm', position: [0, 1, 0], size: [0.3, 2, 0.3] });
+    st.addJoints(arm());
+    const width = (doc: typeof st.doc) => {
+      const { root } = prepareExport(doc);
+      const sm = root.getObjectByName('Skinned Model') as unknown as { geometry: { boundingBox: { min: { x: number }; max: { x: number } } | null; computeBoundingBox: () => void } };
+      sm.geometry.computeBoundingBox();
+      return sm.geometry.boundingBox!.max.x - sm.geometry.boundingBox!.min.x;
+    };
+    const rest = width(st.doc);
+    expect(rest).toBeLessThan(0.5);
+    st.setJointPose('b', [0, 0, 90]);
+    expect(width(st.doc)).toBeGreaterThan(0.9); // the lower half now points sideways
+  });
+});

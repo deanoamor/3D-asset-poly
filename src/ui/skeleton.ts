@@ -103,6 +103,25 @@ export function mountSkeleton(root: HTMLElement, store: Store): void {
     );
   }
 
+  function poseEditor(j: Joint): HTMLElement {
+    const r = store.doc.pose?.[j.id] ?? ([0, 0, 0] as Vec3);
+    const at = (axis: 0 | 1 | 2) => (v: number) => {
+      const q = [...(store.doc.pose?.[j.id] ?? [0, 0, 0])] as Vec3;
+      q[axis] = v;
+      store.setJointPose(j.id, q);
+    };
+    const posed = !!store.doc.pose;
+    return h('div', { class: 'jedit', id: 'pose-editor' },
+      h('strong', {}, j.name),
+      h('div', { class: 'jrow' }, num('Turn X °', r[0], at(0)), num('Turn Y °', r[1], at(1)), num('Turn Z °', r[2], at(2))),
+      h('p', { class: 'fnote' }, 'Drag the colored rings in the scene, or type degrees. Everything below this joint turns with it.'),
+      h('div', { class: 'jactions' },
+        h('button', { class: 'btn sm', id: 'btn-pose-reset-joint', disabled: !store.doc.pose?.[j.id], onclick: () => store.resetPose(j.id) }, 'Reset this joint'),
+        h('button', { class: 'btn sm', id: 'btn-pose-reset', disabled: !posed, onclick: () => store.resetPose() }, 'Reset whole pose'),
+      ),
+    );
+  }
+
   const render = () => {
     const rig = store.doc.rig ?? [];
     const sel = store.joint(store.selectedJoint);
@@ -111,6 +130,9 @@ export function mountSkeleton(root: HTMLElement, store: Store): void {
       h('button', { class: 'caret', 'aria-label': open ? 'Collapse skeleton' : 'Expand skeleton', onclick: () => { open = !open; render(); } }, icon(open ? 'chevD' : 'chevR', 12)),
       h('span', {}, 'Skeleton'),
       h('span', { class: 'skel-count' }, rig.length ? `${rig.length} joints` : ''),
+      rig.length
+        ? h('button', { class: `btn xs${store.ui.pose ? ' primary' : ''}`, id: 'btn-pose-mode', title: store.ui.pose ? 'Leave Pose mode' : 'Pose mode: turn joints to bend the character', 'aria-pressed': String(store.ui.pose), onclick: () => store.setUi({ pose: !store.ui.pose }) }, 'Pose')
+        : null,
       rig.length
         ? h('button', { class: 'tbtn sm', id: 'btn-rig-show', title: store.ui.showRig ? 'Hide the joints and bones' : 'Show the joints and bones', 'aria-pressed': String(store.ui.showRig), 'aria-label': 'Show skeleton', onclick: () => store.setUi({ showRig: !store.ui.showRig }) }, icon(store.ui.showRig ? 'eye' : 'eyeOff', 15))
         : null,
@@ -131,17 +153,20 @@ export function mountSkeleton(root: HTMLElement, store: Store): void {
       h('li', { class: `jrowitem${j.id === store.selectedJoint ? ' on' : ''}`, role: 'treeitem', 'aria-selected': String(j.id === store.selectedJoint), 'data-joint': j.id, style: `padding-left:${8 + depthOf(j, rig) * 12}px`, onclick: () => store.selectJoint(j.id) },
         h('i', { class: 'jdot' }), j.name)));
     box.append(list);
-    box.append(h('div', { class: 'jactions' },
+    if (!store.ui.pose) box.append(h('div', { class: 'jactions' },
       h('button', { class: 'btn sm', id: 'btn-rig-joint', onclick: () => store.addJoint(store.joint(store.selectedJoint) ? {} : { parent: null }) }, icon('plus', 13), sel ? 'Add child joint' : 'Add joint'),
       h('button', { class: 'btn sm', id: 'btn-rig-person', title: 'Add another person skeleton for the selected character', onclick: addPerson }, 'Add person skeleton'),
     ));
-    if (sel) box.append(editor(sel, rig));
-    else box.append(h('p', { class: 'fnote' }, 'Click a joint (a white ball in the scene, or a name above) to move or rename it. Drag a ball to move it; hold Shift to carry the joints below it.'));
+    if (store.ui.pose) {
+      if (sel) box.append(poseEditor(sel));
+      else box.append(h('p', { class: 'fnote' }, 'Pose mode: click a joint (a white ball in the scene, or a name above), then turn it with the rings to bend the character.'));
+    } else if (sel) box.append(editor(sel, rig));
+    else box.append(h('p', { class: 'fnote' }, 'Click a joint (a white ball in the scene, or a name above) to move or rename it. Drag a ball to move it; hold Shift to carry the joints below it. Press Pose to bend the character.'));
   };
 
   let last = '';
   const refresh = () => {
-    const sig = JSON.stringify([store.doc.rig, store.selectedJoint, store.ui.showRig]);
+    const sig = JSON.stringify([store.doc.rig, store.doc.pose, store.selectedJoint, store.ui.showRig, store.ui.pose]);
     if (sig === last) return;
     last = sig;
     render();

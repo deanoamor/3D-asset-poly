@@ -13,6 +13,7 @@ export class RigOverlay {
   readonly group = new THREE.Group();
   private balls: THREE.Mesh[] = [];
   private key = '';
+  private posed: Map<string, [number, number, number]> | null = null;
 
   constructor(private store: Store) {
     this.group.name = 'rig-overlay';
@@ -20,10 +21,12 @@ export class RigOverlay {
   }
 
   /** Rebuild when the joints (or which one is picked) changed. Returns true if anything was redrawn. */
-  sync(): boolean {
+  sync(posed?: Map<string, [number, number, number]>): boolean {
+    this.posed = posed ?? null;
     const rig = this.store.doc.rig ?? [];
+    const at3 = (j: { id: string; pos: [number, number, number] }) => this.posed?.get(j.id) ?? j.pos;
     const show = this.store.ui.showRig && !this.store.ui.preview && rig.length > 0;
-    const key = show ? `${this.store.selectedJoint}|${rig.map((j) => `${j.id}:${j.parent}:${j.pos.map((v) => v.toFixed(4)).join(',')}`).join(';')}` : 'off';
+    const key = show ? `${this.store.selectedJoint}|${rig.map((j) => `${j.id}:${j.parent}:${at3(j).map((v) => v.toFixed(4)).join(',')}`).join(';')}` : 'off';
     if (key === this.key) return false;
     this.key = key;
     this.clear();
@@ -35,12 +38,12 @@ export class RigOverlay {
 
   private draw(): void {
     const rig = this.store.doc.rig ?? [];
-    const at = new Map(rig.map((j) => [j.id, j]));
+    const at = new Map(rig.map((j) => [j.id, { ...j, pos: this.posed?.get(j.id) ?? j.pos }]));
     const mat = (c: number, o = 0.95) => new THREE.MeshBasicMaterial({ color: c, depthTest: false, depthWrite: false, transparent: true, opacity: o });
     for (const j of rig) {
       const picked = j.id === this.store.selectedJoint;
       const ball = new THREE.Mesh(new THREE.SphereGeometry(picked ? 0.045 : 0.032, 12, 8), mat(picked ? PICKED : JOINT));
-      ball.position.set(...j.pos);
+      ball.position.set(...(this.posed?.get(j.id) ?? j.pos));
       ball.renderOrder = 1002;
       ball.userData.jointId = j.id;
       this.group.add(ball);
@@ -48,7 +51,7 @@ export class RigOverlay {
       const p = j.parent ? at.get(j.parent) : undefined;
       if (!p) continue;
       const a = new THREE.Vector3(...p.pos);
-      const b = new THREE.Vector3(...j.pos);
+      const b = new THREE.Vector3(...(this.posed?.get(j.id) ?? j.pos));
       const len = a.distanceTo(b);
       if (len < 1e-4) continue;
       // a bone is a stretched diamond: wide near the parent joint, a point at the child

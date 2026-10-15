@@ -57,6 +57,8 @@ export interface Doc {
   objects: SceneObject[];
   /** The skeleton, if any. */
   rig?: Joint[];
+  /** The pose: how far each joint is turned from rest, in degrees (X, Y, Z), by joint id. */
+  pose?: Record<string, Vec3>;
 }
 
 export const SHAPE_LABELS: Record<ShapeType, string> = {

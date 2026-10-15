@@ -160,3 +160,6 @@ Inside the claude.ai artifact the host only saves some extensions, so the bag ar
 - The ready-made characters (Police Officer, Football Player, Soldier) come with a 22-joint person skeleton. For any other figure, select it and press **Add person skeleton**; or build your own with **Add joint**.
 - Joints are the white balls in the scene (orange when picked). Drag one to move it; hold **Shift** to carry the joints below it. The panel edits name, position and parent.
 - **GLB / glTF export** skins the model to the skeleton automatically: long parts (arms, legs, torso) bend smoothly at the joints, small parts (helmet, pouch) follow their nearest joint. A character becomes one skinned mesh with one skin, which Blender and game engines pose directly. OBJ ignores the skeleton.
+
+### Pose mode
+Press **Pose** in the Skeleton section, click a joint and turn it with the rings (or type degrees): the character bends live. Preview shows the pose with its shadow, and a normal editing view shows the character at rest. The pose is saved with the project (and in a save or a `.3pi` bag), and **GLB/glTF export bakes it in**, so the file holds the posed mesh with its skeleton in that pose. Undo/redo cover every turn; **Reset whole pose** goes back to rest.

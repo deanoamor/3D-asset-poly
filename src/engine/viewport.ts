@@ -4,7 +4,8 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import type { Store } from '../core/store';
 import { effectivelyVisible, isLockedChain } from '../core/docmath';
 import type { SceneObject, ShapeType, Vec3 } from '../core/types';
-import { GeometryCache, MaterialCache, applyTransform } from './sceneBuild';
+import { GeometryCache, MaterialCache, applyTransform, buildExportScene } from './sceneBuild';
+import { applyPose } from './rigExport';
 import { EditController } from './editMode';
 import { meshSignature } from '../core/mesh';
 import { RigOverlay } from './rigOverlay';
@@ -43,6 +44,10 @@ export class Viewport {
   readonly tc: TransformControls;
   private model = new THREE.Group();
   private rig: RigOverlay;
+  private poseRoot: THREE.Group | null = null;
+  private poseBones = new Map<string, THREE.Bone>();
+  private poseSig = '';
+  private poseActive = false;
   private grid: THREE.Object3D;
   readonly nodes = new Map<string, THREE.Object3D>();
   readonly edit: EditController;
@@ -154,7 +159,7 @@ export class Viewport {
 
     store.subscribe((e) => {
       if (e === 'doc' || e === 'reset' || e === 'learn') this.sync();
-      if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool') this.syncRig();
+      if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool' || e === 'history') this.syncRig();
       if (e === 'selection' || e === 'reset') this.onSelection();
       if (e === 'tool') this.onToolChange();
       if (e === 'edit') {
@@ -172,7 +177,68 @@ export class Viewport {
   // ----- skeleton overlay -----
 
   private syncRig(): void {
-    if (this.rig.sync()) this.requestRender();
+    this.syncPose();
+    let posed: Map<string, [number, number, number]> | undefined;
+    if (this.poseActive) {
+      posed = new Map();
+      const v = new THREE.Vector3();
+      for (const [id, b] of this.poseBones) {
+        b.getWorldPosition(v);
+        posed.set(id, [v.x, v.y, v.z]);
+      }
+    }
+    if (this.rig.sync(posed)) this.requestRender();
+    if (this.poseActive || this.tc.object?.userData.jointId) this.refreshGizmoTarget();
+  }
+
+  /** In Pose mode (and in Preview of a posed character) the model is drawn bent by the skeleton; otherwise at rest. */
+  private poseView(): boolean {
+    const ui = this.store.ui;
+    const doc = this.store.doc;
+    if (!doc.rig?.length || this.store.edit) return false;
+    return ui.pose || (ui.preview && !!doc.pose);
+  }
+
+  private disposePose(): void {
+    if (!this.poseRoot) return;
+    if (this.tc.object && this.tc.object.userData.jointId) this.tc.detach();
+    this.poseRoot.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
+    this.poseRoot.removeFromParent();
+    this.poseRoot = null;
+    this.poseBones.clear();
+    this.poseSig = '';
+  }
+
+  private syncPose(): void {
+    const on = this.poseView();
+    this.poseActive = on;
+    this.model.visible = !on;
+    if (!on) {
+      this.disposePose();
+      this.requestRender();
+      return;
+    }
+    const doc = this.store.doc;
+    const sig = JSON.stringify([doc.objects, doc.rig, this.store.ui.preview]);
+    if (!this.poseRoot || sig !== this.poseSig) {
+      this.disposePose();
+      this.poseSig = sig;
+      const root = buildExportScene(doc, 'pose', { bakePose: false });
+      root.traverse((o) => {
+        const m = o as THREE.Mesh;
+        if (m.isMesh) {
+          m.castShadow = true;
+          m.receiveShadow = true;
+          m.frustumCulled = false;
+        }
+        if ((o as THREE.Bone).isBone && o.userData.jointId) this.poseBones.set(o.userData.jointId as string, o as THREE.Bone);
+      });
+      this.scene.add(root);
+      this.poseRoot = root;
+    }
+    applyPose(this.poseBones, doc);
+    this.poseRoot!.updateMatrixWorld(true);
+    this.requestRender();
   }
 
   /** Drag a joint on the plane facing the camera. Shift moves everything below it too. */
@@ -384,6 +450,22 @@ export class Viewport {
 
   refreshGizmoTarget(): void {
     const { tool, preview } = this.store.ui;
+    if (this.poseActive) {
+      // Pose mode: the gizmo turns the picked joint
+      const bone = !preview && this.store.selectedJoint ? this.poseBones.get(this.store.selectedJoint) : undefined;
+      const helper = this.tc.getHelper();
+      if (bone) {
+        this.tc.setMode('rotate');
+        this.tc.setSpace('local');
+        if (this.tc.object !== bone) this.tc.attach(bone);
+        helper.visible = true;
+      } else {
+        if (this.tc.object) this.tc.detach();
+        helper.visible = false;
+      }
+      this.requestRender();
+      return;
+    }
     const sel = this.store.selection;
     let attach: THREE.Object3D | null = null;
     if (this.store.edit) {
@@ -421,6 +503,11 @@ export class Viewport {
   private onGizmoChange(): void {
     const node = this.tc.object;
     if (!node) return;
+    if (this.poseActive && node.userData.jointId) {
+      const D = THREE.MathUtils.radToDeg;
+      this.store.setJointPose(node.userData.jointId as string, [D(node.rotation.x), D(node.rotation.y), D(node.rotation.z)], false);
+      return;
+    }
     if (this.store.edit) {
       this.edit.applyDrag();
       return;
@@ -548,7 +635,11 @@ export class Viewport {
     if (!this.store.edit && this.rig.group.visible) {
       this.raycaster.setFromCamera(this.ndc(e), this.camera);
       const joint = this.rig.pick(this.raycaster);
-      if (joint) return this.beginJointDrag(e, joint);
+      if (joint) {
+        if (this.poseActive) this.store.selectJoint(joint); // in Pose mode a click only picks the joint; the gizmo turns it
+        else this.beginJointDrag(e, joint);
+        return;
+      }
     }
     if (this.store.edit) return this.edit.pointerDown(e);
     const tool = this.store.ui.tool;
