@@ -1,8 +1,9 @@
-import { DEFAULT_SEGMENTS, type SceneObject, type ShapeParams, type ShapeType, type Vec3 } from './types';
+import { DEFAULT_SEGMENTS, type Joint, type SceneObject, type ShapeParams, type ShapeType, type Vec3 } from './types';
 import { cloneMesh, type PolyMesh } from './mesh';
 import { objectTriangles } from './shapes';
 import { Store, emptyDoc } from './store';
 import { Vector3 } from 'three';
+import { jointsFromSpec, type JointSpec } from './library/rigs';
 import { POLICE } from './library/police';
 import { CAR } from './library/car';
 import { HOUSE } from './library/house';
@@ -35,6 +36,8 @@ export interface AssetStep {
   text: string;
   /** Tools and ideas used in this step, shown as small tags. */
   tools: string[];
+  /** The skeleton appears at this step. */
+  rig?: boolean;
 }
 
 export interface AssetDef {
@@ -46,6 +49,8 @@ export interface AssetDef {
   learn: string[];
   steps: AssetStep[];
   challenge: string;
+  /** The character's skeleton, in the asset's own coordinates. Characters have one. */
+  rig?: () => JointSpec[];
   /** Camera hint for the library picture: direction and how tightly to frame. */
   thumb?: { dir: Vec3; zoom: number };
   parts: AssetPart[];
@@ -61,7 +66,7 @@ let counter = 0;
 const uid = () => `a${Date.now().toString(36)}${(counter++).toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 
 /** Fresh objects for a project: a group plus one shape per part (parent first). */
-export function instantiateAsset(def: AssetDef, at: Vec3 = [0, 0, 0], existingNames: Set<string> = new Set()): { group: SceneObject; parts: SceneObject[]; partStep: Map<string, number> } {
+export function instantiateAsset(def: AssetDef, at: Vec3 = [0, 0, 0], existingNames: Set<string> = new Set()): { group: SceneObject; parts: SceneObject[]; partStep: Map<string, number>; joints: Joint[] } {
   const unique = (base: string) => {
     let n = base;
     let i = 2;
@@ -105,7 +110,8 @@ export function instantiateAsset(def: AssetDef, at: Vec3 = [0, 0, 0], existingNa
     partStep.set(o.id, p.step);
     return o;
   });
-  return { group, parts, partStep };
+  const joints = def.rig ? jointsFromSpec(def.rig(), group.id, at) : [];
+  return { group, parts, partStep, joints };
 }
 
 export function assetStats(def: AssetDef): { triangles: number; parts: number; height: number; width: number; depth: number } {

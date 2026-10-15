@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Doc, SceneObject } from '../core/types';
 import { buildObjectGeometry, lookOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
+import { attachSkeletons } from './rigExport';
 import { effectivelyVisible } from '../core/docmath';
 
 const D2R = Math.PI / 180;
@@ -87,5 +88,6 @@ export function buildExportScene(doc: Doc, name: string): THREE.Group {
     if (!node) continue;
     (o.parent ? nodes.get(o.parent) ?? root : root).add(node);
   }
+  attachSkeletons(doc, root, nodes);
   return root;
 }

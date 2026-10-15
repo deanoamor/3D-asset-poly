@@ -7,6 +7,7 @@ import type { SceneObject, ShapeType, Vec3 } from '../core/types';
 import { GeometryCache, MaterialCache, applyTransform } from './sceneBuild';
 import { EditController } from './editMode';
 import { meshSignature } from '../core/mesh';
+import { RigOverlay } from './rigOverlay';
 import { lookOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
 
 const R2D = 180 / Math.PI;
@@ -41,6 +42,7 @@ export class Viewport {
   readonly controls: OrbitControls;
   readonly tc: TransformControls;
   private model = new THREE.Group();
+  private rig: RigOverlay;
   private grid: THREE.Object3D;
   readonly nodes = new Map<string, THREE.Object3D>();
   readonly edit: EditController;
@@ -71,6 +73,8 @@ export class Viewport {
 
     this.scene.background = new THREE.Color(0xebebe8);
     this.scene.add(this.model);
+    this.rig = new RigOverlay(store);
+    this.scene.add(this.rig.group);
     const hemi = new THREE.HemisphereLight(0xffffff, 0x9aa0a8, 1.6);
     const sun = new THREE.DirectionalLight(0xffffff, 2.2);
     sun.position.set(5, 9, 4);
@@ -150,6 +154,7 @@ export class Viewport {
 
     store.subscribe((e) => {
       if (e === 'doc' || e === 'reset' || e === 'learn') this.sync();
+      if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool') this.syncRig();
       if (e === 'selection' || e === 'reset') this.onSelection();
       if (e === 'tool') this.onToolChange();
       if (e === 'edit') {
@@ -162,6 +167,46 @@ export class Viewport {
     this.onSelection();
     this.onToolChange();
     this.loop();
+  }
+
+  // ----- skeleton overlay -----
+
+  private syncRig(): void {
+    if (this.rig.sync()) this.requestRender();
+  }
+
+  /** Drag a joint on the plane facing the camera. Shift moves everything below it too. */
+  private beginJointDrag(e: PointerEvent, id: string): void {
+    const j = this.store.joint(id);
+    if (!j) return;
+    this.store.selectJoint(id);
+    const normal = this.camera.getWorldDirection(new THREE.Vector3());
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, new THREE.Vector3(...j.pos));
+    const start = new THREE.Vector3();
+    this.raycaster.setFromCamera(this.ndc(e), this.camera);
+    if (!this.raycaster.ray.intersectPlane(plane, start)) return;
+    const from = new THREE.Vector3(...j.pos);
+    this.controls.enabled = false;
+    let moved = false;
+    const withChildren = e.shiftKey;
+    const move = (m: PointerEvent) => {
+      if (!moved && Math.hypot(m.clientX - e.clientX, m.clientY - e.clientY) < 3) return;
+      moved = true;
+      this.raycaster.setFromCamera(this.ndc(m), this.camera);
+      const p = new THREE.Vector3();
+      if (!this.raycaster.ray.intersectPlane(plane, p)) return;
+      const to = from.clone().add(p.sub(start));
+      const r = (v: number) => Math.round(v * 1000) / 1000;
+      this.store.moveJoint(id, [r(to.x), r(to.y), r(to.z)], { withChildren, commit: false });
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      this.controls.enabled = true;
+      if (moved) this.store.commit();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
   }
 
   // ----- scene sync -----
@@ -500,6 +545,11 @@ export class Viewport {
   private onPointerDown(e: PointerEvent): void {
     if (e.button !== 0 || this.store.ui.preview || this.tc.dragging || this.spaceDown) return;
     if ((e.target as HTMLElement).closest('.overlay')) return;
+    if (!this.store.edit && this.rig.group.visible) {
+      this.raycaster.setFromCamera(this.ndc(e), this.camera);
+      const joint = this.rig.pick(this.raycaster);
+      if (joint) return this.beginJointDrag(e, joint);
+    }
     if (this.store.edit) return this.edit.pointerDown(e);
     const tool = this.store.ui.tool;
 

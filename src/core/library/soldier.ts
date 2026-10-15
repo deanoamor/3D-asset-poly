@@ -3,6 +3,7 @@ import { band2, bootParts } from './body';
 import { applyStyle, box, frustum, part } from './kit';
 import { blob, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
+import { humanSpec } from './rigs';
 
 // black and gray uniform, one warm accent for rank
 const BLACK = '#1b1d21';
@@ -167,6 +168,7 @@ applyStyle(parts, [
 
 export const SOLDIER: AssetDef = {
   id: 'soldier',
+  rig: () => humanSpec(),
   name: 'Soldier',
   tagline: 'A tactical soldier in a black and gray uniform: helmet, visor, vest, pack and rank',
   level: 'Detailed',
@@ -180,6 +182,7 @@ export const SOLDIER: AssetDef = {
     { title: 'Head, mask and visor', text: 'The head is a Sphere under a helmet: a dome with a darker rim and a ridge along the top. A curved dark visor wraps around the eyes, and a gray face mask with a vent and a filter covers the mouth. Straps hold the mask to the head.', tools: ['Shape: Sphere', 'Edit shape: Pull out', 'Rotate (E)'] },
     { title: 'Headset and backpack', text: 'Black ear cups sit on both sides of the helmet, joined by a band over the top, with a thin microphone boom curving to the mouth. The backpack is a Box slightly narrower at the top, with a lid, two side pouches, a steel buckle and two straps that go over the shoulders.', tools: ['Shape: Sphere + Size (R)', 'Shape: Box', 'Group Ctrl+G'] },
     { title: 'Rank and name', text: 'A dark patch on the chest carries three gold chevrons, the rank. A name tape and a small unit patch with a star sit on the other side, with dog tags at the neck, a combat knife on the belt and a grenade. Name every part and group them as Soldier.', tools: ['Rename in Layers', 'Group Ctrl+G', 'Color palette'] },
+    { title: 'Skeleton: joints and bones', text: 'A skeleton lets a 3D app bend the character. The white balls are joints (hips, knees, shoulders, elbows, wrists, neck, head) and the teal lines between them are bones. Each bone is moved by the joint it starts from, so turning a shoulder swings the whole arm. When you export to GLB, every part is skinned to these joints automatically: long parts like arms and legs bend smoothly at the joints, small parts like a helmet or a pouch follow one joint.', tools: ['Skeleton panel (under Layers)', 'Drag a joint', 'Shift+drag: carry its children'], rig: true },
   ],
   challenge: 'Make an officer: change the helmet to a flat cap with a color of your choice, add one more chevron to each sleeve, and swap the backpack for a side bag.',
   parts,

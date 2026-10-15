@@ -3,6 +3,7 @@ import { bootParts } from './body';
 import { applyStyle } from './kit';
 import { blob, faceOn, headBlob, onSurface, plate, ribbon, soccerBall, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
+import { humanSpec, type BodyJoints } from './rigs';
 
 const RED = '#d64545';
 const RED_D = '#b53434';
@@ -143,8 +144,26 @@ applyStyle(parts, [
   [/^(Headband)/, { smooth: true, paint: 0.3 }],
 ]);
 
+const BODY_JOINTS: BodyJoints = {
+  hips: [0, 0.94, 0],
+  spine: [0, 1.1, 0.03],
+  chest: [0, 1.27, 0.05],
+  neck: [0, 1.4, 0.06],
+  head: [0, 1.53, 0.07],
+  headTop: [0, 1.97, 0.11],
+  shoulder: [0.31, 1.37, 0.056],
+  elbow: [0.385, 1.09, 0.03],
+  wrist: [0.37, 0.85, 0.07],
+  fingers: [0.37, 0.78, 0.1],
+  hip: [0.105, 0.88, 0],
+  knee: [0.115, 0.52, 0.07],
+  ankle: [0.115, 0.235, -0.02],
+  toe: [0.115, 0.12, 0.16],
+};
+
 export const FOOTBALLER: AssetDef = {
   id: 'footballer',
+  rig: () => humanSpec(BODY_JOINTS, { shoulder: [-0.31, 1.37, 0.056], elbow: [-0.4, 1.12, 0.1], wrist: [-0.3, 0.99, 0.36], fingers: [-0.27, 0.94, 0.46] }),
   name: 'Football Player',
   tagline: 'A player standing with the ball in one hand: one-piece limbs, a kit with details',
   level: 'Detailed',
@@ -158,6 +177,7 @@ export const FOOTBALLER: AssetDef = {
     { title: 'Head and face', text: 'The head is a Sphere with 8 sides and a narrower jaw. Eyes, eyebrows, the nose and the smile are placed on the surface of the head so they never float. Big eyes give it a friendly, cartoon feel.', tools: ['Edit shape: narrow the jaw', 'Mirror for symmetry', 'Shape: Pyramid + Rotate'] },
     { title: 'Hair and headband', text: 'Hair is two flattened spheres plus eight spikes. Each spike is a short tube that starts inside the head and tapers to a point, tilted a different way so they do not look copied. A red headband is a thin ring around the forehead.', tools: ['Cylinder: Top size near 0', 'Rotate (E)', 'Duplicate Ctrl+D'] },
     { title: 'The ball', text: 'A football is a white 20-sided-hexagon ball with 12 black pentagons. Build the ball first, then add each black pentagon as a thin flat shape lying exactly on one of its faces. The hand sits against the ball so it is held, and nothing floats. Name every part and group them as Football Player.', tools: ['Shape: Sphere, 10 sides', 'Rotate (E)', 'Group Ctrl+G'] },
+    { title: 'Skeleton: joints and bones', text: 'A skeleton lets a 3D app bend the character. The white balls are joints (hips, knees, shoulders, elbows, wrists, neck, head) and the teal lines between them are bones. Each bone is moved by the joint it starts from, so turning a shoulder swings the whole arm. When you export to GLB, every part is skinned to these joints automatically: long parts like arms and legs bend smoothly at the joints, small parts like a helmet or a pouch follow one joint.', tools: ['Skeleton panel (under Layers)', 'Drag a joint', 'Shift+drag: carry its children'], rig: true },
   ],
   challenge: 'Make the goalkeeper: change the kit colors, add gloves by making the hands bigger, and move both arms out to the sides.',
   parts,

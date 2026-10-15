@@ -1,3 +1,4 @@
+import type { Joint } from '../core/types';
 import type { Store } from '../core/store';
 import { ASSETS, assetStats, instantiateAsset, type AssetDef } from '../core/assets';
 import { logEvent } from '../core/analytics';
@@ -8,18 +9,21 @@ import { openExportDialog } from './dialogs';
 import type { Tour } from './onboarding';
 
 /** Put an asset into the current project, to the right of whatever is already there. */
-export function addAsset(store: Store, vp: Viewport, def: AssetDef): { groupId: string; partStep: Map<string, number>; partIds: string[] } {
+export function addAsset(store: Store, vp: Viewport, def: AssetDef, opts: { rig?: boolean } = {}): { groupId: string; partStep: Map<string, number>; partIds: string[]; joints: Joint[] } {
   store.exitEdit();
   const names = new Set(store.doc.objects.map((o) => o.name));
   const stats = assetStats(def);
   const box = store.worldBounds();
   const x = box.isEmpty() ? 0 : box.max.x + 1.5 + stats.width / 2;
-  const { group, parts, partStep } = instantiateAsset(def, [x, 0, 0], names);
-  store.mutate((d) => d.objects.push(group, ...parts));
+  const { group, parts, partStep, joints } = instantiateAsset(def, [x, 0, 0], names);
+  store.mutate((d) => {
+    d.objects.push(group, ...parts);
+    if (opts.rig !== false && joints.length) d.rig = [...(d.rig ?? []), ...joints];
+  });
   store.select([group.id]);
   vp.focus();
   logEvent('asset_added', { asset: def.id });
-  return { groupId: group.id, partStep, partIds: parts.map((p) => p.id) };
+  return { groupId: group.id, partStep, partIds: parts.map((p) => p.id), joints };
 }
 
 export function mountLearn(root: HTMLElement, store: Store, vp: Viewport, others: () => Tour[] = () => []): { start: (def: AssetDef) => void; stop: () => void; active: () => boolean } {
@@ -29,12 +33,18 @@ export function mountLearn(root: HTMLElement, store: Store, vp: Viewport, others
   let step = 0;
   let groupId = '';
   let partStep = new Map<string, number>();
+  let joints: Joint[] = [];
 
   const idsAt = (pred: (s: number) => boolean) => [...partStep].filter(([, s]) => pred(s)).map(([id]) => id);
 
   function show(): void {
     if (!def) return;
     store.setLearnHidden(new Set(idsAt((s) => s > step)));
+    // the skeleton appears at its own step, not before
+    const wantRig = !!joints.length && (step >= def.steps.length || !!def.steps[step]?.rig);
+    const hasRig = !!store.joint(joints[0]?.id);
+    if (wantRig && !hasRig) store.addJoints(joints);
+    else if (!wantRig && hasRig) store.removeJointsOf(groupId);
     const fresh = idsAt((s) => s === step);
     if (step < def.steps.length) store.select(fresh);
     render();
@@ -72,7 +82,7 @@ export function mountLearn(root: HTMLElement, store: Store, vp: Viewport, others
       dots,
       h('strong', {}, s.title),
       h('p', {}, s.text),
-      h('div', { class: 'lgroup' }, h('span', { class: 'lhead' }, 'New in this step'), h('div', { class: 'chips' }, ...names.map((n) => h('span', { class: 'chip part' }, n)))),
+      ...(names.length ? [h('div', { class: 'lgroup' }, h('span', { class: 'lhead' }, 'New in this step'), h('div', { class: 'chips' }, ...names.map((n) => h('span', { class: 'chip part' }, n))))] : []),
       h('div', { class: 'lgroup' }, h('span', { class: 'lhead' }, 'Tools and ideas'), h('div', { class: 'chips' }, ...s.tools.map((t) => h('span', { class: 'chip' }, t)))),
       h('div', { class: 'coach-actions' },
         h('button', { class: 'btn sm', id: 'learn-back', disabled: step === 0, onclick: () => { step -= 1; show(); } }, 'Back'),
@@ -83,7 +93,8 @@ export function mountLearn(root: HTMLElement, store: Store, vp: Viewport, others
 
   function start(asset: AssetDef): void {
     others().forEach((t) => t.stop());
-    const added = addAsset(store, vp, asset);
+    const added = addAsset(store, vp, asset, { rig: false });
+    joints = added.joints;
     def = asset;
     step = 0;
     groupId = added.groupId;

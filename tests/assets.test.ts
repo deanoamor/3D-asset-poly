@@ -13,7 +13,7 @@ describe('asset library', () => {
     describe(def.name, () => {
       it('every part belongs to a real step and every step adds something', () => {
         for (const p of def.parts) expect(p.step).toBeGreaterThanOrEqual(0), expect(p.step).toBeLessThan(def.steps.length);
-        def.steps.forEach((_, i) => expect(def.parts.some((p) => p.step === i)).toBe(true));
+        def.steps.forEach((st, i) => expect(st.rig || def.parts.some((p) => p.step === i)).toBe(true));
         expect(def.steps.every((s) => s.title && s.text.length > 40 && s.tools.length > 0)).toBe(true);
         expect(def.learn.length).toBeGreaterThanOrEqual(3);
         expect(def.challenge.length).toBeGreaterThan(20);
@@ -108,5 +108,28 @@ describe('asset library', () => {
     const b = st.worldBounds();
     expect(b.max.y - b.min.y).toBeGreaterThan(0.3);
     expect(b.max.z - b.min.z).toBeGreaterThan(0.3);
+  });
+});
+
+describe('character skeletons', () => {
+  it('every person has 22 joints, a single root at the hips, and joints inside the body', () => {
+    for (const id of ['police', 'soldier', 'footballer']) {
+      const def = ASSETS.find((a) => a.id === id)!;
+      expect(def.steps.at(-1)!.rig).toBe(true);
+      const { group, joints } = instantiateAsset(def, [3, 0, 0]);
+      expect(joints).toHaveLength(22);
+      expect(joints.every((j) => j.owner === group.id)).toBe(true);
+      expect(joints.filter((j) => j.parent === null).map((j) => j.name)).toEqual(['Hips']);
+      const head = joints.find((j) => j.name === 'Head Top')!;
+      const toe = joints.find((j) => j.name === 'Toe Left')!;
+      expect(head.pos[1]).toBeGreaterThan(1.8);
+      expect(head.pos[1]).toBeLessThan(2.1);
+      expect(toe.pos[1]).toBeLessThan(0.25);
+      expect(joints.find((j) => j.name === 'Hips')!.pos[0]).toBeCloseTo(3, 5); // moved with the asset
+    }
+  });
+
+  it('props have no skeleton', () => {
+    for (const id of ['car', 'house']) expect(instantiateAsset(ASSETS.find((a) => a.id === id)!).joints).toHaveLength(0);
   });
 });

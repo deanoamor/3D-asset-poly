@@ -4,6 +4,7 @@ import { readSavedDoc, readSavedHistory, startAutosave } from './core/persist';
 import { Viewport, isTyping } from './engine/viewport';
 import { h } from './ui/dom';
 import { mountLayers } from './ui/layers';
+import { mountSkeleton } from './ui/skeleton';
 import { mountProps } from './ui/props';
 import { mountToolbar } from './ui/toolbar';
 import { mountPolyCounter } from './ui/polycounter';
@@ -35,6 +36,7 @@ async function boot(): Promise<void> {
   const tours: Tour[] = [];
   const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour(), assets: () => openAssetLibrary(store, vp, learnPlayer), saves: () => openSavesDialog(store, vp) });
   mountLayers(layers, store);
+  mountSkeleton(layers, store);
   mountProps(props, store);
   mountToolbar(stage, store, vp);
   mountPolyCounter(stage, store);

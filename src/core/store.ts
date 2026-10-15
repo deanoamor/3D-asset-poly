@@ -3,6 +3,7 @@ import {
   DEFAULT_SEGMENTS,
   SHAPE_LABELS,
   type Doc,
+  type Joint,
   type EnginePreset,
   type SceneObject,
   type ShapeType,
@@ -60,9 +61,11 @@ export interface UiState {
   snapObjects: boolean;
   preview: boolean;
   gridStep: number;
+  /** Draw the skeleton's joints and bones over the model. */
+  showRig: boolean;
 }
 
-export type StoreEvent = 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
+export type StoreEvent = 'rig' | 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
 
 export interface EditState {
   id: string;
@@ -89,7 +92,10 @@ export class Store {
     snapObjects: true,
     preview: false,
     gridStep: 0.25,
+    showRig: true,
   };
+  /** The joint picked in the viewport or the Skeleton list (not saved). */
+  selectedJoint: string | null = null;
   edit: EditState | null = null;
   /** Parts the Learn view has not revealed yet. Only hides them on screen; the project itself is never changed. */
   learnHidden: Set<string> | null = null;
@@ -131,6 +137,7 @@ export class Store {
     this.redoStack = history?.redo.slice(-HISTORY_CAP) ?? [];
     this.edit = null;
     this.selection = [];
+    this.selectedJoint = null;
     this.emit('reset');
     this.emit('selection');
   }
@@ -287,7 +294,119 @@ export class Store {
       for (const c of descendantIds(this.doc, id)) kill.add(c);
     }
     if (!kill.size) return;
-    this.mutate((d) => (d.objects = d.objects.filter((o) => !kill.has(o.id))));
+    this.mutate((d) => {
+      d.objects = d.objects.filter((o) => !kill.has(o.id));
+      // a deleted character takes its skeleton with it
+      if (d.rig) {
+        d.rig = d.rig.filter((j) => !j.owner || !kill.has(j.owner));
+        if (!d.rig.length) delete d.rig;
+      }
+    });
+    this.fixJointSelection();
+  }
+
+  // ----- skeleton: joints and bones -----
+
+  joint(id: string | null | undefined): Joint | undefined {
+    return id ? this.doc.rig?.find((j) => j.id === id) : undefined;
+  }
+
+  private fixJointSelection(): void {
+    if (this.selectedJoint && !this.joint(this.selectedJoint)) this.selectedJoint = null;
+    this.emit('rig');
+  }
+
+  selectJoint(id: string | null): void {
+    this.selectedJoint = id && this.joint(id) ? id : null;
+    this.emit('rig');
+  }
+
+  /** Add a joint. With a parent, the bone between them is the line from the parent to this joint. */
+  addJoint(opts: { name?: string; parent?: string | null; pos?: Vec3; owner?: string } = {}): string {
+    const parent = opts.parent === undefined ? this.selectedJoint : opts.parent;
+    const par = this.joint(parent);
+    const id = newId();
+    const pos: Vec3 = opts.pos ?? (par ? [par.pos[0], par.pos[1] + 0.2, par.pos[2]] : [0, 1, 0]);
+    const count = this.doc.rig?.length ?? 0;
+    const j: Joint = { id, name: opts.name ?? `Joint ${count + 1}`, parent: par ? par.id : null, pos, ...(opts.owner ?? par?.owner ? { owner: opts.owner ?? par?.owner } : {}) };
+    this.mutate((d) => (d.rig = [...(d.rig ?? []), j]));
+    this.selectedJoint = id;
+    this.emit('rig');
+    return id;
+  }
+
+  /** Add many joints at once (a ready-made skeleton). */
+  addJoints(joints: Joint[]): void {
+    if (!joints.length) return;
+    this.mutate((d) => (d.rig = [...(d.rig ?? []), ...joints.map((j) => ({ ...j, pos: [...j.pos] as Vec3 }))]));
+    this.emit('rig');
+  }
+
+  removeJointsOf(owner: string): void {
+    if (!this.doc.rig?.some((j) => j.owner === owner)) return;
+    this.mutate((d) => {
+      d.rig = d.rig!.filter((j) => j.owner !== owner);
+      if (!d.rig.length) delete d.rig;
+    });
+    this.fixJointSelection();
+  }
+
+  /** Put a joint somewhere. With `withChildren` everything below it moves too (like moving a whole arm). */
+  moveJoint(id: string, pos: Vec3, opts: { withChildren?: boolean; commit?: boolean } = {}): void {
+    const j = this.joint(id);
+    if (!j) return;
+    const delta: Vec3 = [pos[0] - j.pos[0], pos[1] - j.pos[1], pos[2] - j.pos[2]];
+    this.mutate((d) => {
+      const rig = d.rig!;
+      const kids = opts.withChildren ? this.jointDescendants(id, rig) : new Set<string>();
+      for (const q of rig) {
+        if (q.id === id) q.pos = [...pos] as Vec3;
+        else if (kids.has(q.id)) q.pos = [q.pos[0] + delta[0], q.pos[1] + delta[1], q.pos[2] + delta[2]];
+      }
+    }, opts.commit ?? true);
+    this.emit('rig');
+  }
+
+  jointDescendants(id: string, rig: Joint[] = this.doc.rig ?? []): Set<string> {
+    const out = new Set<string>();
+    const walk = (p: string) => {
+      for (const q of rig) if (q.parent === p && !out.has(q.id)) {
+        out.add(q.id);
+        walk(q.id);
+      }
+    };
+    walk(id);
+    return out;
+  }
+
+  renameJoint(id: string, name: string): void {
+    this.mutate((d) => {
+      const j = d.rig?.find((q) => q.id === id);
+      if (j) j.name = name.trim() || j.name;
+    });
+    this.emit('rig');
+  }
+
+  /** Give a joint a different parent. Refuses loops (a joint cannot hang from its own child). */
+  setJointParent(id: string, parent: string | null): string | null {
+    if (parent && (parent === id || this.jointDescendants(id).has(parent))) return 'A joint cannot hang from itself or from one of its own children.';
+    this.mutate((d) => {
+      const j = d.rig?.find((q) => q.id === id);
+      if (j) j.parent = parent;
+    });
+    this.emit('rig');
+    return null;
+  }
+
+  /** Remove a joint. Its children are reattached to its parent so the chain stays whole. */
+  deleteJoint(id: string): void {
+    const j = this.joint(id);
+    if (!j) return;
+    this.mutate((d) => {
+      d.rig = d.rig!.filter((q) => q.id !== id).map((q) => (q.parent === id ? { ...q, parent: j.parent } : q));
+      if (!d.rig.length) delete d.rig;
+    });
+    this.fixJointSelection();
   }
 
   /** Duplicate the selection (with children), offset a little so the copy is visible. */

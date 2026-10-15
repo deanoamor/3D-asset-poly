@@ -154,3 +154,9 @@ One-time setup: GitHub repo > Settings > Pages > Source: **GitHub Actions**. The
 **Download all (.3pi)** writes one file holding every save (gzipped JSON). On another computer, open **Saves > Import bag (.3pi)** to bring them back.
 Importing never loses work: new projects are added, newer ones replace older ones, and an older project that differs is kept as "… (imported)".
 Inside the claude.ai artifact the host only saves some extensions, so the bag arrives as `.zip`; Import accepts that too.
+
+## Skeleton: joints and bones
+**Skeleton** (under Layers) holds the joints. A bone is the line between a joint and its parent joint, so turning a joint swings everything below it.
+- The ready-made characters (Police Officer, Football Player, Soldier) come with a 22-joint person skeleton. For any other figure, select it and press **Add person skeleton**; or build your own with **Add joint**.
+- Joints are the white balls in the scene (orange when picked). Drag one to move it; hold **Shift** to carry the joints below it. The panel edits name, position and parent.
+- **GLB / glTF export** skins the model to the skeleton automatically: long parts (arms, legs, torso) bend smoothly at the joints, small parts (helmet, pouch) follow their nearest joint. A character becomes one skinned mesh with one skin, which Blender and game engines pose directly. OBJ ignores the skeleton.

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
+import { bakeVertexColors } from './bakeColor';
+import { settleSkins } from './rigExport';
 import { PRESETS, importGuide, packsObj, type ExportFormat } from '../core/presets';
 import { writeObj } from './objExport';
 import { slug } from './slug';
@@ -26,34 +28,15 @@ export interface ExportResult {
   contents: string[];
 }
 
-/**
- * Painted shapes keep their colors in vertex colors on a white material. Apps that ignore vertex colors
- * (Blender by default, OBJ importers) would show them white/grey. So the material gets the shape's average
- * color and the vertex colors become a 0..1 tint on top of it: right everywhere, richer where COLOR_0 is used.
- */
 function bakeBaseColors(content: THREE.Object3D): void {
   const mats = new Map<string, THREE.MeshStandardMaterial>();
   content.traverse((o) => {
     const m = o as THREE.Mesh;
     const mat = m.material as THREE.MeshStandardMaterial | undefined;
-    const col = m.isMesh ? m.geometry.getAttribute('color') : undefined;
-    if (!col || !mat?.vertexColors) return;
-    const g = m.geometry.clone();
-    const c = g.getAttribute('color');
-    const mean = [0, 0, 0];
-    for (let i = 0; i < c.count; i++) for (let k = 0; k < 3; k++) mean[k] += c.getComponent(i, k) / c.count;
-    const base = mean.map((v) => Math.min(1, Math.max(0.02, v * 1.12)));
-    for (let i = 0; i < c.count; i++) for (let k = 0; k < 3; k++) c.setComponent(i, k, Math.min(1, c.getComponent(i, k) / base[k]));
-    const key = base.map((v) => v.toFixed(4)).join(',') + (mat.side === THREE.DoubleSide ? 'd' : '');
-    let nm = mats.get(key);
-    if (!nm) {
-      nm = mat.clone();
-      nm.color.setRGB(base[0], base[1], base[2]);
-      nm.name = `Color #${new THREE.Color().setRGB(base[0], base[1], base[2]).getHexString()}`;
-      mats.set(key, nm);
-    }
-    m.geometry = g;
-    m.material = nm;
+    if (!m.isMesh || !mat || Array.isArray(mat)) return;
+    const r = bakeVertexColors(m.geometry, mat, mats);
+    m.geometry = r.geometry;
+    m.material = r.material;
   });
 }
 
@@ -80,6 +63,7 @@ export function prepareExport(doc: Doc, collision = false): { root: THREE.Group;
   }
   root.scale.setScalar(preset.scale);
   root.updateMatrixWorld(true);
+  settleSkins(root);
   return { root, size: size.multiplyScalar(preset.scale) };
 }
 
@@ -103,14 +87,25 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
   const sizeText = `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m`;
   const exporter = new GLTFExporter();
 
-  const glb = async () => (await exporter.parseAsync(root, { binary: true, onlyVisible: true, trs: false })) as ArrayBuffer;
+  // glTF wants a skinned mesh at the top level of the scene, so for the file it sits beside the root, not inside it
+  const parse = async (binary: boolean) => {
+    const skins: THREE.Object3D[] = [];
+    root.traverse((o) => (o as THREE.SkinnedMesh).isSkinnedMesh && skins.push(o));
+    skins.forEach((o) => o.removeFromParent());
+    try {
+      return await exporter.parseAsync(skins.length ? [root, ...skins] : root, { binary, onlyVisible: true, trs: false });
+    } finally {
+      skins.forEach((o) => root.add(o));
+    }
+  };
+  const glb = async () => (await parse(true)) as ArrayBuffer;
 
   if (opts.format === 'glb') {
     const data = await glb();
     return { blob: new Blob([data], { type: 'model/gltf-binary' }), filename: `${name}.glb`, size, triangles, model: { kind: 'glb', data }, contents: [`${name}.glb`] };
   }
   if (opts.format === 'gltf') {
-    const json = JSON.stringify(await exporter.parseAsync(root, { binary: false, onlyVisible: true, trs: false }));
+    const json = JSON.stringify(await parse(false));
     return { blob: new Blob([json], { type: 'model/gltf+json' }), filename: `${name}.gltf`, size, triangles, model: { kind: 'gltf', data: json }, contents: [`${name}.gltf`] };
   }
   if (opts.format === 'obj') {

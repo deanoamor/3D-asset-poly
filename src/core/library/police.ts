@@ -3,6 +3,7 @@ import { band2, bootParts } from './body';
 import { applyStyle } from './kit';
 import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
+import { humanSpec } from './rigs';
 
 const NAVY = '#22304f';
 const NAVY_L = '#2e4170';
@@ -132,6 +133,7 @@ applyStyle(parts, [
 
 export const POLICE: AssetDef = {
   id: 'police',
+  rig: () => humanSpec(),
   name: 'Police Officer',
   tagline: 'A friendly officer: one-piece limbs, a real face, uniform and gear',
   level: 'Detailed',
@@ -145,6 +147,7 @@ export const POLICE: AssetDef = {
     { title: 'Head and face', text: 'The head is a Sphere with 8 sides and a narrower jaw, reshaped in Edit shape. Every facial feature sits on the surface so nothing floats: white eye blobs with smaller pupils, curved eyebrows, a Pyramid nose pointing outward, and a curved mouth.', tools: ['Edit shape: narrow the jaw', 'Shape: Pyramid + Rotate (E)', 'Mirror for symmetry'] },
     { title: 'Hair, mustache and cap', text: 'Hair is a few flattened spheres on and behind the head. The mustache and sideburns are thin curved strips that follow the face. The cap is a band, a crown that widens toward the top, a flat top and a peak that is attached to the band. A gold badge goes on the front.', tools: ['Squash with Size (R)', 'Cylinder: 10 sides + Top size', 'Rotate (E)'] },
     { title: 'Gear', text: 'A chest badge with a star, a name tag, a radio with an antenna, a holster, a baton, and a pouch at the back. Each is a small part pressed onto the surface it hangs from. Name every part in Layers and group them as Police Officer.', tools: ['Rename in Layers', 'Group Ctrl+G', 'Color palette'] },
+    { title: 'Skeleton: joints and bones', text: 'A skeleton lets a 3D app bend the character. The white balls are joints (hips, knees, shoulders, elbows, wrists, neck, head) and the teal lines between them are bones. Each bone is moved by the joint it starts from, so turning a shoulder swings the whole arm. When you export to GLB, every part is skinned to these joints automatically: long parts like arms and legs bend smoothly at the joints, small parts like a helmet or a pouch follow one joint.', tools: ['Skeleton panel (under Layers)', 'Drag a joint', 'Shift+drag: carry its children'], rig: true },
   ],
   challenge: 'Make a detective: remove the cap, give the officer a hat with a wide brim, and swap the shirt for a long coat by scaling a copy of the torso larger.',
   parts,

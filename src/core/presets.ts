@@ -148,7 +148,7 @@ ${o.collision ? `3. A collision shape is created from the node ending in "-convc
    In Solid mode you can also set Shading > Color to Material or Attribute.
 3. Smooth/painted colors are stored as vertex colors (COLOR_0). In the material, add a Color Attribute node into Base Color to see them.
 ${o.hasObj ? `\nOption B: OBJ\n1. File > Import > Wavefront (.obj) and pick the .obj in the "obj" folder (keep the .mtl next to it).\n2. Only base colors are carried, not the painted variation.\n` : ''}
-Scale: 1 unit = 1 metre, Y up. Blender converts to Z up on import.
+Skeleton: characters come with an Armature. Select it and press Ctrl+Tab for Pose Mode, then rotate a bone (R) to bend the character. The whole character is one skinned mesh.\nScale: 1 unit = 1 metre, Y up. Blender converts to Z up on import.
 `,
     c4d: `Option A: OBJ (every version)
 1. File > Merge (or Open) and pick the .obj in the "obj" folder. Keep the .mtl next to it.

@@ -35,12 +35,28 @@ export interface SceneObject {
   parent: string | null;
 }
 
+/**
+ * A joint of a skeleton. A bone is the stretch between a joint and its parent joint, so a rig is just a tree of points.
+ * Moving a parent joint turns everything below it, like an elbow carrying the forearm. `owner` ties a character's
+ * joints to its group, so a project can hold several skeletons.
+ */
+export interface Joint {
+  id: string;
+  name: string;
+  parent: string | null;
+  /** World position, metres. */
+  pos: Vec3;
+  owner?: string;
+}
+
 export interface Doc {
   version: 1;
   name: string;
   enginePreset: EnginePreset;
   /** Flat list; sibling order is the order of appearance. */
   objects: SceneObject[];
+  /** The skeleton, if any. */
+  rig?: Joint[];
 }
 
 export const SHAPE_LABELS: Record<ShapeType, string> = {
