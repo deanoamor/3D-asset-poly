@@ -8,6 +8,7 @@ import { mountProps } from './ui/props';
 import { mountToolbar } from './ui/toolbar';
 import { mountPolyCounter } from './ui/polycounter';
 import { mountTopbar } from './ui/topbar';
+import { openSavesDialog, watchSaveLink } from './ui/saves';
 import { mountEditTour, mountOnboarding, type Tour } from './ui/onboarding';
 import { mountEditBar } from './ui/editbar';
 import { mountLearn, openAssetLibrary } from './ui/assets';
@@ -31,7 +32,7 @@ async function boot(): Promise<void> {
 
   const vp = new Viewport(stage, store);
   const tours: Tour[] = [];
-  const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour(), assets: () => openAssetLibrary(store, vp, learnPlayer) });
+  const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour(), assets: () => openAssetLibrary(store, vp, learnPlayer), saves: () => openSavesDialog(store, vp) });
   mountLayers(layers, store);
   mountProps(props, store);
   mountToolbar(stage, store, vp);
@@ -50,6 +51,7 @@ async function boot(): Promise<void> {
       editTour.start();
     }
   }
+  watchSaveLink(store);
   startAutosave(store, bar.setSaved);
 
   // Debug / test hook

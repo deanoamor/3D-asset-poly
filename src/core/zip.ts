@@ -64,3 +64,35 @@ export function zipFiles(entries: ZipEntry[], date = new Date()): Uint8Array<Arr
 export function zipSingle(filename: string, data: Uint8Array, date = new Date()): Uint8Array<ArrayBuffer> {
   return zipFiles([{ name: filename, data }], date);
 }
+
+/** Reads a store-only ZIP (what `zipFiles` writes, and what a host wraps a single file in). Returns [] if it is not one. */
+export function unzipFiles(bytes: Uint8Array): ZipEntry[] {
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const dec = new TextDecoder();
+  const out: ZipEntry[] = [];
+  let end = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) {
+      end = i;
+      break;
+    }
+  }
+  if (end < 0) return out;
+  const count = dv.getUint16(end + 10, true);
+  let p = dv.getUint32(end + 16, true);
+  for (let n = 0; n < count; n++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true);
+    const size = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true);
+    const extraLen = dv.getUint16(p + 30, true);
+    const commentLen = dv.getUint16(p + 32, true);
+    const local = dv.getUint32(p + 42, true);
+    const name = dec.decode(bytes.subarray(p + 46, p + 46 + nameLen));
+    p += 46 + nameLen + extraLen + commentLen;
+    if (method !== 0) continue; // compressed entries are not supported
+    const start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+    out.push({ name, data: bytes.slice(start, start + size) });
+  }
+  return out;
+}

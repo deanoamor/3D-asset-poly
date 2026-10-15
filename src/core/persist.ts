@@ -1,9 +1,12 @@
 import type { Doc } from './types';
 import type { Store } from './store';
+import type { SaveEntry } from './bag';
+import { validDoc } from './persist-valid';
 
 const DOC_KEY = 'polystudio.doc.v1';
 const DB_NAME = 'polystudio';
 const HIST_STORE = 'history';
+const SAVES_STORE = 'saves';
 
 function lsGet(k: string): string | null {
   try {
@@ -23,8 +26,12 @@ function lsSet(k: string, v: string): void {
 function openDb(): Promise<IDBDatabase | null> {
   return new Promise((resolve) => {
     try {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(HIST_STORE);
+      const req = indexedDB.open(DB_NAME, 2);
+      req.onupgradeneeded = () => {
+        const names = req.result.objectStoreNames;
+        if (!names.contains(HIST_STORE)) req.result.createObjectStore(HIST_STORE);
+        if (!names.contains(SAVES_STORE)) req.result.createObjectStore(SAVES_STORE);
+      };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => resolve(null);
     } catch {
@@ -58,10 +65,7 @@ async function idbGet<T>(key: string): Promise<T | undefined> {
   return v;
 }
 
-export function validDoc(d: unknown): d is Doc {
-  const x = d as Doc;
-  return !!x && x.version === 1 && Array.isArray(x.objects) && typeof x.name === 'string';
-}
+export { validDoc };
 
 export interface Saved {
   doc: Doc;
@@ -133,4 +137,46 @@ export function clearSaved(): void {
     /* ignore */
   }
   void idbPut('stacks', { undo: [], redo: [], savedAt: 0 });
+}
+
+// ---------- the library of saves (kept in the browser's IndexedDB) ----------
+
+/** All saves, newest first. */
+export async function listSaves(): Promise<SaveEntry[]> {
+  const db = await openDb();
+  if (!db) return [];
+  const all = await new Promise<SaveEntry[]>((resolve) => {
+    const req = db.transaction(SAVES_STORE).objectStore(SAVES_STORE).getAll();
+    req.onsuccess = () => resolve(req.result as SaveEntry[]);
+    req.onerror = () => resolve([]);
+  });
+  db.close();
+  return all.filter((e) => e && typeof e.id === 'string').sort((a, b) => b.savedAt - a.savedAt);
+}
+
+export async function putSaves(entries: SaveEntry[]): Promise<boolean> {
+  const db = await openDb();
+  if (!db) return false;
+  const ok = await new Promise<boolean>((resolve) => {
+    const tx = db.transaction(SAVES_STORE, 'readwrite');
+    for (const e of entries) tx.objectStore(SAVES_STORE).put(e, e.id);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+    tx.onabort = () => resolve(false);
+  });
+  db.close();
+  return ok;
+}
+
+export async function deleteSave(id: string): Promise<void> {
+  const db = await openDb();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    const tx = db.transaction(SAVES_STORE, 'readwrite');
+    tx.objectStore(SAVES_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+    tx.onabort = () => resolve();
+  });
+  db.close();
 }

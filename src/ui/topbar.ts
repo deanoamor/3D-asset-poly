@@ -5,7 +5,7 @@ import type { Viewport } from '../engine/viewport';
 
 export const APP_NAME = 'Poly Studio';
 
-export function mountTopbar(root: HTMLElement, store: Store, vp: Viewport, hooks: { editTour: () => void; assets: () => void }): { setSaved: (s: 'saved' | 'saving') => void } {
+export function mountTopbar(root: HTMLElement, store: Store, vp: Viewport, hooks: { editTour: () => void; assets: () => void; saves: () => void }): { setSaved: (s: 'saved' | 'saving') => void } {
   const name = h('input', { class: 'projname', id: 'projname', value: store.doc.name, maxlength: '60', 'aria-label': 'Project name', spellcheck: false }) as HTMLInputElement;
   name.addEventListener('change', () => store.rename(name.value));
   name.addEventListener('keydown', (e) => {
@@ -13,11 +13,13 @@ export function mountTopbar(root: HTMLElement, store: Store, vp: Viewport, hooks
     if (e.key === 'Enter') name.blur();
   });
   const assetsBtn = h('button', { class: 'btn sm', id: 'btn-assets', title: 'Ready-made assets you can use or learn from', onclick: () => hooks.assets() }, icon('library', 15), 'Assets');
+  const savesBtn = h('button', { class: 'btn sm', id: 'btn-saves', title: 'Your saved projects, and backup as a .3pi file', onclick: () => hooks.saves() }, icon('folder', 15), 'Saves');
   const status = h('span', { class: 'savestate', role: 'status' }, 'Saved');
   const undo = h('button', { class: 'tbtn', id: 'btn-undo', title: 'Undo (Ctrl+Z)', 'aria-label': 'Undo', onclick: () => store.undo() }, icon('undo', 17), h('span', { class: 'lbl' }, 'Undo'));
   const redo = h('button', { class: 'tbtn', id: 'btn-redo', title: 'Redo (Ctrl+Shift+Z)', 'aria-label': 'Redo', onclick: () => store.redo() }, icon('redo', 17), h('span', { class: 'lbl' }, 'Redo'));
   const menuList = h('div', { class: 'menu hidden', role: 'menu' },
     h('button', { role: 'menuitem', onclick: () => { hideMenu(); openProjectDialog(store, { first: false }); } }, 'New project…'),
+    h('button', { role: 'menuitem', onclick: () => { hideMenu(); hooks.saves(); } }, 'My saves…'),
     h('button', { role: 'menuitem', onclick: () => { hideMenu(); openProjectFile(store); } }, 'Open project file…'),
     h('button', { role: 'menuitem', onclick: () => { hideMenu(); saveProjectFile(store); } }, 'Save project file'),
     h('hr'),
@@ -37,6 +39,7 @@ export function mountTopbar(root: HTMLElement, store: Store, vp: Viewport, hooks
       h('span', { class: 'logo', title: APP_NAME }, h('i'), h('i'), h('i')),
       h('div', { class: 'menuwrap' }, menuBtn, menuList),
       assetsBtn,
+      savesBtn,
       name,
       status,
     ),

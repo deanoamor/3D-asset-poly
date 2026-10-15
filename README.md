@@ -148,3 +148,9 @@ Unity, Godot, Unreal, Web, plus 3D software: **Blender**, **Cinema 4D**, **Maya 
 Every push to `main` builds and publishes the app through `.github/workflows/pages.yml`.
 One-time setup: GitHub repo > Settings > Pages > Source: **GitHub Actions**. The site is then at
 `https://<your-username>.github.io/3D-asset-poly/`.
+
+## Saves and the .3pi bag
+**Saves** (top bar) lists your projects. They are kept in the browser (IndexedDB), so they disappear if browser data is cleared; the dialog says so.
+**Download all (.3pi)** writes one file holding every save (gzipped JSON). On another computer, open **Saves > Import bag (.3pi)** to bring them back.
+Importing never loses work: new projects are added, newer ones replace older ones, and an older project that differs is kept as "… (imported)".
+Inside the claude.ai artifact the host only saves some extensions, so the bag arrives as `.zip`; Import accepts that too.

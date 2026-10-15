@@ -288,3 +288,24 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .segrow { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #f1f1ef; border-radius: 8px; padding: 3px; margin-bottom: 10px; }
 .segbtn { border: 0; background: none; border-radius: 6px; padding: 6px 4px; font-weight: 500; }
 .segbtn.on { background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); color: var(--accent); }
+
+/* saves library */
+.dlg.saves { min-width: min(640px, 92vw); }
+.savewarn { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; margin: 4px 0 12px; border-radius: 10px; background: #fff7e0; border: 1px solid #f0dca0; color: #5a4300; }
+.savewarn p { margin: 0; font-size: 13px; line-height: 1.45; }
+.savewarn .ico { flex: none; margin-top: 1px; }
+.savebar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.slist { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 46vh; overflow: auto; }
+.scard { display: flex; gap: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.scard.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.sthumb { flex: none; width: 100px; height: 75px; object-fit: cover; border-radius: 8px; background: #f1f1ef; }
+.sthumb.empty { display: grid; place-items: center; color: var(--muted); }
+.sinfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.sinfo strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.schip { margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 1px 8px; }
+.smeta { color: var(--muted); font-size: 12px; }
+.sactions { display: flex; gap: 6px; margin-top: auto; }
+.sask { font-size: 12px; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }
+.btn.danger { background: #d64545; border-color: #d64545; color: #fff; }
+.sempty { padding: 18px 4px; text-align: center; }
+.saves-foot { justify-content: space-between; }
