@@ -15,6 +15,8 @@ export { slug };
 export interface ExportOptions {
   format: ExportFormat;
   collision: boolean;
+  /** Include the skeleton (default). Off: parts stay separate and named, with no joints. */
+  skeleton?: boolean;
 }
 
 export interface ExportResult {
@@ -78,11 +80,17 @@ function triangleTotal(root: THREE.Object3D, skip: (n: THREE.Object3D) => boolea
   return t;
 }
 
+/** The project as it goes into the file: without its skeleton when the option is off. */
+export function docForExport(doc: Doc, skeleton = true): Doc {
+  return skeleton === false && doc.rig ? { ...doc, rig: undefined } : doc;
+}
+
 export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<ExportResult> {
   const name = slug(doc.name);
   const preset = PRESETS[doc.enginePreset];
   const collision = opts.collision && !!preset.collision;
-  const { root, size } = prepareExport(doc, collision);
+  const exportDoc = docForExport(doc, opts.skeleton);
+  const { root, size } = prepareExport(exportDoc, collision);
   const triangles = triangleTotal(root, (o) => collision && !!preset.collision && o.name.endsWith(preset.collision.nodeSuffix));
   const sizeText = `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m`;
   const exporter = new GLTFExporter();

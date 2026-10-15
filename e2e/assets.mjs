@@ -111,6 +111,9 @@ ok(await page.isHidden('#coach-learn'), 'and the lesson card is gone');
 console.log('# export an asset');
 await page.evaluate(() => { const s = window.__app.store; s.select([]); const keep = s.doc.objects.find((o) => o.name === 'Police Officer'); const kill = s.doc.objects.filter((o) => o.kind === 'group' && o.id !== keep.id).flatMap((g) => [g.id, ...s.doc.objects.filter((c) => c.parent === g.id).map((c) => c.id)]); s.mutate((doc) => (doc.objects = doc.objects.filter((o) => !kill.includes(o.id)))); });
 await page.click('#btn-export');
+ok(await page.isVisible('#export-skeleton'), 'the export offers to include the skeleton');
+await page.uncheck('#export-skeleton'); // parts stay separate and named
+await page.waitForTimeout(600);
 await page.waitForFunction(() => document.querySelector('#verify')?.dataset.ok !== undefined);
 ok((await page.getAttribute('#verify', 'data-ok')) === 'true', 'self-test: ' + (await page.textContent('#verify')));
 const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-download')]);

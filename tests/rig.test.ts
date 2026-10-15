@@ -141,3 +141,26 @@ describe('skeleton in the exported file', () => {
     expect(skinned).toBe(0);
   });
 });
+
+describe('export option', () => {
+  it('can leave the skeleton out, keeping parts separate and named', async () => {
+    const { docForExport, prepareExport } = await import('../src/engine/exporter');
+    const st = new Store(emptyDoc('Opt'));
+    st.addShape('box', { name: 'Torso' });
+    st.addJoints(arm());
+    const names = (skeleton: boolean) => {
+      const out: string[] = [];
+      let skinned = 0;
+      prepareExport(docForExport(st.doc, skeleton)).root.traverse((o) => {
+        out.push(o.name);
+        if ((o as { isSkinnedMesh?: boolean }).isSkinnedMesh) skinned++;
+      });
+      return { out, skinned };
+    };
+    expect(names(true).skinned).toBe(1);
+    const off = names(false);
+    expect(off.skinned).toBe(0);
+    expect(off.out).toContain('Torso');
+    expect(off.out).not.toContain('Shoulder');
+  });
+});

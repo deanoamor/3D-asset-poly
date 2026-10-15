@@ -83,6 +83,7 @@ export function openProjectFile(store: Store): void {
 
 let exportFormat: ExportFormat = 'glb';
 let exportCollision = false;
+let exportSkeleton = true;
 
 export function openExportDialog(store: Store): void {
   let close: () => void = () => {};
@@ -163,6 +164,18 @@ export function openExportDialog(store: Store): void {
               h('span', {}, h('strong', {}, preset.collision.label), h('br'), h('small', {}, preset.collision.hint)),
             )
           : null,
+        doc.rig?.length && exportFormat !== 'obj'
+          ? h('label', { class: 'check' },
+              (() => {
+                const cb = h('input', { type: 'checkbox', id: 'export-skeleton', checked: exportSkeleton, onchange: () => {
+                  exportSkeleton = cb.checked;
+                  render();
+                } }) as HTMLInputElement;
+                return cb;
+              })(),
+              h('span', {}, h('strong', {}, 'Include the skeleton'), h('br'), h('small', {}, 'On: each character becomes one skinned mesh with joints, ready to pose. Off: parts stay separate and named, with no joints.')),
+            )
+          : null,
       ),
       h('div', { class: 'field' }, h('span', {}, 'Checks'),
         h('ul', { class: 'checks' }, ...(checks.length ? checks : [{ level: 'ok', message: 'Everything looks good. This model is ready for your engine.' } as OkRow]).map((c) => checkRow(c, store, render, close))),
@@ -182,7 +195,7 @@ export function openExportDialog(store: Store): void {
           disabled: blocked,
           onclick: async () => {
             try {
-              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision });
+              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton });
               const saved = await download(res.blob, res.filename);
               if (!saved) return; // viewer declined the save
               const first = !hasEvent('first_export');
@@ -207,7 +220,7 @@ export function openExportDialog(store: Store): void {
     }
     void (async () => {
       try {
-        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision });
+        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton });
         const v = await verifyExport(res, exportCollision ? preset.collision?.nodeSuffix : undefined);
         if (mine !== token) return;
         verify.className = `verify ${v.ok ? 'good' : 'bad'}`;
