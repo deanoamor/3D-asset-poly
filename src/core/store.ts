@@ -147,10 +147,41 @@ export class Store {
 
   /** Apply a change. Pass commit=false for live edits (drag, scrub) then call commit(). */
   mutate(fn: (doc: Doc) => void, commit = true): void {
+    const owners = this.ownerMatrices();
     fn(this.doc);
+    this.followOwners(owners);
     this.pruneSelection();
     this.emit('doc');
     if (commit) this.commit();
+  }
+
+  /** Where each rigged character (the group that owns joints) stands right now. */
+  private ownerMatrices(): Map<string, THREE.Matrix4> {
+    const out = new Map<string, THREE.Matrix4>();
+    const rig = this.doc.rig;
+    if (!rig?.length) return out;
+    for (const owner of new Set(rig.map((j) => j.owner).filter((o): o is string => !!o))) {
+      if (this.doc.objects.some((o) => o.id === owner)) out.set(owner, worldMatrix(this.doc, owner));
+    }
+    return out;
+  }
+
+  /** A character's joints travel with it: when its group is moved, turned or resized, so are its joints. */
+  private followOwners(before: Map<string, THREE.Matrix4>): void {
+    if (!before.size || !this.doc.rig) return;
+    const v = new THREE.Vector3();
+    for (const [owner, m0] of before) {
+      if (!this.doc.objects.some((o) => o.id === owner)) continue;
+      const m1 = worldMatrix(this.doc, owner);
+      if (m1.equals(m0)) continue;
+      const delta = m1.clone().multiply(m0.clone().invert());
+      const r = (n: number) => Math.round(n * 1e5) / 1e5;
+      this.doc.rig = this.doc.rig.map((j) => {
+        if (j.owner !== owner) return j;
+        v.set(...j.pos).applyMatrix4(delta);
+        return { ...j, pos: [r(v.x), r(v.y), r(v.z)] as Vec3 };
+      });
+    }
   }
 
   commit(): void {

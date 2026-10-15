@@ -202,3 +202,35 @@ describe('pose', () => {
     expect(width(st.doc)).toBeGreaterThan(0.9); // the lower half now points sideways
   });
 });
+
+describe('a skeleton follows its character', () => {
+  it('moving, turning and resizing the group carries the joints along', () => {
+    const st = new Store(emptyDoc());
+    const g = st.addShape('box', { name: 'Body' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; });
+    st.addJoints(arm().map((j) => ({ ...j, owner: g.id })));
+    st.update(g.id, { position: [3, 0, 2] });
+    expect(st.joint('a')!.pos).toEqual([3, 2, 2]);
+    expect(st.joint('c')!.pos).toEqual([3, 0, 2]);
+    st.update(g.id, { position: [0, 0, 0] });
+    st.update(g.id, { size: [2, 2, 2] });
+    expect(st.joint('a')!.pos[1]).toBeCloseTo(4, 4);
+    st.update(g.id, { size: [1, 1, 1] });
+    st.update(g.id, { rotation: [0, 0, 90] }); // lying down: the arm now points along X
+    expect(st.joint('a')!.pos[0]).toBeCloseTo(-2, 4);
+    expect(st.joint('a')!.pos[1]).toBeCloseTo(0, 4);
+    st.undo();
+    st.undo();
+    expect(st.joint('a')!.pos[1]).toBeCloseTo(4, 3); // back to the doubled size: undo keeps joints and group in step
+  });
+
+  it('moving a joint on its own does not move the character', () => {
+    const st = new Store(emptyDoc());
+    const g = st.addShape('box', { name: 'Body' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; });
+    st.addJoints(arm().map((j) => ({ ...j, owner: g.id })));
+    st.moveJoint('b', [1, 1, 0]);
+    expect(st.get(g.id)!.position).toEqual([0, 0, 0]);
+    expect(st.joint('a')!.pos).toEqual([0, 2, 0]);
+  });
+});

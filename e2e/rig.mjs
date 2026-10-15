@@ -75,6 +75,13 @@ ok(Math.hypot(w1[0] - w0[0], w1[1] - w0[1], w1[2] - w0[2]) > 0.02, `dragging the
 ok((await page.evaluate(() => window.__app.store.joint(window.__app.store.selectedJoint)?.name)) === 'Wrist Right', 'and picked it');
 await page.evaluate(() => window.__app.store.undo());
 
+console.log('# the skeleton follows the character when it is moved');
+const hipsBefore = (await D()).rig.find((j) => j.name === 'Hips').pos;
+await page.evaluate(() => { const s = window.__app.store; const g = s.doc.objects.find((o) => o.name === 'Police Officer'); s.update(g.id, { position: [g.position[0] + 1, g.position[1], g.position[2] + 2] }); });
+const hipsAfter = (await D()).rig.find((j) => j.name === 'Hips').pos;
+ok(Math.abs(hipsAfter[0] - hipsBefore[0] - 1) < 1e-3 && Math.abs(hipsAfter[2] - hipsBefore[2] - 2) < 1e-3, 'moving the character moves its joints too');
+await page.evaluate(() => window.__app.store.undo());
+
 console.log('# hide and show');
 await page.click('#btn-rig-show');
 ok(!(await page.evaluate(() => window.__app.store.ui.showRig)), 'the skeleton can be hidden');
