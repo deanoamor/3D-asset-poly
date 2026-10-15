@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Store } from '../core/store';
 import { needsDoubleSide } from '../core/shapes';
-import { edgeMap, faceCenter, mirrorPairs, triangulate, vert, vertCount, verticesOfSelection, centroidOf, type EdgeInfo, type PolyMesh, type Sel, type V3 } from '../core/mesh';
+import { averageNormal, edgeMap, faceCenter, mirrorPairs, triangulate, vert, vertCount, verticesOfSelection, centroidOf, type EdgeInfo, type PolyMesh, type Sel, type V3 } from '../core/mesh';
 import type { Viewport } from './viewport';
 
 const ORANGE = 0xff8a00;
@@ -21,6 +21,9 @@ function dotTexture(): THREE.Texture {
 }
 
 interface DragState {
+  /** True when the move handle drives this drag (it then snaps itself); direct drags snap on their own. */
+  gizmo: boolean;
+  startPos: THREE.Vector3;
   W: THREE.Matrix4;
   Winv: THREE.Matrix4;
   proxyInv: THREE.Matrix4;
@@ -39,9 +42,35 @@ export class EditController {
   private drag: DragState | null = null;
   private activeId: string | null = null;
   private edges: EdgeInfo[] = [];
+  private raf = 0;
+  private hoverAt = 0;
 
   constructor(private vp: Viewport, private store: Store) {
     vp.scene.add(this.proxy);
+    vp.container.addEventListener('pointermove', (ev) => this.hover(ev));
+  }
+
+  /** While a drag is running the overlays are redrawn at most once per frame. */
+  rebuildSoon(): void {
+    if (!this.drag) return this.rebuild();
+    if (this.raf) return;
+    this.raf = requestAnimationFrame(() => {
+      this.raf = 0;
+      this.rebuild();
+    });
+  }
+
+  /** Show a grab cursor over something the user can drag. */
+  private hover(ev: PointerEvent): void {
+    const e = this.store.edit;
+    const canvas = this.vp.renderer.domElement;
+    if (!e) return;
+    if (ev.buttons !== 0 || this.drag || this.vp.tc.dragging) return;
+    const now = performance.now();
+    if (now - this.hoverAt < 50) return;
+    this.hoverAt = now;
+    const hit = this.pickAt(ev.clientX, ev.clientY);
+    canvas.style.cursor = hit === null ? '' : e.sel.includes(hit) ? 'grab' : 'pointer';
   }
 
   get dragging(): boolean {
@@ -189,7 +218,7 @@ export class EditController {
 
   // ----- dragging the handle -----
 
-  beginDrag(): void {
+  beginDrag(gizmo = true): void {
     const e = this.store.edit;
     const mesh = this.mesh();
     const node = this.node();
@@ -200,12 +229,20 @@ export class EditController {
     const start = new Map<number, V3>();
     selected.forEach((i) => start.set(i, vert(mesh, i)));
     this.proxy.updateMatrixWorld(true);
-    this.drag = { W, Winv: W.clone().invert(), proxyInv: this.proxy.matrixWorld.clone().invert(), start, selected, pairs: e.symmetry ? mirrorPairs(mesh) : null };
+    this.drag = { gizmo, startPos: this.proxy.position.clone(), W, Winv: W.clone().invert(), proxyInv: this.proxy.matrixWorld.clone().invert(), start, selected, pairs: e.symmetry ? mirrorPairs(mesh) : null };
   }
 
   applyDrag(): void {
     const d = this.drag;
     if (!d) return;
+    const e = this.store.edit;
+    if (d.gizmo && e?.snap && this.vp.tc.getMode() === 'translate') {
+      // snap how far it moved, not where it ended up, so the first nudge never jumps
+      const step = this.store.ui.gridStep;
+      const delta = this.proxy.position.clone().sub(d.startPos);
+      delta.set(Math.round(delta.x / step) * step, Math.round(delta.y / step) * step, Math.round(delta.z / step) * step);
+      this.proxy.position.copy(d.startPos).add(delta);
+    }
     this.proxy.updateMatrixWorld(true);
     const T = this.proxy.matrixWorld.clone().multiply(d.proxyInv);
     const out = new Map<number, V3>();
@@ -226,6 +263,7 @@ export class EditController {
   endDrag(): void {
     this.drag = null;
     this.store.commit();
+    this.rebuild();
     this.updateProxy();
     this.vp.refreshGizmoTarget();
   }
@@ -310,6 +348,82 @@ export class EditController {
     return out;
   }
 
+  private mouseRay(ev: { clientX: number; clientY: number }): THREE.Ray {
+    const r = this.vp.renderer.domElement.getBoundingClientRect();
+    this.ray.setFromCamera(new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), this.vp.camera);
+    return this.ray.ray.clone();
+  }
+
+  /** Where along the line (origin, dir) the pointer ray comes closest. */
+  private lineParam(ray: THREE.Ray, origin: THREE.Vector3, dir: THREE.Vector3): number | null {
+    const w0 = origin.clone().sub(ray.origin);
+    const b = dir.dot(ray.direction);
+    const d = dir.dot(w0);
+    const e = ray.direction.dot(w0);
+    const den = 1 - b * b;
+    return den < 1e-4 ? null : (b * e - d) / den;
+  }
+
+  /**
+   * Drag an already selected face / edge / point directly: faces slide along the way they point (push or pull),
+   * edges and points follow the pointer in the plane facing the camera.
+   */
+  private directDrag(ev: PointerEvent, hit: number | string): void {
+    const e = this.store.edit!;
+    const mesh = this.mesh()!;
+    const node = this.node()!;
+    const sx = ev.clientX;
+    const sy = ev.clientY;
+    const wasOrbit = this.vp.controls.enabled;
+    this.vp.controls.enabled = false;
+    this.updateProxy();
+    const centre = this.proxy.position.clone();
+    let axis: THREE.Vector3 | null = null;
+    if (e.mode === 'face') {
+      const n = averageNormal(mesh, e.sel as number[]);
+      node.updateWorldMatrix(true, false);
+      axis = new THREE.Vector3(...n).transformDirection(node.matrixWorld).normalize();
+    }
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(this.vp.camera.getWorldDirection(new THREE.Vector3()), centre);
+    const ray0 = this.mouseRay(ev);
+    const t0 = axis ? this.lineParam(ray0, centre, axis) : 0;
+    const p0 = axis ? null : ray0.intersectPlane(plane, new THREE.Vector3());
+    let dragging = false;
+    const step = this.store.ui.gridStep;
+    const snap = (v: number) => (this.store.edit?.snap ? Math.round(v / step) * step : v);
+
+    const move = (m: PointerEvent) => {
+      if (!dragging) {
+        if (Math.hypot(m.clientX - sx, m.clientY - sy) < 3) return;
+        dragging = true;
+        this.beginDrag(false);
+        this.vp.renderer.domElement.style.cursor = 'grabbing';
+      }
+      const ray = this.mouseRay(m);
+      if (axis) {
+        const t = this.lineParam(ray, centre, axis);
+        if (t === null || t0 === null) return;
+        this.proxy.position.copy(centre).addScaledVector(axis, snap(t - t0));
+      } else {
+        const p = ray.intersectPlane(plane, new THREE.Vector3());
+        if (!p || !p0) return;
+        const d = p.sub(p0);
+        this.proxy.position.copy(centre).add(new THREE.Vector3(snap(d.x), snap(d.y), snap(d.z)));
+      }
+      this.applyDrag();
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      this.vp.controls.enabled = wasOrbit;
+      this.vp.renderer.domElement.style.cursor = '';
+      if (dragging) this.endDrag();
+      else if (this.store.edit?.id === e.id) this.store.editSelect([hit]); // a plain click on the selection selects just that
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
   pointerDown(ev: PointerEvent): void {
     const e = this.store.edit;
     const mesh = this.mesh();
@@ -318,6 +432,10 @@ export class EditController {
     const sx = ev.clientX;
     const sy = ev.clientY;
     const shift = ev.shiftKey;
+    if (!shift) {
+      const hit = this.pickAt(sx, sy);
+      if (hit !== null && e.sel.includes(hit)) return this.directDrag(ev, hit);
+    }
     const wasOrbit = this.vp.controls.enabled;
     if (shift) this.vp.controls.enabled = false; // Shift-drag draws a selection box instead of orbiting
     let moved = false;

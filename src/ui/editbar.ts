@@ -45,13 +45,14 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
     h('button', { class: 'tool', 'data-etool': t.id, title: `${t.tip} (${t.key})`, onclick: () => store.setUi({ tool: t.id }) }, icon(t.ico, 18), h('span', { class: 'tl' }, t.label), h('kbd', {}, t.key)),
   );
   const mirror = h('button', { class: 'tool', id: 'edit-mirror', 'aria-pressed': 'false', title: 'Mirror: whatever you do on the left also happens on the right. Great for faces and characters.', onclick: () => store.setEditOption({ symmetry: !store.edit?.symmetry }) }, icon('mirror', 18), h('span', { class: 'tl' }, 'Mirror'));
+  const snapBtn = h('button', { class: 'tool', id: 'edit-snap', 'aria-pressed': 'false', title: 'Snap: moves jump in round steps (0.25 m). Leave it off for smooth, free movement.', onclick: () => store.setEditOption({ snap: !store.edit?.snap }) }, icon('grid', 18), h('span', { class: 'tl' }, 'Snap'));
   const xray = h('button', { class: 'tool', id: 'edit-xray', 'aria-pressed': 'false', title: 'See through the shape so you can pick points on the far side', onclick: () => store.setEditOption({ xray: !store.edit?.xray }) }, icon('xray', 18), h('span', { class: 'tl' }, 'See-through'));
-  rowTools.append(h('span', { class: 'vsep' }), ...toolBtns, h('span', { class: 'vsep' }), mirror, xray);
+  rowTools.append(h('span', { class: 'vsep' }), ...toolBtns, h('span', { class: 'vsep' }), mirror, xray, snapBtn);
 
   const need = (what: string, ok: () => boolean) => () => (ok() ? null : what);
   const e = () => store.edit;
   const actions: Action[] = [
-    { id: 'edit-pullout', label: 'Pull out', key: 'P', ico: 'pullout', tip: 'Grow a new part out of the selected face or edge, like a nose, an arm or a block. Drag the arrow afterwards to make it longer or shorter.', run: () => store.pullOut(),
+    { id: 'edit-pullout', label: 'Pull out', key: 'P', ico: 'pullout', tip: 'Grow a new part out of the selected face or edge, like a nose, an arm or a block. Then drag the orange face to make it longer or shorter.', run: () => store.pullOut(),
       blocked: () => (e()?.mode === 'vertex' ? 'Switch to Faces or Edges' : e()?.sel.length ? null : 'Select a face or an edge first') },
     { id: 'edit-shrink', label: 'Shrink face', key: 'I', ico: 'shrink', tip: 'Make a smaller face inside the selected one. Useful for windows, eyes and buttons.', run: () => store.shrinkFace(),
       blocked: () => (e()?.mode !== 'face' ? 'Switch to Faces' : e()?.sel.length ? null : 'Select a face first') },
@@ -100,6 +101,8 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
     toolBtns.forEach((b) => b.classList.toggle('active', b.dataset.etool === store.ui.tool));
     mirror.classList.toggle('active', ed.symmetry);
     mirror.setAttribute('aria-pressed', String(ed.symmetry));
+    snapBtn.classList.toggle('active', ed.snap);
+    snapBtn.setAttribute('aria-pressed', String(ed.snap));
     xray.classList.toggle('active', ed.xray);
     xray.setAttribute('aria-pressed', String(ed.xray));
     actions.forEach((a, i) => {
@@ -112,9 +115,9 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
     if (!n) {
       hint.append(`Click ${ed.mode === 'face' ? 'a face' : ed.mode === 'edge' ? 'an edge' : 'a point'} to select it · Shift-click adds more · Shift-drag selects an area · drag empty space to look around`);
     } else if (store.ui.tool === 'select') {
-      hint.append(`Switch to Move to drag the selected ${what}, or use an action below`);
+      hint.append(`Drag the selected ${what} to move it · or use an action below`);
     } else {
-      hint.append(`Drag the arrows to change the selected ${what} · Pull out grows a new part from it · Shrink face + Pull out makes a narrower block`);
+      hint.append(ed.mode === 'face' ? 'Drag the orange face to push or pull it · Pull out grows a new part from it · Shrink face + Pull out makes a narrower block' : `Drag the orange ${what} to move it, or use the arrows · Pull out grows a new part from it`);
     }
     hint.append(h('span', { class: 'hstat' }, `${fmt(vertCount(mesh))} points · ${fmt(edgeMap(mesh).size)} edges · ${fmt(mesh.f.length)} faces · ${fmt(meshTriangles(mesh))} triangles`));
   };

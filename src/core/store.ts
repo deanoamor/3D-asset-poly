@@ -83,6 +83,8 @@ export interface EditState {
   symmetry: boolean;
   /** Draw the model see-through so points on the far side can be picked. */
   xray: boolean;
+  /** Snap moves, turns and resizes to round steps (off = fully smooth). */
+  snap: boolean;
 }
 
 const MAX_EDIT_TRIANGLES = 60000;
@@ -491,7 +493,7 @@ export class Store {
       o.size = [1, 1, 1];
     });
     this.selection = [id];
-    this.edit = { id, mode: 'face', sel: [], symmetry: false, xray: false };
+    this.edit = { id, mode: 'face', sel: [], symmetry: false, xray: false, snap: false };
     this.ui.tool = 'move';
     this.emit('selection');
     this.emit('tool');
@@ -522,7 +524,7 @@ export class Store {
     this.emit('edit');
   }
 
-  setEditOption(patch: Partial<Pick<EditState, 'symmetry' | 'xray'>>): void {
+  setEditOption(patch: Partial<Pick<EditState, 'symmetry' | 'xray' | 'snap'>>): void {
     if (!this.edit) return;
     Object.assign(this.edit, patch);
     this.emit('edit');

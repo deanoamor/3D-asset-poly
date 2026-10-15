@@ -277,7 +277,7 @@ const EDIT_STEPS: Step[] = [
   },
   {
     title: 'Pull it out',
-    text: 'Press Pull out. A new part grows from the face right away, like a neck or a hat. Drag the green arrow to make it longer or shorter.',
+    text: 'Press Pull out. A new part grows from the face right away, like a neck or a hat. Then drag the orange face (or the green arrow) to make it longer or shorter.',
     highlight: '#edit-pullout',
     done: (s) => !!s.edit && (s.get(s.edit.id)?.mesh?.f.length ?? 0) > 6,
     auto: (s) => {

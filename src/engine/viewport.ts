@@ -225,7 +225,7 @@ export class Viewport {
         this.sig.delete(id);
       }
     }
-    if (this.store.edit) this.edit.rebuild();
+    if (this.store.edit) this.edit.rebuildSoon();
     this.refreshGizmoTarget();
     this.requestRender();
   }
@@ -279,9 +279,11 @@ export class Viewport {
     this.tc.setMode(mode);
     this.tc.setSpace(mode === 'translate' ? 'world' : 'local');
     const step = ui.snapGrid ? ui.gridStep : null;
-    this.tc.setTranslationSnap(step);
-    this.tc.setRotationSnap(ui.snapGrid ? THREE.MathUtils.degToRad(15) : null);
-    this.tc.setScaleSnap(step);
+    const ed = this.store.edit;
+    // while editing points, snapping is opt-in and relative (the edit bar's Snap), so drags stay smooth
+    this.tc.setTranslationSnap(ed ? null : step);
+    this.tc.setRotationSnap((ed ? ed.snap : ui.snapGrid) ? THREE.MathUtils.degToRad(15) : null);
+    this.tc.setScaleSnap(ed ? (ed.snap ? 0.1 : null) : step);
     this.renderer.domElement.style.cursor = ui.tool === 'shape' ? 'crosshair' : ui.tool === 'color' ? 'copy' : '';
     this.refreshOutlines();
     this.refreshGizmoTarget();
