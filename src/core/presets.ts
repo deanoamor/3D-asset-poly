@@ -56,6 +56,27 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
     formats: [GLB, PACKAGE],
     note: 'Unreal imports .glb with its glTF importer (enable the glTF Importer or Interchange plugin). Add collision in the Static Mesh Editor.',
   },
+  blender: {
+    id: 'blender',
+    label: 'Blender',
+    scale: 1,
+    formats: [GLB, OBJ, PACKAGE],
+    note: 'Blender imports .glb natively and keeps colors, names and vertex colors. OBJ works too but only carries the base colors.',
+  },
+  c4d: {
+    id: 'c4d',
+    label: 'Cinema 4D',
+    scale: 1,
+    formats: [OBJ, GLB, PACKAGE],
+    note: 'OBJ opens in every Cinema 4D version. Recent versions (2023 and later) also open .glb. Cinema 4D works in centimetres, so the guide shows how to scale.',
+  },
+  maya: {
+    id: 'maya',
+    label: 'Maya / 3ds Max',
+    scale: 1,
+    formats: [OBJ, GLB, PACKAGE],
+    note: 'OBJ imports in Maya, 3ds Max, ZBrush, Modo and most other 3D software. Newer versions also read .glb.',
+  },
   web: {
     id: 'web',
     label: 'Web',
@@ -64,6 +85,11 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
     note: 'Works with three.js, Babylon.js, model-viewer and PlayCanvas through their glTF loaders.',
   },
 };
+
+/** Packages for these apps also carry an OBJ so the model opens without any plugin. */
+export function packsObj(engine: EnginePreset): boolean {
+  return PRESETS[engine].formats.some((f) => f.id === 'obj');
+}
 
 export function defaultFormat(engine: EnginePreset): ExportFormat {
   return PRESETS[engine].formats[0].id;
@@ -92,6 +118,34 @@ ${o.collision ? `3. A collision shape is created from the node ending in "-convc
 2. In the Content Browser choose Import and pick ${o.modelName}.glb.
 3. Open the new Static Mesh and compare its size with the numbers above.
 4. Collision: in the Static Mesh Editor use Collision > Add Box Simplified Collision.
+`,
+    blender: `Option A: glTF (recommended)
+1. File > Import > glTF 2.0 (.glb/.gltf) and pick ${o.modelName}.glb.
+2. Parts keep their names in the Outliner. Colors show in Material Preview.
+3. Smooth/painted colors are stored as vertex colors (COLOR_0). In the material, add a Color Attribute node into Base Color to see them.
+${o.hasObj ? `\nOption B: OBJ\n1. File > Import > Wavefront (.obj) and pick the .obj in the "obj" folder (keep the .mtl next to it).\n2. Only base colors are carried, not the painted variation.\n` : ''}
+Scale: 1 unit = 1 metre, Y up. Blender converts to Z up on import.
+`,
+    c4d: `Option A: OBJ (every version)
+1. File > Merge (or Open) and pick the .obj in the "obj" folder. Keep the .mtl next to it.
+2. In the import dialog set the scale to Meters, or scale the model 100x if it looks tiny (Cinema 4D defaults to centimetres).
+3. Each part is a separate object with its own material.
+${o.hasObj ? '' : ''}
+Option B: glTF (Cinema 4D 2023 and later)
+1. File > Merge and pick ${o.modelName}.glb.
+2. Vertex colors may need a Vertex Color tag/shader to be visible.
+
+Pivot: bottom center. Y up, same as Cinema 4D.
+`,
+    maya: `Maya:
+1. File > Import and pick the .obj in the "obj" folder (keep the .mtl beside it). Set Units to metres in Preferences if the size is off.
+2. Newer Maya versions can import .glb through the glTF plugin.
+
+3ds Max:
+1. File > Import and pick the .obj. In the import dialog keep "Convert units" on, and set the model unit to metres.
+2. Max uses Z up: rotate 90 degrees on X if the model lies on its back.
+
+ZBrush / Modo / others: import the .obj. Colors come from the .mtl as materials.
 `,
     web: `three.js:
   import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';

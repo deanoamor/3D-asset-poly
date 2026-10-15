@@ -27,7 +27,7 @@ await page.evaluate(() => {
 });
 
 const py = (code, ...args) => execFileSync('python3', ['-I', '-c', code, ...args]).toString();
-const matrix = [['unity', 'glb'], ['unity', 'obj'], ['unity', 'package'], ['godot', 'glb'], ['godot', 'package'], ['unreal', 'glb'], ['unreal', 'package'], ['web', 'glb'], ['web', 'gltf'], ['web', 'package']];
+const matrix = [['unity', 'glb'], ['unity', 'obj'], ['unity', 'package'], ['godot', 'glb'], ['godot', 'package'], ['unreal', 'glb'], ['unreal', 'package'], ['web', 'glb'], ['web', 'gltf'], ['web', 'package'], ['blender', 'glb'], ['blender', 'package'], ['c4d', 'obj'], ['c4d', 'package'], ['maya', 'obj']];
 
 for (const [engine, format] of matrix) {
   console.log(`# ${engine} / ${format}`);
@@ -72,13 +72,13 @@ for (const [engine, format] of matrix) {
       ok(+nf === +nv / 3 && Math.abs(+miny) < 1e-6, `OBJ: ${nv} vertices, ${nf} faces, lowest y ${miny}`);
       ok(+stats[1] === 3, 'MTL has one material per color');
     } else {
-      ok(listing.includes(`IMPORT_${engine.toUpperCase()}.txt`), 'contains the import guide');
+      ok(listing.includes(`IMPORT_${({ c4d: 'CINEMA_4D', maya: 'MAYA_3DS_MAX' })[engine] ?? engine.toUpperCase()}.txt`), 'contains the import guide');
       ok(listing.includes('test_chest.glb'), 'contains the .glb');
-      if (engine === 'unity') ok(listing.includes('obj/test_chest.obj'), 'Unity package also has OBJ');
+      if (['unity', 'blender', 'c4d', 'maya'].includes(engine)) ok(listing.includes('obj/test_chest.obj'), 'package also has OBJ');
       const glbBytes = Uint8Array.from(Buffer.from(py("import zipfile,sys,base64;z=zipfile.ZipFile(sys.argv[1]);print(base64.b64encode(z.read('test_chest.glb')).decode())", file).trim(), 'base64'));
       await checkGlb(glbBytes, 'packaged glb');
       const guide = py("import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print([z.read(n).decode() for n in z.namelist() if n.endswith('.txt')][0])", file);
-      ok(guide.includes('Pivot: bottom center') && guide.toLowerCase().includes(engine), 'guide mentions the engine and pivot');
+      ok(guide.includes('Pivot: bottom center') && guide.toLowerCase().includes(({ c4d: 'cinema 4d', maya: 'maya' })[engine] ?? engine), 'guide mentions the engine and pivot');
     }
   }
   if (!(await page.$('#btn-download'))) { /* dialog closed after download */ }

@@ -139,3 +139,6 @@ tests       unit tests      e2e   browser tests
 Select a shape (or a group) and open **Surface** in Properties: **Flat / Smooth** shading and **Color variation**
 (painted per-vertex gradients, not image textures). Ready-made assets use smooth faces/skin/hair and faceted painted clothes.
 GLB/glTF export carries normals and `COLOR_0`; OBJ/MTL only carries the base color.
+
+## Export targets
+Unity, Godot, Unreal, Web, plus 3D software: **Blender**, **Cinema 4D**, **Maya / 3ds Max** (OBJ+MTL opens everywhere, GLB in newer versions; the package adds a per-app import guide).

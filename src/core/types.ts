@@ -2,7 +2,7 @@ import type { PolyMesh } from './mesh';
 
 export type ShapeType = 'box' | 'cylinder' | 'sphere' | 'cone' | 'pyramid' | 'plane';
 export type Vec3 = [number, number, number];
-export type EnginePreset = 'unity' | 'godot' | 'unreal' | 'web';
+export type EnginePreset = 'unity' | 'godot' | 'unreal' | 'web' | 'blender' | 'c4d' | 'maya';
 
 export interface ShapeParams {
   /** Sides for cylinder/cone, smoothness for sphere. */

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
-import { PRESETS, importGuide, type ExportFormat } from '../core/presets';
+import { PRESETS, importGuide, packsObj, type ExportFormat } from '../core/presets';
 import { writeObj } from './objExport';
 import { slug } from './slug';
 import { buildExportScene } from './sceneBuild';
@@ -89,12 +89,12 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
   // package: model + import guide (Unity also gets OBJ so it works without a plugin)
   const data = await glb();
   const entries: { name: string; data: Uint8Array | string }[] = [{ name: `${name}.glb`, data: new Uint8Array(data) }];
-  const hasObj = doc.enginePreset === 'unity';
+  const hasObj = packsObj(doc.enginePreset);
   if (hasObj) {
     const { obj, mtl } = writeObj(root, doc.name);
     entries.push({ name: `obj/${name}.obj`, data: obj }, { name: `obj/${name}.mtl`, data: mtl });
   }
-  entries.push({ name: `IMPORT_${preset.label.toUpperCase()}.txt`, data: importGuide(doc.enginePreset, { modelName: name, hasObj, collision, sizeText, tris: triangles }) });
+  entries.push({ name: `IMPORT_${preset.label.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}.txt`, data: importGuide(doc.enginePreset, { modelName: name, hasObj, collision, sizeText, tris: triangles }) });
   return {
     blob: new Blob([zipFiles(entries)], { type: 'application/zip' }),
     filename: `${name}_${doc.enginePreset}.zip`,

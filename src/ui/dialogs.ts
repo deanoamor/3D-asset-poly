@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { Store } from '../core/store';
 import { emptyDoc, polyStats } from '../core/store';
 import { runChecks, type Check } from '../core/checks';
-import { PRESETS, defaultFormat, importGuide, type ExportFormat } from '../core/presets';
+import { PRESETS, defaultFormat, importGuide, packsObj, type ExportFormat } from '../core/presets';
 import { removeTinyParts } from '../core/suggest';
 import type { EnginePreset } from '../core/types';
 import { download, exportFiles, slug } from '../engine/exporter';
@@ -97,7 +97,7 @@ export function openExportDialog(store: Store): void {
     const verify = h('div', { class: 'verify pending', id: 'verify', role: 'status' }, 'Checking the file…');
     const guide = h('pre', { class: 'guide', id: 'import-guide' }, importGuide(doc.enginePreset, {
       modelName: slug(doc.name),
-      hasObj: doc.enginePreset === 'unity',
+      hasObj: packsObj(doc.enginePreset),
       collision: exportCollision && !!preset.collision,
       sizeText: size ? `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m` : 'n/a',
       tris: stats.total,
@@ -106,9 +106,9 @@ export function openExportDialog(store: Store): void {
     clear(root);
     add(
       root,
-      h('div', { class: 'dlg-head' }, h('h2', {}, 'Export to a game engine'), h('button', { class: 'tbtn', 'aria-label': 'Close', onclick: () => close() }, icon('close', 16))),
-      h('div', { class: 'field' }, h('span', {}, 'Game engine'),
-        h('div', { class: 'cards four' }, ...Object.values(PRESETS).map((p) =>
+      h('div', { class: 'dlg-head' }, h('h2', {}, 'Export to a game engine or 3D software'), h('button', { class: 'tbtn', 'aria-label': 'Close', onclick: () => close() }, icon('close', 16))),
+      h('div', { class: 'field' }, h('span', {}, 'Target'),
+        h('div', { class: 'cards seven' }, ...Object.values(PRESETS).map((p) =>
           h('button', {
             class: `card${doc.enginePreset === p.id ? ' on' : ''}`,
             'data-preset': p.id,

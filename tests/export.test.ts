@@ -80,6 +80,11 @@ describe('export', () => {
     expect(PRESETS.unity.formats.map((f) => f.id)).toContain('obj');
     expect(PRESETS.unreal.formats.map((f) => f.id)).not.toContain('obj');
     expect(defaultFormat('godot')).toBe('glb');
+    for (const e of ['blender', 'c4d', 'maya'] as const) {
+      expect(PRESETS[e].formats.map((f) => f.id)).toEqual(expect.arrayContaining(['glb', 'obj', 'package']));
+      expect(importGuide(e, { modelName: 'x', hasObj: true, collision: false, sizeText: '1 x 1 x 1 m', tris: 12 })).toContain('.obj');
+    }
+    expect(defaultFormat('c4d')).toBe('obj');
     expect(importGuide('unity', { modelName: 'x', hasObj: true, collision: false, sizeText: '1 x 1 x 1 m', tris: 12 })).toContain('com.unity.cloud.gltfast');
   });
 });
