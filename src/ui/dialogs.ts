@@ -1,0 +1,212 @@
+import * as THREE from 'three';
+import type { Store } from '../core/store';
+import { emptyDoc, polyStats } from '../core/store';
+import { runChecks, type Check } from '../core/checks';
+import { PRESETS } from '../core/presets';
+import { removeTinyParts, reduceDetail } from '../core/suggest';
+import { TARGET_BUDGETS, TARGET_LABELS, type EnginePreset, type TargetId } from '../core/types';
+import { download, exportGltf, slug, type ExportFormat } from '../engine/exporter';
+import { hasEvent, logEvent, readEvents } from '../core/analytics';
+import { validDoc, clearSaved } from '../core/persist';
+import { add, clear, fmt, h, icon, modal, toast } from './dom';
+
+export const bus = new EventTarget();
+export const emit = (name: string, detail?: unknown) => bus.dispatchEvent(new CustomEvent(name, { detail }));
+
+// ---------- new project ----------
+
+export function openProjectDialog(store: Store, opts: { first: boolean }): void {
+  let target: TargetId = 'mobile';
+  let close: () => void = () => {};
+  const name = h('input', { type: 'text', value: 'Wooden chest', maxlength: '60', 'aria-label': 'Project name', id: 'proj-name' }) as HTMLInputElement;
+  const custom = h('input', { type: 'number', min: '100', step: '500', value: '10000', 'aria-label': 'Custom triangle budget', disabled: true }) as HTMLInputElement;
+  const guide = h('input', { type: 'checkbox', checked: !hasEvent('first_export'), id: 'proj-guide' }) as HTMLInputElement;
+  const cards = (['mobile', 'pc', 'custom'] as TargetId[]).map((t) => {
+    const c = h('button', {
+      class: `card${t === target ? ' on' : ''}`,
+      'data-target': t,
+      type: 'button',
+      onclick: () => {
+        target = t;
+        cards.forEach((x) => x.classList.toggle('on', x.dataset.target === t));
+        custom.disabled = t !== 'custom';
+        customRow.classList.toggle('hidden', t !== 'custom');
+      },
+    }, h('strong', {}, TARGET_LABELS[t]), h('span', {}, t === 'mobile' ? `${fmt(TARGET_BUDGETS.mobile)} triangles. Phones, tablets, web.` : t === 'pc' ? `${fmt(TARGET_BUDGETS.pc)} triangles. Desktop and console.` : 'Set your own budget.'));
+    return c;
+  });
+  const customRow = h('label', { class: 'prow hidden' }, h('span', {}, 'Custom budget'), custom, h('span', { class: 'unit' }, 'tris'));
+  const backup =
+    !opts.first && store.doc.objects.length
+      ? h('p', { class: 'fnote' }, 'Your current project is replaced. ', h('button', { class: 'link', onclick: () => saveProjectFile(store) }, 'Download a backup first'))
+      : null;
+  const body = h('div', { class: 'dlg' },
+    h('h2', {}, opts.first ? 'Welcome. Let’s make a game prop.' : 'New project'),
+    h('p', { class: 'lead' }, 'Pick a target and the polygon budget appears right away. You can change it any time.'),
+    h('label', { class: 'field' }, h('span', {}, 'Project name'), name),
+    h('div', { class: 'field' }, h('span', {}, 'Target'), h('div', { class: 'cards' }, ...cards), customRow),
+    h('label', { class: 'check' }, guide, h('span', {}, 'Guide me through my first prop (a wooden chest, about 10 minutes)')),
+    backup,
+    h('div', { class: 'dlg-actions' },
+      opts.first ? null : h('button', { class: 'btn', onclick: () => close() }, 'Cancel'),
+      h('button', {
+        class: 'btn primary',
+        id: 'btn-create',
+        onclick: () => {
+          const doc = emptyDoc(name.value.trim() || 'Untitled prop', target);
+          doc.customBudget = Math.max(100, +custom.value || 10000);
+          clearSaved();
+          store.load(doc);
+          store.setUi({ tool: 'select' });
+          logEvent('project_created', { target, guided: guide.checked });
+          close();
+          emit('project-created', { guided: guide.checked });
+        },
+      }, 'Create project'),
+    ),
+  );
+  close = modal(body, { dismissable: !opts.first });
+}
+
+// ---------- save / open file ----------
+
+export function saveProjectFile(store: Store): void {
+  const blob = new Blob([JSON.stringify(store.doc, null, 1)], { type: 'application/json' });
+  download(blob, `${slug(store.doc.name)}.polyproj.json`);
+}
+
+export function openProjectFile(store: Store): void {
+  const input = h('input', { type: 'file', accept: '.json,application/json' }) as HTMLInputElement;
+  input.addEventListener('change', async () => {
+    const f = input.files?.[0];
+    if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      if (!validDoc(data)) throw new Error('not a project');
+      store.load(data);
+      toast(`Opened "${data.name}".`);
+    } catch {
+      toast('That file is not a project from this app.');
+    }
+  });
+  input.click();
+}
+
+// ---------- export ----------
+
+export function openExportDialog(store: Store): void {
+  let format: ExportFormat = 'glb';
+  let close: () => void = () => {};
+  const root = h('div', { class: 'dlg export' });
+  const render = () => {
+    const doc = store.doc;
+    const checks = runChecks(doc);
+    const blocked = checks.some((c) => c.level === 'error');
+    const stats = polyStats(doc);
+    const box = store.worldBounds();
+    const size = box.isEmpty() ? null : box.getSize(new THREE.Vector3());
+    clear(root);
+    add(
+      root,
+      h('div', { class: 'dlg-head' }, h('h2', {}, 'Export'), h('button', { class: 'tbtn', 'aria-label': 'Close', onclick: () => close() }, icon('close', 16))),
+      h('div', { class: 'field' }, h('span', {}, 'Game engine'),
+        h('div', { class: 'cards four' }, ...(Object.values(PRESETS)).map((p) =>
+          h('button', {
+            class: `card${doc.enginePreset === p.id ? ' on' : ''}`,
+            'data-preset': p.id,
+            onclick: () => {
+              store.setPreset(p.id as EnginePreset);
+              render();
+            },
+          }, h('strong', {}, p.label)),
+        )),
+        h('p', { class: 'fnote' }, PRESETS[doc.enginePreset].note),
+      ),
+      h('div', { class: 'field' }, h('span', {}, 'Checks'),
+        h('ul', { class: 'checks' }, ...(checks.length ? checks : [{ level: 'ok', message: 'Everything looks good. This model is ready for your engine.' } as OkRow]).map((c) => checkRow(c, store, render, close))),
+      ),
+      h('div', { class: 'summary' },
+        h('span', {}, `${fmt(stats.total)} triangles`),
+        size ? h('span', {}, `${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m`) : null,
+        h('span', {}, 'Pivot: bottom center'),
+        h('span', {}, 'Scale: 1 unit = 1 m'),
+      ),
+      h('div', { class: 'dlg-actions' },
+        h('label', { class: 'fmt' }, 'Format',
+          (() => {
+            const sel = h('select', { id: 'export-format', 'aria-label': 'File format', onchange: () => (format = sel.value as ExportFormat) },
+              h('option', { value: 'glb' }, '.glb (single file)'),
+              h('option', { value: 'gltf' }, '.gltf (JSON, embedded data)'),
+            ) as HTMLSelectElement;
+            sel.value = format;
+            return sel;
+          })(),
+        ),
+        h('button', {
+          class: 'btn primary',
+          id: 'btn-download',
+          disabled: blocked,
+          onclick: async () => {
+            try {
+              const res = await exportGltf(store.doc, format);
+              download(res.blob, res.filename);
+              const first = !hasEvent('first_export');
+              const created = readEvents().filter((e) => e.name === 'project_created').pop();
+              logEvent(first ? 'first_export' : 'export', { engine: doc.enginePreset, format, tris: stats.total, ms: created ? Date.now() - created.t : undefined });
+              emit('export');
+              close();
+              toast(`Saved ${res.filename}. Origin is at the bottom center; 1 unit = 1 m.`, 5000);
+            } catch (err) {
+              toast(`Export failed: ${(err as Error).message}`);
+            }
+          },
+        }, icon('export', 15), 'Download'),
+      ),
+    );
+  };
+  close = modal(root);
+  render();
+}
+
+type OkRow = Omit<Check, 'level'> & { level: 'ok' | Check['level'] };
+
+function checkRow(c: OkRow, store: Store, rerender: () => void, closeDlg: () => void): HTMLElement {
+  const ico = c.level === 'ok' ? 'check' : c.level === 'error' ? 'error' : c.level === 'warn' ? 'warn' : 'info';
+  return h('li', { class: `check-row ${c.level}` }, icon(ico, 16), h('span', { class: 'cmsg' }, c.message),
+    c.objectId ? h('button', { class: 'link', onclick: () => {
+      store.select([c.objectId!]);
+      closeDlg();
+    } }, 'Show me') : null,
+    c.fix ? h('button', { class: 'btn sm', onclick: () => {
+      if (c.fix!.id === 'reduce-detail') {
+        const msg = reduceDetail(store);
+        toast(msg ?? 'Nothing left to simplify automatically.');
+      } else if (c.fix!.id === 'remove-tiny') {
+        toast(`Removed ${removeTinyParts(store)} tiny part(s).`);
+      }
+      rerender();
+    } }, c.fix.label) : null,
+  );
+}
+
+// ---------- shortcuts ----------
+
+export function openShortcuts(): void {
+  const rows: [string, string][] = [
+    ['V / S / W / E / R / C', 'Select, Shape, Move, Rotate, Size, Color'],
+    ['Ctrl+Z · Ctrl+Shift+Z', 'Undo · Redo'],
+    ['Ctrl+D', 'Duplicate'],
+    ['Ctrl+G · Ctrl+Shift+G', 'Group · Ungroup'],
+    ['Delete', 'Delete selection'],
+    ['1 · 2 · 3 · 4', 'Front · Side · Top · 3D view'],
+    ['F', 'Focus on selection'],
+    ['Space + drag', 'Orbit while a tool is active'],
+    ['Right-drag · Scroll', 'Pan · Zoom'],
+    ['Shift-click', 'Add to selection'],
+    ['Esc', 'Deselect, cancel, leave preview'],
+  ];
+  const body = h('div', { class: 'dlg' }, h('h2', {}, 'Keyboard shortcuts'), h('p', { class: 'lead' }, 'Everything here also has a button. Shortcuts are optional.'),
+    h('table', { class: 'keys' }, ...rows.map(([k, v]) => h('tr', {}, h('td', {}, h('kbd', {}, k)), h('td', {}, v)))),
+  );
+  modal(body);
+}
