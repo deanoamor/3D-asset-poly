@@ -12,6 +12,7 @@ const SEPARATE: Record<string, RegExp> = {
   car: /^$/,
   police: /^$/,
   footballer: /^$/,
+  soldier: /^$/,
 };
 
 function boxesOf(id: string) {
@@ -49,7 +50,7 @@ describe('nothing floats', () => {
   }
 
   it('the character bodies are one connected piece, not several', () => {
-    for (const id of ['police', 'footballer']) {
+    for (const id of ['police', 'footballer', 'soldier']) {
       const comps = components(boxesOf(id), 0.004);
       expect(comps.length).toBe(1);
     }

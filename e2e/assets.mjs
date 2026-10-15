@@ -24,20 +24,20 @@ console.log('# library dialog');
 await page.click('#btn-assets');
 await page.waitForSelector('.acard');
 const cards = await page.$$eval('.acard', (els) => els.map((e) => ({ id: e.dataset.asset, name: e.querySelector('strong').textContent, img: e.querySelector('img')?.src.startsWith('data:image/png') && e.querySelector('img').src.length > 5000, bullets: e.querySelectorAll('li').length, level: e.querySelector('.level').textContent })));
-ok(cards.map((c) => c.id).join() === 'police,car,house,footballer', `four assets: ${cards.map((c) => c.name).join(', ')}`);
+ok(cards.map((c) => c.id).join() === 'police,car,house,footballer,soldier', `five assets: ${cards.map((c) => c.name).join(', ')}`);
 ok(cards.every((c) => c.img), 'every card has a rendered 3D preview');
 ok(cards.every((c) => c.bullets === 3), 'every card lists what you will learn');
 await shot('01-library');
 
 console.log('# add to project');
-for (const id of ['police', 'car', 'house', 'footballer']) {
+for (const id of ['police', 'car', 'house', 'footballer', 'soldier']) {
   if (!(await page.isVisible('.acard'))) await page.click('#btn-assets');
   await page.click(`.acard[data-asset="${id}"] [data-act="add"]`);
   await page.waitForTimeout(500);
 }
 let d = await D();
 const groups = d.filter((o) => o.kind === 'group');
-ok(groups.map((g) => g.name).join() === 'Police Officer,Car,House,Football Player', `four groups: ${groups.map((g) => g.name).join(', ')}`);
+ok(groups.map((g) => g.name).join() === 'Police Officer,Car,House,Football Player,Soldier', `five groups: ${groups.map((g) => g.name).join(', ')}`);
 ok(groups.every((g) => d.filter((o) => o.parent === g.id).length >= 75), `each group has dozens of parts (${groups.map((g) => d.filter((o) => o.parent === g.id).length).join(', ')})`);
 const xs = groups.map((g) => g.position[0]);
 ok(xs.every((x, i) => i === 0 || x > xs[i - 1]), `placed left to right, not on top of each other (${xs.map((x) => x.toFixed(1)).join(', ')})`);
@@ -63,7 +63,7 @@ await page.click('#btn-assets');
 await page.click('.acard[data-asset="car"] [data-act="learn"]');
 await page.waitForSelector('#coach-learn:not(.hidden)');
 d = await D();
-const carGroups = d.filter((o) => o.name.startsWith('Car'));
+const carGroups = d.filter((o) => o.kind === 'group' && /^Car( \d+)?$/.test(o.name));
 ok(carGroups.length === 2 && carGroups[1].name === 'Car 2', 'learning adds a second, uniquely named Car without touching the first');
 const learnGroup = carGroups[1];
 const learnParts = d.filter((o) => o.parent === learnGroup.id);

@@ -6,7 +6,7 @@ import { worldMatrix } from '../src/core/docmath';
 
 describe('asset library', () => {
   it('has the four assets', () => {
-    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer']);
+    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier']);
   });
 
   for (const def of ASSETS) {
@@ -36,7 +36,7 @@ describe('asset library', () => {
         const s = assetStats(def);
         if (def.id === 'car') expect(s.depth).toBeGreaterThan(3.5);
         if (def.id === 'house') expect(s.width).toBeGreaterThan(7);
-        if (def.id === 'police' || def.id === 'footballer') expect(s.height).toBeGreaterThan(1.6), expect(s.height).toBeLessThan(2.1);
+        if (def.id === 'police' || def.id === 'footballer' || def.id === 'soldier') expect(s.height).toBeGreaterThan(1.6), expect(s.height).toBeLessThan(2.1);
         if (def.id === 'police') expect(b.min.y).toBeLessThan(0.01);
       });
 
@@ -90,6 +90,8 @@ describe('asset library', () => {
       expect(parts.length).toBeGreaterThanOrEqual(75);
       expect(parts.filter((p) => p.mesh).length).toBeGreaterThanOrEqual(2); // reshaped with Edit shape
     }
+    const soldier = instantiateAsset(ASSETS.find((a) => a.id === 'soldier')!).parts.map((p) => p.name);
+    for (const n of ['Head', 'Helmet', 'Visor Lens', 'Face Mask', 'Belt', 'Vest', 'Backpack', 'Glove Right', 'Chest Chevron 1', 'Sleeve Chevron Left 1', 'Rank Patch']) expect(soldier).toContain(n);
     for (const id of ['police', 'footballer']) {
       const names = instantiateAsset(ASSETS.find((a) => a.id === id)!).parts.map((p) => p.name);
       for (const n of ['Head', 'Eye White Left', 'Pupil Right', 'Eyebrow Left', 'Nose', 'Mouth', 'Ear Left', 'Hand Right']) expect(names).toContain(n);

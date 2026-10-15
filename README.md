@@ -49,14 +49,15 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Asset library (use directly, or learn from it)
 
-The **Assets** button (top bar) opens four detailed, ready-made assets, lit with a warm backdrop and a soft shadow:
+The **Assets** button (top bar) opens five detailed, ready-made assets, lit with a warm backdrop and a soft shadow:
 
 | Asset | Parts | Triangles | What it shows off |
 |---|---|---|---|
 | **Police Officer** | ~85 | ~2,400 | one-piece tapered limbs, a head with a jaw and a face that sits on its surface, layered uniform, cap, gear |
 | **Car** | ~84 | ~1,700 | sloped hood and glass, wheel wells, tire + rim + hub wheels, lights, grille, trim, roof rack |
 | **House** | ~155 | ~2,000 | half-timber walls, tiled roof with a dormer, doors, windows, shutters, porch, chimney with smoke, garden, fence, tree |
-| **Football Player** | ~85 | ~2,600 | a mid-kick pose with bent one-piece limbs, a boot that follows the foot, kit with number and stripes, spiky hair, a patched ball |
+| **Football Player** | ~85 | ~2,600 | a standing pose holding a classic football (12 black pentagons), bent one-piece limbs, kit with number and stripes, spiky hair |
+| **Soldier** | ~100 | ~2,900 | black and gray tactical uniform: helmet with wrap-around visor and mask, headset, vest with pouches, backpack, belt, holster, knife, gold rank chevrons on the chest and sleeves |
 
 **Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
 gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test
