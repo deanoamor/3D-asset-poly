@@ -51,7 +51,7 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
   const need = (what: string, ok: () => boolean) => () => (ok() ? null : what);
   const e = () => store.edit;
   const actions: Action[] = [
-    { id: 'edit-pullout', label: 'Pull out', key: 'P', ico: 'pullout', tip: 'Pull the selected face or edge out to make a new part, like a nose or an arm. Then drag the arrows.', run: () => store.pullOut(),
+    { id: 'edit-pullout', label: 'Pull out', key: 'P', ico: 'pullout', tip: 'Grow a new part out of the selected face or edge, like a nose, an arm or a block. Drag the arrow afterwards to make it longer or shorter.', run: () => store.pullOut(),
       blocked: () => (e()?.mode === 'vertex' ? 'Switch to Faces or Edges' : e()?.sel.length ? null : 'Select a face or an edge first') },
     { id: 'edit-shrink', label: 'Shrink face', key: 'I', ico: 'shrink', tip: 'Make a smaller face inside the selected one. Useful for windows, eyes and buttons.', run: () => store.shrinkFace(),
       blocked: () => (e()?.mode !== 'face' ? 'Switch to Faces' : e()?.sel.length ? null : 'Select a face first') },
@@ -114,7 +114,7 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
     } else if (store.ui.tool === 'select') {
       hint.append(`Switch to Move to drag the selected ${what}, or use an action below`);
     } else {
-      hint.append(`Drag the arrows to change the selected ${what} · try Pull out to grow a new part`);
+      hint.append(`Drag the arrows to change the selected ${what} · Pull out grows a new part from it · Shrink face + Pull out makes a narrower block`);
     }
     hint.append(h('span', { class: 'hstat' }, `${fmt(vertCount(mesh))} points · ${fmt(edgeMap(mesh).size)} edges · ${fmt(mesh.f.length)} faces · ${fmt(meshTriangles(mesh))} triangles`));
   };

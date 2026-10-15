@@ -213,7 +213,33 @@ describe('store editing', () => {
     verts.forEach((i) => up.set(i, [m().v[i * 3], m().v[i * 3 + 1] + 1, m().v[i * 3 + 2]]));
     st.setMeshVerts(up, true);
     st.exitEdit();
-    expect(st.get(id)!.size[1]).toBeCloseTo(2, 4);
+    expect(st.get(id)!.size[1]).toBeCloseTo(1 + 0.85 + 1, 4); // 1 m box + Pull out's own 0.85 + the extra metre dragged
+  });
+
+  it('pull out grows right away, in the direction the face points, and stays a valid solid', () => {
+    const { st, id } = setup();
+    st.enterEdit(id);
+    const m = () => st.get(id)!.mesh!;
+    const right = m().f.findIndex((_, i) => faceNormal(m(), i)[0] > 0.9);
+    st.editSelect([right]);
+    const w0 = boundsOf(m()).max[0] - boundsOf(m()).min[0];
+    st.pullOut();
+    const w1 = boundsOf(m()).max[0] - boundsOf(m()).min[0];
+    expect(w1).toBeGreaterThan(w0 + 0.2);
+    expect(isClosed(m())).toBe(true);
+    expect(consistentWinding(m())).toBe(true);
+    expect(signedVolume(m())).toBeGreaterThan(2);
+  });
+
+  it('pull out on an edge makes a visible flap', () => {
+    const st = new Store(emptyDoc('t'));
+    const o = st.addShape('plane');
+    st.enterEdit(o.id);
+    st.setEditMode('edge');
+    st.editSelect([[...edgeMap(st.get(o.id)!.mesh!).keys()][0]]);
+    st.pullOut();
+    const b = boundsOf(st.get(o.id)!.mesh!);
+    expect(b.max[1] - b.min[1]).toBeGreaterThan(0.2);
   });
 
   it('each action is one undo step and undo drops the edit selection', () => {

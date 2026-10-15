@@ -271,6 +271,35 @@ export function mirrorPairs(m: PolyMesh, eps = 1e-4): Map<number, number> {
   return out;
 }
 
+export function faceArea(m: PolyMesh, fi: number): number {
+  const f = m.f[fi];
+  const a = vert(m, f[0]);
+  let area = 0;
+  for (let k = 1; k + 1 < f.length; k++) area += Math.hypot(...cross(sub(vert(m, f[k]), a), sub(vert(m, f[k + 1]), a))) / 2;
+  return area;
+}
+
+/** Average outward direction of some faces (unit length). */
+export function averageNormal(m: PolyMesh, faces: number[]): V3 {
+  const n = faces.reduce((acc, fi) => add(acc, faceNormal(m, fi)), [0, 0, 0] as V3);
+  const l = Math.hypot(...n);
+  return l < 1e-6 ? [0, 1, 0] : mul(n, 1 / l);
+}
+
+/** How far "Pull out" grows a part when it is first made: scales with the face so it is always visible, never huge. */
+export function pullDistance(m: PolyMesh, faces: number[]): number {
+  const size = Math.sqrt(faces.reduce((a, fi) => a + faceArea(m, fi), 0));
+  return Math.max(0.15, Math.min(1, Math.round(size * 0.6 * 20) / 20));
+}
+
+export function moveVerts(m: PolyMesh, ids: Iterable<number>, delta: V3): void {
+  for (const i of ids) {
+    m.v[i * 3] += delta[0];
+    m.v[i * 3 + 1] += delta[1];
+    m.v[i * 3 + 2] += delta[2];
+  }
+}
+
 // ---------- operations (all mutate the mesh in place) ----------
 
 /** Drop unused vertices and degenerate faces. Returns old index -> new index (-1 when removed). */

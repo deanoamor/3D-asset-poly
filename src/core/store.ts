@@ -14,7 +14,7 @@ import { byId, childrenOf, decomposeTo, descendantIds, effectivelyVisible, isLoc
 import { clampSegments, objectTriangles } from './shapes';
 import {
   bakeScale, cloneMesh, convertSelection, deleteEdges, deleteFaces, deleteVerts, edgeMap, extrudeEdges, extrudeFaces, insetFaces, loopCut, meshTriangles,
-  boundsOf, mergeVerts, normalizeMesh, polyMeshFor, subdivide, vertCount, verticesOfSelection,
+  averageNormal, boundsOf, mergeVerts, moveVerts, normalizeMesh, parseEdge, polyMeshFor, pullDistance, subdivide, vertCount, verticesOfSelection,
   type EditMode, type PolyMesh, type Sel, type V3,
 } from './mesh';
 
@@ -577,10 +577,23 @@ export class Store {
     if (!e.sel.length) return e.mode === 'face' ? 'Click a face first.' : 'Click an edge first.';
     this.editOp((m, ed) => {
       if (ed.mode === 'face') {
-        extrudeFaces(m, ed.sel as number[]);
-        return ed.sel;
+        const faces = ed.sel as number[];
+        const dir = averageNormal(m, faces);
+        const dist = pullDistance(m, faces);
+        extrudeFaces(m, faces);
+        // grow right away so the result is visible; the arrow then fine-tunes it
+        moveVerts(m, verticesOfSelection(m, 'face', faces), [dir[0] * dist, dir[1] * dist, dir[2] * dist]);
+        return faces;
       }
-      return extrudeEdges(m, ed.sel as string[]);
+      const keys = ed.sel as string[];
+      const edges = edgeMap(m);
+      const adj = new Set<number>();
+      keys.forEach((k) => edges.get(k)?.faces.forEach((f) => adj.add(f)));
+      const dir = adj.size ? averageNormal(m, [...adj]) : ([0, 1, 0] as [number, number, number]);
+      const fresh = extrudeEdges(m, keys);
+      const len = Math.max(0.15, Math.min(1, keys.length ? 0.6 * (keys.reduce((a, k) => { const [x, y] = parseEdge(k); return a + Math.hypot(m.v[x * 3] - m.v[y * 3], m.v[x * 3 + 1] - m.v[y * 3 + 1], m.v[x * 3 + 2] - m.v[y * 3 + 2]); }, 0) / keys.length) : 0.5));
+      moveVerts(m, verticesOfSelection(m, 'edge', fresh), [dir[0] * len, dir[1] * len, dir[2] * len]);
+      return fresh;
     });
     this.ui.tool = 'move';
     this.emit('tool');

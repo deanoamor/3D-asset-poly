@@ -277,7 +277,7 @@ const EDIT_STEPS: Step[] = [
   },
   {
     title: 'Pull it out',
-    text: 'Press Pull out, then drag the green arrow up a little. A new part grows from the face, like a neck or a hat.',
+    text: 'Press Pull out. A new part grows from the face right away, like a neck or a hat. Drag the green arrow to make it longer or shorter.',
     highlight: '#edit-pullout',
     done: (s) => !!s.edit && (s.get(s.edit.id)?.mesh?.f.length ?? 0) > 6,
     auto: (s) => {
@@ -287,10 +287,6 @@ const EDIT_STEPS: Step[] = [
         s.editSelect([topFace(s.get(s.edit!.id)!.mesh!)]);
       }
       s.pullOut();
-      const m = s.get(s.edit!.id)!.mesh!;
-      const ups = new Map<number, [number, number, number]>();
-      for (const fi of s.edit!.sel as number[]) for (const vi of m.f[fi]) ups.set(vi, [m.v[vi * 3], m.v[vi * 3 + 1] + 0.4, m.v[vi * 3 + 2]]);
-      s.setMeshVerts(ups, true);
     },
   },
   {
