@@ -65,16 +65,21 @@ ok(!(await D()).pose, 'undo goes back to rest');
 await page.evaluate(() => window.__app.store.redo());
 ok(!!(await D()).pose, 'redo brings the pose back');
 
-console.log('# leaving Pose mode shows the character at rest again, and preview shows the pose');
-await page.click('#btn-pose-mode');
-await page.waitForTimeout(300);
-const modelVisible = await page.evaluate(() => window.__app.vp.model.visible);
-ok(modelVisible, 'back to the normal view the rest model is shown');
-ok(!!(await D()).pose, 'the pose is kept in the project');
+console.log('# Preview follows the Pose button');
 await page.click('#btn-preview');
 await page.waitForTimeout(500);
-ok(!(await page.evaluate(() => window.__app.vp.model.visible)), 'Preview shows the posed character');
+ok(!(await page.evaluate(() => window.__app.vp.model.visible)), 'Pose on + Preview: the posed character is shown');
 await page.click('#btn-preview');
+await page.click('#btn-pose-mode');
+await page.waitForTimeout(300);
+ok(await page.evaluate(() => window.__app.vp.model.visible), 'Pose off: the normal view shows the character at rest');
+ok(!!(await D()).pose, 'the pose is still kept in the project');
+await page.click('#btn-preview');
+await page.waitForTimeout(500);
+ok(await page.evaluate(() => window.__app.vp.model.visible), 'Pose off + Preview: the preview is the normal, unposed one');
+await page.click('#btn-preview');
+await page.click('#btn-pose-mode');
+await page.waitForTimeout(300);
 
 console.log('# saved with the project');
 await page.click('#btn-saves'); await page.click('#btn-save-now'); await page.waitForSelector('.scard');

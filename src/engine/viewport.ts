@@ -191,12 +191,10 @@ export class Viewport {
     if (this.poseActive || this.tc.object?.userData.jointId) this.refreshGizmoTarget();
   }
 
-  /** In Pose mode (and in Preview of a posed character) the model is drawn bent by the skeleton; otherwise at rest. */
+  /** Only while Pose mode is on (also in its Preview) the model is drawn bent by the skeleton; otherwise it is shown at rest. */
   private poseView(): boolean {
-    const ui = this.store.ui;
-    const doc = this.store.doc;
-    if (!doc.rig?.length || this.store.edit) return false;
-    return ui.pose || (ui.preview && !!doc.pose);
+    if (!this.store.doc.rig?.length || this.store.edit) return false;
+    return this.store.ui.pose;
   }
 
   private disposePose(): void {

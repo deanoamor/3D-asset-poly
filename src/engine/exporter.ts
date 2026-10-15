@@ -17,6 +17,8 @@ export interface ExportOptions {
   collision: boolean;
   /** Include the skeleton (default). Off: parts stay separate and named, with no joints. */
   skeleton?: boolean;
+  /** Bake the pose into the file (default). Off: the character is exported at rest. */
+  pose?: boolean;
 }
 
 export interface ExportResult {
@@ -81,15 +83,16 @@ function triangleTotal(root: THREE.Object3D, skip: (n: THREE.Object3D) => boolea
 }
 
 /** The project as it goes into the file: without its skeleton when the option is off. */
-export function docForExport(doc: Doc, skeleton = true): Doc {
-  return skeleton === false && doc.rig ? { ...doc, rig: undefined } : doc;
+export function docForExport(doc: Doc, skeleton = true, pose = true): Doc {
+  if (skeleton === false && doc.rig) return { ...doc, rig: undefined, pose: undefined };
+  return pose === false && doc.pose ? { ...doc, pose: undefined } : doc;
 }
 
 export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<ExportResult> {
   const name = slug(doc.name);
   const preset = PRESETS[doc.enginePreset];
   const collision = opts.collision && !!preset.collision;
-  const exportDoc = docForExport(doc, opts.skeleton);
+  const exportDoc = docForExport(doc, opts.skeleton, opts.pose);
   const { root, size } = prepareExport(exportDoc, collision);
   const triangles = triangleTotal(root, (o) => collision && !!preset.collision && o.name.endsWith(preset.collision.nodeSuffix));
   const sizeText = `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m`;

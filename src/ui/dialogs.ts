@@ -173,7 +173,7 @@ export function openExportDialog(store: Store): void {
                 } }) as HTMLInputElement;
                 return cb;
               })(),
-              h('span', {}, h('strong', {}, 'Include the skeleton'), h('br'), h('small', {}, 'On: each character becomes one skinned mesh with joints, ready to pose. Off: parts stay separate and named, with no joints.')),
+              h('span', {}, h('strong', {}, 'Include the skeleton'), h('br'), h('small', {}, 'On: each character becomes one skinned mesh with joints, ready to pose. Off: parts stay separate and named, with no joints.', doc.pose ? (store.ui.pose ? ' Your pose is included.' : ' Pose is off, so the character is exported at rest.') : '')),
             )
           : null,
       ),
@@ -195,7 +195,7 @@ export function openExportDialog(store: Store): void {
           disabled: blocked,
           onclick: async () => {
             try {
-              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton });
+              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose });
               const saved = await download(res.blob, res.filename);
               if (!saved) return; // viewer declined the save
               const first = !hasEvent('first_export');
@@ -220,7 +220,7 @@ export function openExportDialog(store: Store): void {
     }
     void (async () => {
       try {
-        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton });
+        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose });
         const v = await verifyExport(res, exportCollision ? preset.collision?.nodeSuffix : undefined);
         if (mine !== token) return;
         verify.className = `verify ${v.ok ? 'good' : 'bad'}`;
