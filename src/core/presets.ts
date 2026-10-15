@@ -136,7 +136,8 @@ ${o.collision ? `3. A collision shape is created from the node ending in "-convc
 `,
     blender: `Option A: glTF (recommended)
 1. File > Import > glTF 2.0 (.glb/.gltf) and pick ${o.modelName}.glb.
-2. Parts keep their names in the Outliner. Colors show in Material Preview.
+2. Switch the viewport to Material Preview (press Z, then pick it, or click the second-to-last sphere icon at the top right of the viewport). The default Solid mode shows every imported material in grey; it is a Blender display setting, not a problem with the file.
+   In Solid mode you can also set Shading > Color to Material or Attribute.
 3. Smooth/painted colors are stored as vertex colors (COLOR_0). In the material, add a Color Attribute node into Base Color to see them.
 ${o.hasObj ? `\nOption B: OBJ\n1. File > Import > Wavefront (.obj) and pick the .obj in the "obj" folder (keep the .mtl next to it).\n2. Only base colors are carried, not the painted variation.\n` : ''}
 Scale: 1 unit = 1 metre, Y up. Blender converts to Z up on import.

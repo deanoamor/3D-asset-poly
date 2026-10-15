@@ -4252,7 +4252,8 @@ ${t.collision?`3. A collision shape is created from the node ending in "-convcol
 4. Collision: in the Static Mesh Editor use Collision > Add Box Simplified Collision.
 `,blender:`Option A: glTF (recommended)
 1. File > Import > glTF 2.0 (.glb/.gltf) and pick ${t.modelName}.glb.
-2. Parts keep their names in the Outliner. Colors show in Material Preview.
+2. Switch the viewport to Material Preview (press Z, then pick it, or click the second-to-last sphere icon at the top right of the viewport). The default Solid mode shows every imported material in grey; it is a Blender display setting, not a problem with the file.
+   In Solid mode you can also set Shading > Color to Material or Attribute.
 3. Smooth/painted colors are stored as vertex colors (COLOR_0). In the material, add a Color Attribute node into Base Color to see them.
 ${t.hasObj?`
 Option B: OBJ
