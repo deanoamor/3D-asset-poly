@@ -71,6 +71,7 @@ export const ICONS: Record<string, string> = {
   error: P('M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4'),
   folder: P('M2 4.5h4l1.5 1.5H14v6.5H2z'),
   plus: P('M8 3v10M3 8h10'),
+  library: P('M2.5 9.5l5.5 3 5.5-3M2.5 6.5L8 9.5l5.5-3L8 3.5z'),
   edit: P('M3 13l1-3.5L11 2.5 13.5 5 6.5 12zM9.5 4L12 6.5'),
   pointsMode: P('M3.5 3.5h9v9h-9z') + '<circle cx="3.5" cy="3.5" r="1.8" fill="currentColor"/><circle cx="12.5" cy="3.5" r="1.8" fill="currentColor"/><circle cx="3.5" cy="12.5" r="1.8" fill="currentColor"/><circle cx="12.5" cy="12.5" r="1.8" fill="currentColor"/>',
   edgesMode: P('M3.5 3.5h9v9h-9z') + '<path d="M3.5 12.5h9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
@@ -109,10 +110,10 @@ export function fmt(n: number): string {
   return n.toLocaleString('en-US');
 }
 
-export function modal(content: HTMLElement, opts: { onClose?: () => void; dismissable?: boolean } = {}): () => void {
+export function modal(content: HTMLElement, opts: { onClose?: () => void; dismissable?: boolean; wide?: boolean } = {}): () => void {
   const dismissable = opts.dismissable ?? true;
   const back = h('div', { class: 'modal-back' });
-  const box = h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' }, content);
+  const box = h('div', { class: `modal${opts.wide ? ' wide' : ''}`, role: 'dialog', 'aria-modal': 'true' }, content);
   back.append(box);
   const close = () => {
     document.removeEventListener('keydown', key, true);

@@ -73,7 +73,7 @@ export function mountLayers(root: HTMLElement, store: Store): void {
     const el = h(
       'div',
       {
-        class: `layer${selected ? ' sel' : ''}${o.visible ? '' : ' dim'}${heavyId === o.id && redBudget ? ' heavy' : ''}`,
+        class: `layer${selected ? ' sel' : ''}${o.visible && !store.learnHidden?.has(o.id) ? '' : ' dim'}${heavyId === o.id && redBudget ? ' heavy' : ''}`,
         role: 'treeitem',
         'aria-selected': String(selected),
         'aria-level': String(depth + 1),
@@ -205,7 +205,7 @@ export function mountLayers(root: HTMLElement, store: Store): void {
 
   store.subscribe((e) => {
     if (renaming && e !== 'selection') return;
-    if (e === 'doc' || e === 'selection' || e === 'reset') {
+    if (e === 'doc' || e === 'selection' || e === 'reset' || e === 'learn') {
       const top = list.scrollTop;
       render();
       list.scrollTop = top;

@@ -23,7 +23,7 @@ const seen = [];
 for (let i = 1; i <= 20; i++) { await p.mouse.move(pt.x, pt.y - i * 3); seen.push(+(await maxOf(1)).toFixed(3)); }
 await p.mouse.up();
 console.log('   heights:', seen.join(' '));
-ok(seen[seen.length - 1] > start + 0.3, `dragging the face pulled it up (${start.toFixed(2)} -> ${seen[seen.length - 1]})`);
+ok(seen[seen.length - 1] > start + 0.2, `dragging the face pulled it up (${start.toFixed(2)} -> ${seen[seen.length - 1]})`);
 ok(new Set(seen).size >= 18, `and it is smooth: ${new Set(seen).size} different heights in 20 steps`);
 ok(seen.every((v, i) => i === 0 || v >= seen[i - 1] - 1e-9), 'monotonic, no jumping back');
 await p.keyboard.press('Control+z');

@@ -10,6 +10,7 @@ import { mountPolyCounter } from './ui/polycounter';
 import { mountTopbar } from './ui/topbar';
 import { mountEditTour, mountOnboarding, type Tour } from './ui/onboarding';
 import { mountEditBar } from './ui/editbar';
+import { mountLearn, openAssetLibrary } from './ui/assets';
 import { openExportDialog, openProjectDialog, openShortcuts } from './ui/dialogs';
 import { toast } from './ui/dom';
 
@@ -30,7 +31,7 @@ async function boot(): Promise<void> {
 
   const vp = new Viewport(stage, store);
   const tours: Tour[] = [];
-  const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour() });
+  const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour(), assets: () => openAssetLibrary(store, vp, learnPlayer) });
   mountLayers(layers, store);
   mountProps(props, store);
   mountToolbar(stage, store, vp);
@@ -38,6 +39,9 @@ async function boot(): Promise<void> {
   tours.push(mountOnboarding(stage, store, () => tours.filter((t) => t !== tours[0])));
   const editTour = mountEditTour(stage, store, () => tours.filter((t) => t !== editTour));
   tours.push(editTour);
+  const learnPlayer = mountLearn(stage, store, vp, () => tours.filter((t) => t !== learnTour));
+  const learnTour: Tour = { start: () => {}, stop: () => learnPlayer.stop(), active: learnPlayer.active };
+  tours.push(learnTour);
   mountEditBar(stage, store, () => startEditTour());
   function startEditTour(): void {
     if (store.edit || store.selection.length || store.doc.objects.length) editTour.start();

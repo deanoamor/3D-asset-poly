@@ -47,6 +47,21 @@ Also included: Preview mode, new project / open / save project file (`.polyproj.
 (press `?`), and a local-only event log (`localStorage`, key `polystudio.events.v1`) that records
 project creation, onboarding steps and exports so time-to-first-export can be measured later.
 
+## Asset library (use directly, or learn from it)
+
+The **Assets** button (top bar) opens four ready-made props: **Police Officer** (Beginner), **Car** (Easy), **House** (Easy) and
+**Football Player** (Medium). Each card has a 3D preview, its size, parts, triangle count, and what you will learn.
+
+- **Add to project** puts the asset into the current project as a group, to the right of what is already there. Every part is
+  a normal shape with a clear name (Torso, Cap Brim, Front Wheel Left, Roof…), so you can recolor, resize, reshape or export it.
+- **Learn how it is made** adds the asset and rebuilds it step by step (5 to 6 steps each). Every step shows the new parts (and
+  highlights them on the canvas), the tools and ideas used (Duplicate, Rotate, Merge points, fewer sides = fewer triangles), and a
+  closing challenge. The lesson only hides parts on screen: the project data is never changed, so a reload cannot leave anything hidden.
+- The car cabin and the house roof are real *edited* shapes (Edit shape and Merge points), so they double as examples for that feature.
+- All four stay far below the mobile budget (164 to 476 triangles each).
+
+Assets are defined as data in `src/core/assets.ts`; adding a fifth is a matter of listing its parts and steps.
+
 ## Edit Shape (turn a box into something else)
 
 Select a shape and press **Edit shape** (toolbar, `Tab`, or double-click it). The toolbar switches to a bar made for beginners:

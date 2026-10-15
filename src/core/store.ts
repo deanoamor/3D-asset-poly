@@ -73,7 +73,7 @@ export interface UiState {
   gridStep: number;
 }
 
-export type StoreEvent = 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit';
+export type StoreEvent = 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
 
 export interface EditState {
   id: string;
@@ -102,6 +102,8 @@ export class Store {
     gridStep: 0.25,
   };
   edit: EditState | null = null;
+  /** Parts the Learn view has not revealed yet. Only hides them on screen; the project itself is never changed. */
+  learnHidden: Set<string> | null = null;
   private committed: string;
   undoStack: string[] = [];
   redoStack: string[] = [];
@@ -470,6 +472,11 @@ export class Store {
     this.reparent(id, o.parent, dir < 0 ? j : j + 1);
   }
 
+  setLearnHidden(ids: Set<string> | null): void {
+    this.learnHidden = ids && ids.size ? ids : null;
+    this.emit('learn');
+  }
+
   // ----- shape editing -----
 
   /** Why this object can't be edited, or null when it can. */
@@ -505,6 +512,7 @@ export class Store {
     const e = this.edit;
     if (!e) return;
     this.edit = null;
+    this.ui.tool = 'select';
     if (this.get(e.id)?.mesh) {
       this.mutate((d) => {
         const o = d.objects.find((x) => x.id === e.id);

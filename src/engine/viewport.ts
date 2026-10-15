@@ -133,7 +133,7 @@ export class Viewport {
     });
 
     store.subscribe((e) => {
-      if (e === 'doc' || e === 'reset') this.sync();
+      if (e === 'doc' || e === 'reset' || e === 'learn') this.sync();
       if (e === 'selection' || e === 'reset') this.onSelection();
       if (e === 'tool') this.onToolChange();
       if (e === 'edit') {
@@ -214,7 +214,7 @@ export class Viewport {
       node.name = o.name;
       applyTransform(node, o);
       // three.js hides children of hidden parents on its own
-      node.visible = o.visible;
+      node.visible = o.visible && !this.store.learnHidden?.has(o.id);
       const parentNode = o.parent ? this.nodes.get(o.parent) ?? this.model : this.model;
       if (node.parent !== parentNode) parentNode.add(node);
     }
@@ -421,7 +421,7 @@ export class Viewport {
     const hits = this.raycaster.intersectObject(this.model, true);
     for (const h of hits) {
       const id = h.object.userData.id as string | undefined;
-      if (!id || !h.object.visible) continue;
+      if (!id || !h.object.visible || this.store.learnHidden?.has(id)) continue;
       const o = map.get(id);
       if (!o || !effectivelyVisible(map, o)) continue;
       if (isLockedChain(map, o)) continue;
