@@ -142,6 +142,15 @@ export function mountProps(root: HTMLElement, store: Store): void {
         }, 'Unlock')),
       );
     }
+    if (!isShape) {
+      body.append(
+        h('div', { class: 'editcard' },
+          h('strong', {}, 'This is a group'),
+          h('p', {}, 'Its parts move, rotate and resize together. Ungroup to work on them one by one.'),
+          h('button', { class: 'btn block', id: 'btn-ungroup-props', onclick: () => store.ungroupSelected() }, icon('ungroup', 14), 'Ungroup'),
+        ),
+      );
+    }
     if (isShape) {
       body.append(
         h('div', { class: 'editcard' },

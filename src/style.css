@@ -85,7 +85,9 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .layer.drop-before::before { top: -1px; } .layer.drop-after::after { bottom: -1px; }
 .layer.drop-in { outline: 2px solid var(--accent); outline-offset: -2px; }
 .layer-tail { height: 40px; }
-.layer-actions { display: flex; gap: 2px; padding: 6px; border-top: 1px solid var(--line); justify-content: space-between; }
+.layer-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 6px; border-top: 1px solid var(--line); }
+.tbtn.lab { justify-content: center; font-size: 12px; gap: 4px; }
+.tbtn.lab span { color: var(--text); }
 .empty { display: flex; flex-direction: column; gap: 4px; padding: 20px 14px; color: var(--muted); text-align: center; }
 .empty strong { color: var(--text); }
 

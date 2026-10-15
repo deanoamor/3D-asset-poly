@@ -15,7 +15,7 @@ export function mountLayers(root: HTMLElement, store: Store): void {
   root.append(h('div', { class: 'panel-head' }, h('span', {}, 'Layers')), list, actions);
 
   const mkBtn = (ico: string, label: string, title: string, fn: () => void, id?: string) =>
-    h('button', { class: 'tbtn sm', title, 'aria-label': label, id, onclick: fn }, icon(ico, 15));
+    h('button', { class: 'tbtn sm lab', title, 'aria-label': label, id, onclick: fn }, icon(ico, 15), h('span', {}, label));
 
   const doGroup = () => {
     const why = store.canGroup();
@@ -29,10 +29,10 @@ export function mountLayers(root: HTMLElement, store: Store): void {
   const moveSel = (dir: -1 | 1) => store.selection.length === 1 && store.nudgeOrder(store.selection[0], dir);
   actions.append(
     mkBtn('group', 'Group', 'Group selection (Ctrl+G)', doGroup, 'btn-group'),
-    mkBtn('ungroup', 'Ungroup', 'Ungroup (Ctrl+Shift+G)', doUngroup),
+    mkBtn('ungroup', 'Ungroup', 'Ungroup: release the parts of the selected group (Ctrl+Shift+G)', doUngroup, 'btn-ungroup'),
     mkBtn('duplicate', 'Duplicate', 'Duplicate (Ctrl+D)', () => store.selection.length && store.duplicateSelected(), 'btn-duplicate'),
-    mkBtn('up', 'Move up', 'Move up in the list', () => moveSel(-1)),
-    mkBtn('down', 'Move down', 'Move down in the list', () => moveSel(1)),
+    mkBtn('up', 'Up', 'Move up in the list', () => moveSel(-1)),
+    mkBtn('down', 'Down', 'Move down in the list', () => moveSel(1)),
     mkBtn('trash', 'Delete', 'Delete (Del)', () => store.deleteSelected()),
   );
 
