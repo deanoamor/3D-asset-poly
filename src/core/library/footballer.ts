@@ -1,7 +1,7 @@
 import type { AssetDef, AssetPart } from '../assets';
 import { bootParts } from './body';
 import { applyStyle } from './kit';
-import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
+import { blob, faceOn, headBlob, onSurface, plate, ribbon, soccerBall, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
 
 const RED = '#d64545';
@@ -129,14 +129,12 @@ spikes.forEach((d, i) => {
 add(toPart(5, 'Headband', sweep([R(H([0, 0.1, -0.005]), [0.19 * K * 0.86 + 0.012, 0.2 * K * 0.86 + 0.012]), R(H([0, 0.155, -0.005]), [0.19 * K * 0.8 + 0.012, 0.2 * K * 0.8 + 0.012])], { sides: 10 }), RED));
 
 // ---- 6 the ball ----
-const ball = blob(BALL, [0.14, 0.14, 0.14], 10);
-add(toPart(6, 'Ball', ball, WHITE));
-[[0, 1, 0], [0.9, 0.45, 0], [-0.9, 0.45, 0], [0, 0.45, 0.9], [0, 0.45, -0.9], [0.65, -0.5, 0.6], [-0.65, -0.5, -0.6]].forEach((d, i) => {
-  add(plate(6, `Ball Patch ${i + 1}`, ball, BALL, d as Vec3, 0.085, 0.085, 0.02, BLACK));
-});
+const ball = soccerBall(BALL, 0.14);
+add(toPart(6, 'Ball', ball.body, WHITE));
+ball.caps.forEach((c, i) => add(toPart(6, `Ball Patch ${i + 1}`, c, BLACK)));
 
 applyStyle(parts, [
-  [/^(Eye White|Iris|Pupil|Eye Highlight|Mouth|Ball$)/, { smooth: true }],
+  [/^(Eye White|Iris|Pupil|Eye Highlight|Mouth)/, { smooth: true }],
   [/^(Head|Neck|Ear |Arm |Leg |Knee|Elbow Left|Hand |Thumb |Nose|Cheek)/, { smooth: true, paint: 0.4 }],
   [/^(Hair|Sideburn|Eyebrow)/, { smooth: true, paint: 0.55 }],
   [/^(Jersey|Sleeve|Shoulder|Collar|Chest Band)/, { paint: 0.5 }],
@@ -159,7 +157,7 @@ export const FOOTBALLER: AssetDef = {
     { title: 'Arms', text: 'One arm hangs relaxed and the other is bent at the elbow to carry the ball at hip height. Each arm is one tube bent at the elbow, with a thicker red sleeve over its upper half and a white hem. A gold band marks the captain. Hands are rounded with a thumb on the side.', tools: ['Edit shape: Pull out + Move', 'Cylinder: Top size', 'Shape: Sphere'] },
     { title: 'Head and face', text: 'The head is a Sphere with 8 sides and a narrower jaw. Eyes, eyebrows, the nose and the smile are placed on the surface of the head so they never float. Big eyes give it a friendly, cartoon feel.', tools: ['Edit shape: narrow the jaw', 'Mirror for symmetry', 'Shape: Pyramid + Rotate'] },
     { title: 'Hair and headband', text: 'Hair is two flattened spheres plus eight spikes. Each spike is a short tube that starts inside the head and tapers to a point, tilted a different way so they do not look copied. A red headband is a thin ring around the forehead.', tools: ['Cylinder: Top size near 0', 'Rotate (E)', 'Duplicate Ctrl+D'] },
-    { title: 'The ball', text: 'A white Sphere with 10 sides and seven black patches pressed onto its surface. Each patch is turned to face outward, then moved until it sits flat on the ball. The hand sits against the ball so it is held, and nothing floats. Name every part and group them as Football Player.', tools: ['Shape: Sphere, 10 sides', 'Rotate (E)', 'Group Ctrl+G'] },
+    { title: 'The ball', text: 'A football is a white 20-sided-hexagon ball with 12 black pentagons. Build the ball first, then add each black pentagon as a thin flat shape lying exactly on one of its faces. The hand sits against the ball so it is held, and nothing floats. Name every part and group them as Football Player.', tools: ['Shape: Sphere, 10 sides', 'Rotate (E)', 'Group Ctrl+G'] },
   ],
   challenge: 'Make the goalkeeper: change the kit colors, add gloves by making the hands bigger, and move both arms out to the sides.',
   parts,

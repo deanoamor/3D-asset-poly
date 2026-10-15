@@ -246,3 +246,73 @@ export function faceOn(step: number, head: PolyMesh, c: V, o: { skin: string; sk
   parts.push(toPart(step, 'Mouth', mouth, o.lip ?? '#8a4a3a'));
   return parts;
 }
+
+/**
+ * A football as a truncated icosahedron: 12 black pentagons and 20 white hexagons, like the classic ball.
+ * Returns the white solid plus 12 slightly raised black pentagon caps.
+ */
+export function soccerBall(center: V, r: number): { body: PolyMesh; caps: PolyMesh[] } {
+  const phi = (1 + Math.sqrt(5)) / 2;
+  const ico: V[] = [];
+  for (const a of [-1, 1]) for (const b of [-phi, phi]) ico.push([0, a, b], [a, b, 0], [b, 0, a]);
+  const ivs = ico.map((p) => norm(p));
+  // neighbours: the 5 closest vertices of each icosahedron vertex
+  const nb = ivs.map((p, i) =>
+    ivs.map((q, j) => ({ j, d: len(sub(p, q)) })).filter((o) => o.j !== i).sort((a, b) => a.d - b.d).slice(0, 5).map((o) => o.j),
+  );
+  const verts: V[] = [];
+  const idx = new Map<string, number>();
+  const pt = (a: number, b: number): number => {
+    const key = `${a}>${b}`;
+    let i = idx.get(key);
+    if (i === undefined) {
+      const p = add(mul(ivs[a], 2 / 3), mul(ivs[b], 1 / 3));
+      i = verts.length;
+      verts.push(p);
+      idx.set(key, i);
+    }
+    return i;
+  };
+  const faces: number[][] = [];
+  const pents: number[][] = [];
+  // pentagons: around each vertex, ordered by angle around its axis
+  ivs.forEach((p, i) => {
+    const u = norm(cross(p, Math.abs(p[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]));
+    const w = cross(p, u);
+    const ring = [...nb[i]].sort((a, b) => Math.atan2(dot(sub(ivs[a], p), w), dot(sub(ivs[a], p), u)) - Math.atan2(dot(sub(ivs[b], p), w), dot(sub(ivs[b], p), u)));
+    const f = ring.map((j) => pt(i, j));
+    pents.push(f);
+    faces.push(f);
+  });
+  // hexagons: one per icosahedron face (triangle of mutual neighbours)
+  const seen = new Set<string>();
+  ivs.forEach((_, a) => {
+    for (const b of nb[a]) for (const c of nb[a]) {
+      if (b >= c || !nb[b].includes(c)) continue;
+      const key = [a, b, c].sort((x, y) => x - y).join(',');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      faces.push([pt(a, b), pt(b, a), pt(b, c), pt(c, b), pt(c, a), pt(a, c)]);
+    }
+  });
+  const R = r / len(verts[0]);
+  const place = (p: V, k = 1): V => [center[0] + p[0] * R * k, center[1] + p[1] * R * k, center[2] + p[2] * R * k];
+  const orient = (f: number[], pts: V[]): number[] => {
+    const c = pts.reduce<V>((s, p) => add(s, p), [0, 0, 0]).map((x) => x / pts.length) as V;
+    const n = cross(sub(pts[1], pts[0]), sub(pts[2], pts[0]));
+    return dot(n, c) >= 0 ? f : [...f].reverse();
+  };
+  const body: PolyMesh = { v: verts.flatMap((p) => place(p)), f: faces.map((f) => orient(f, f.map((i) => verts[i]))) };
+  const caps = pents.map((f) => {
+    const v: number[] = [];
+    f.forEach((i) => v.push(...place(verts[i], 0.985)));
+    f.forEach((i) => v.push(...place(verts[i], 1.012)));
+    const n = f.length;
+    const faces2: number[][] = [Array.from({ length: n }, (_, k) => n + k), Array.from({ length: n }, (_, k) => n - 1 - k)];
+    for (let k = 0; k < n; k++) faces2.push([k, (k + 1) % n, n + ((k + 1) % n), n + k]);
+    const pts = f.map((i) => verts[i]);
+    const flip = dot(cross(sub(pts[1], pts[0]), sub(pts[2], pts[0])), pts[0]) < 0;
+    return { v, f: flip ? faces2.map((q) => [...q].reverse()) : faces2 };
+  });
+  return { body, caps };
+}
