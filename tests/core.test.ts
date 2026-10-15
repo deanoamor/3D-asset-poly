@@ -161,3 +161,71 @@ describe('zip', () => {
     expect(new Uint8Array(readFileSync(join(dir, 'out.bin')))).toEqual(payload);
   });
 });
+
+import { buildObjectGeometry, paintVertexColors, smoothNormals } from '../src/core/shapes';
+
+describe('smooth shading and painted color', () => {
+  const normalsAt = (g: ReturnType<typeof buildGeometry>) => g.getAttribute('normal');
+
+  it('a sphere gets soft normals, a box keeps crisp edges', () => {
+    const sphere = buildGeometry('sphere', { segments: 12, taper: 1 });
+    const before = [normalsAt(sphere).getX(0), normalsAt(sphere).getY(0), normalsAt(sphere).getZ(0)];
+    smoothNormals(sphere);
+    const pos = sphere.getAttribute('position');
+    // after smoothing, a vertex normal points the way the vertex points from the centre
+    let worst = 0;
+    for (let i = 0; i < pos.count; i += 17) {
+      const p = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)).normalize();
+      const n = new THREE.Vector3(normalsAt(sphere).getX(i), normalsAt(sphere).getY(i), normalsAt(sphere).getZ(i));
+      worst = Math.max(worst, 1 - p.dot(n));
+    }
+    expect(worst).toBeLessThan(0.05);
+    expect(before.some((v) => v !== 0)).toBe(true);
+
+    const box = buildGeometry('box', { segments: 1, taper: 1 });
+    const flatNormals = Array.from(normalsAt(box).array);
+    smoothNormals(box);
+    expect(Array.from(normalsAt(box).array).every((v, i) => Math.abs(v - flatNormals[i]) < 1e-5)).toBe(true);
+  });
+
+  it('flat paint gives each facet its own shade, smooth paint flows between points', () => {
+    const flat = buildGeometry('sphere', { segments: 12, taper: 1 });
+    paintVertexColors(flat, '#c98e64', 0.6, false);
+    const c = flat.getAttribute('color');
+    expect(c.count).toBe(flat.getAttribute('position').count);
+    // every triangle is one flat shade
+    expect(c.getX(0)).toBeCloseTo(c.getX(1), 6);
+    expect(c.getX(0)).toBeCloseTo(c.getX(2), 6);
+    const shades = new Set<string>();
+    for (let t = 0; t < c.count; t += 3) shades.add(c.getX(t).toFixed(3));
+    expect(shades.size).toBeGreaterThan(10);
+
+    const soft = buildGeometry('sphere', { segments: 12, taper: 1 });
+    smoothNormals(soft);
+    paintVertexColors(soft, '#c98e64', 0.6, true);
+    const sc = soft.getAttribute('color');
+    expect(new Set(Array.from({ length: sc.count }, (_, i) => sc.getX(i).toFixed(3))).size).toBeGreaterThan(10);
+  });
+
+  it('zero paint leaves the plain color, and painting is stable between runs', () => {
+    const st = new Store(emptyDoc());
+    const o = st.addShape('sphere');
+    expect(buildObjectGeometry(o).getAttribute('color')).toBeUndefined();
+    st.setSurface([o.id], { smooth: true, paint: 0.5 });
+    const a = buildObjectGeometry(st.get(o.id)!);
+    const b = buildObjectGeometry(st.get(o.id)!);
+    expect(Array.from(a.getAttribute('color').array)).toEqual(Array.from(b.getAttribute('color').array));
+  });
+
+  it('setSurface reaches every shape inside a group and is one undo step', () => {
+    const st = new Store(emptyDoc());
+    const a = st.addShape('box');
+    const b = st.addShape('sphere');
+    st.select([a.id, b.id]);
+    const gid = st.groupSelected()!;
+    st.setSurface([gid], { smooth: true, paint: 0.4 });
+    expect([a.id, b.id].every((id) => st.get(id)!.smooth && st.get(id)!.paint === 0.4)).toBe(true);
+    st.undo();
+    expect([a.id, b.id].every((id) => !st.get(id)!.smooth)).toBe(true);
+  });
+});

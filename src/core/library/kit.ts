@@ -118,3 +118,14 @@ export function face(step: number, c: Vec3, scale: number, skinDark: string, bro
     box(step, 'Mouth', [c[0], c[1] - 0.105 * k, z - 0.005 * k], [0.075 * k, 0.014 * k, 0.014 * k], opts.mouth ?? '#8a4a3a'),
   ];
 }
+
+export type StyleRule = [RegExp, { smooth?: boolean; paint?: number }];
+
+/** Give parts their surface look by name: the first matching rule wins. */
+export function applyStyle(parts: AssetPart[], rules: StyleRule[]): AssetPart[] {
+  for (const p of parts) {
+    const hit = rules.find(([re]) => re.test(p.name));
+    if (hit) Object.assign(p, hit[1]);
+  }
+  return parts;
+}

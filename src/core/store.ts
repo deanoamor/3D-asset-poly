@@ -455,6 +455,22 @@ export class Store {
     this.reparent(id, o.parent, dir < 0 ? j : j + 1);
   }
 
+  /** Surface look for shapes (and every shape inside the given groups): smooth shading and painted color variation. */
+  setSurface(ids: string[], patch: { smooth?: boolean; paint?: number }, commit = true): void {
+    this.mutate((d) => {
+      const all = new Set<string>();
+      for (const id of ids) {
+        all.add(id);
+        descendantIds(d, id).forEach((c) => all.add(c));
+      }
+      for (const o of d.objects) {
+        if (!all.has(o.id) || o.kind !== 'shape') continue;
+        if (patch.smooth !== undefined) o.smooth = patch.smooth;
+        if (patch.paint !== undefined) o.paint = Math.round(Math.max(0, Math.min(1, patch.paint)) * 100) / 100;
+      }
+    }, commit);
+  }
+
   setLearnHidden(ids: Set<string> | null): void {
     this.learnHidden = ids && ids.size ? ids : null;
     this.emit('learn');

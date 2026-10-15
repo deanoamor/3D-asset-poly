@@ -1,5 +1,6 @@
 import type { AssetDef, AssetPart } from '../assets';
 import { bootParts } from './body';
+import { applyStyle } from './kit';
 import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
 
@@ -42,7 +43,7 @@ const pelvis = blob(L(0.88, 0, 0.01), [0.228, 0.12, 0.152], 8);
 const K = 1.22;
 const HC: Vec3 = [0, 1.72, 0.105];
 const H = (v: Vec3): Vec3 => [HC[0] + v[0] * K, HC[1] + v[1] * K, HC[2] + v[2] * K];
-const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 8);
+const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 12);
 
 // ---- 0 boots ----
 add(...bootParts(0, 1, ANKLE_L, 0, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
@@ -109,7 +110,7 @@ arm('Right', SH_R, EL_R, WR_R, false);
 // ---- 4 head and face ----
 add(toPart(4, 'Neck', sweep([R(L(1.38), [0.07, 0.064]), R(L(1.52), [0.066, 0.06])], { sides: 6 }), SKIN));
 add(toPart(4, 'Head', head, SKIN));
-add(...faceOn(4, head, HC, { skin: SKIN, skinDark: SKIN_D, brow: HAIR, eye: 1.55, browTilt: 0.03, smile: 0.07, lip: '#7a3a30' }));
+add(...faceOn(4, head, HC, { skin: SKIN, skinDark: SKIN_D, brow: HAIR, eye: 1.3, browTilt: 0.03, smile: 0.08, lip: '#7a3a30', iris: '#4a2f1e' }));
 
 // ---- 5 hair and headband ----
 add(toPart(5, 'Hair Top', blob(H([0, 0.09, -0.03]), vmul([0.19, 0.13, 0.2], K), 7), HAIR));
@@ -133,6 +134,16 @@ add(toPart(6, 'Ball', ball, WHITE));
 [[0, 1, 0], [0.9, 0.45, 0], [-0.9, 0.45, 0], [0, 0.45, 0.9], [0, 0.45, -0.9], [0.65, -0.5, 0.6], [-0.65, -0.5, -0.6]].forEach((d, i) => {
   add(plate(6, `Ball Patch ${i + 1}`, ball, BALL, d as Vec3, 0.085, 0.085, 0.02, BLACK));
 });
+
+applyStyle(parts, [
+  [/^(Eye White|Iris|Pupil|Eye Highlight|Mouth|Ball$)/, { smooth: true }],
+  [/^(Head|Neck|Ear |Arm |Leg |Knee|Elbow Left|Hand |Thumb |Nose|Cheek)/, { smooth: true, paint: 0.4 }],
+  [/^(Hair|Sideburn|Eyebrow)/, { smooth: true, paint: 0.55 }],
+  [/^(Jersey|Sleeve|Shoulder|Collar|Chest Band)/, { paint: 0.5 }],
+  [/^(Shorts|Waistband|Sock)/, { paint: 0.4 }],
+  [/^(Boot|Stud)/, { paint: 0.3 }],
+  [/^(Headband)/, { smooth: true, paint: 0.3 }],
+]);
 
 export const FOOTBALLER: AssetDef = {
   id: 'footballer',

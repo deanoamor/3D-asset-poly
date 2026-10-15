@@ -25,6 +25,18 @@ describe('export', () => {
     expect(size.y).toBeCloseTo(2, 3);
   });
 
+  it('carries normals and painted vertex colors for smooth shapes', () => {
+    const st = chest();
+    st.setSurface(st.doc.objects.map((o) => o.id), { smooth: true, paint: 0.5 }, true);
+    let attrs: string[] = [];
+    prepareExport(st.doc).root.traverse((o) => {
+      const m = o as { geometry?: { attributes: Record<string, unknown> } };
+      if (m.geometry && !attrs.length) attrs = Object.keys(m.geometry.attributes);
+    });
+    expect(attrs).toContain('normal');
+    expect(attrs).toContain('color');
+  });
+
   it('adds a Godot collision box only when asked', () => {
     const st = chest();
     st.setPreset('godot');

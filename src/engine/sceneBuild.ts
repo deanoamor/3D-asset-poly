@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Doc, SceneObject } from '../core/types';
-import { buildGeometry, buildMeshGeometry, needsDoubleSide } from '../core/shapes';
+import { buildObjectGeometry, lookOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
 import { effectivelyVisible } from '../core/docmath';
 
 const D2R = Math.PI / 180;
@@ -8,12 +8,13 @@ const D2R = Math.PI / 180;
 export class GeometryCache {
   private map = new Map<string, THREE.BufferGeometry>();
   get(o: SceneObject): THREE.BufferGeometry {
-    if (o.mesh) return buildMeshGeometry(o.mesh); // edited meshes are not shared
+    if (o.mesh) return buildObjectGeometry(o); // edited meshes are not shared
     const shape = o.shape!;
-    const key = `${shape}:${o.params.segments}:${shape === 'cylinder' ? o.params.taper.toFixed(3) : 0}`;
+    const look = lookOf(o);
+    const key = `${shape}:${o.params.segments}:${shape === 'cylinder' ? o.params.taper.toFixed(3) : 0}:${look.smooth ? 's' : 'f'}:${look.paint}:${look.paint > 0 ? o.color : ''}`;
     let g = this.map.get(key);
     if (!g) {
-      g = buildGeometry(shape, o.params);
+      g = buildObjectGeometry(o);
       this.map.set(key, g);
     }
     return g;
@@ -27,17 +28,19 @@ export class GeometryCache {
 export class MaterialCache {
   private map = new Map<string, THREE.MeshStandardMaterial>();
   /** Planes have a single face, so they are rendered (and exported) double-sided. */
-  get(hex: string, doubleSided = false): THREE.MeshStandardMaterial {
-    const key = hex + (doubleSided ? ':2' : '');
+  get(hex: string, doubleSided = false, vertexColors = false): THREE.MeshStandardMaterial {
+    // with vertex colors the colors live in the geometry, so one white material serves every color
+    const key = vertexColors ? `vc${doubleSided ? ':2' : ''}` : hex + (doubleSided ? ':2' : '');
     let m = this.map.get(key);
     if (!m) {
       m = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(hex),
+        color: new THREE.Color(vertexColors ? '#ffffff' : hex),
+        vertexColors,
         roughness: 0.85,
         metalness: 0,
         side: doubleSided ? THREE.DoubleSide : THREE.FrontSide,
       });
-      m.name = `Color ${hex}${doubleSided ? ' (2-sided)' : ''}`;
+      m.name = vertexColors ? `Painted${doubleSided ? ' (2-sided)' : ''}` : `Color ${hex}${doubleSided ? ' (2-sided)' : ''}`;
       this.map.set(key, m);
     }
     return m;
@@ -70,7 +73,7 @@ export function buildExportScene(doc: Doc, name: string): THREE.Group {
     if (!effectivelyVisible(map, o)) continue;
     let node: THREE.Object3D;
     if (o.kind === 'shape') {
-      const mesh = new THREE.Mesh(geos.get(o), mats.get(o.color, needsDoubleSide(o)));
+      const mesh = new THREE.Mesh(geos.get(o), mats.get(o.color, needsDoubleSide(o), usesVertexColors(o)));
       node = mesh;
     } else {
       node = new THREE.Group();

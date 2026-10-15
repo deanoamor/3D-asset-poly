@@ -22,6 +22,9 @@ export interface AssetPart {
   rot?: Vec3;
   segments?: number;
   taper?: number;
+  /** Surface look: soft shading and painted color variation (0..1). */
+  smooth?: boolean;
+  paint?: number;
   /** An edited shape: unit-sized points, scaled by `size`. */
   mesh?: () => PolyMesh;
 }
@@ -96,6 +99,8 @@ export function instantiateAsset(def: AssetDef, at: Vec3 = [0, 0, 0], existingNa
       parent: group.id,
     };
     if (p.mesh) o.mesh = cloneMesh(p.mesh());
+    if (p.smooth) o.smooth = true;
+    if (p.paint) o.paint = p.paint;
     partStep.set(o.id, p.step);
     return o;
   });

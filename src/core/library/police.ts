@@ -1,5 +1,6 @@
 import type { AssetDef, AssetPart } from '../assets';
 import { band2, bootParts } from './body';
+import { applyStyle } from './kit';
 import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
 
@@ -26,7 +27,7 @@ const pelvis = blob([0, 0.86, 0], [0.215, 0.1, 0.14], 8);
 const K = 1.22; // a big head, as in stylised characters
 const HC: Vec3 = [0, 1.7, 0.014];
 const H = (v: Vec3): Vec3 => [HC[0] + v[0] * K, HC[1] + v[1] * K, HC[2] + v[2] * K];
-const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 8);
+const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 12);
 
 // ---- 0 boots ----
 for (const s of [1, -1] as const) add(...bootParts(0, s, [s * 0.115, 0.215, 0], 0, { boot: BLACK, sole: GRAY, cuff: GRAY_L, laces: GRAY_L }));
@@ -83,7 +84,7 @@ for (const s of [1, -1] as const) {
 // ---- 4 head and face ----
 add(toPart(4, 'Neck', sweep([R([0, 1.37, 0], [0.07, 0.064]), R([0, 1.5, 0.012], [0.066, 0.06])], { sides: 6 }), SKIN));
 add(toPart(4, 'Head', head, SKIN));
-add(...faceOn(4, head, HC, { skin: SKIN, skinDark: SKIN_D, brow: HAIR, eye: 1.55, browTilt: 0.06, smile: 0.015 }));
+add(...faceOn(4, head, HC, { skin: SKIN, skinDark: SKIN_D, brow: HAIR, eye: 1.3, browTilt: 0.06, smile: 0.03 }));
 
 // ---- 5 hair, mustache and cap ----
 add(toPart(5, 'Hair Top', blob(H([0, 0.085, -0.03]), vmul([0.192, 0.14, 0.2], K), 7), HAIR));
@@ -118,6 +119,16 @@ add(toPart(6, 'Baton', sweep([R([0.215, 0.9, 0.04], 0.024), R([0.232, 0.76, 0.05
 add(toPart(6, 'Baton Grip', sweep([R([0.216, 0.9, 0.04], 0.027), R([0.221, 0.84, 0.044], 0.027)], { sides: 6 }), GRAY_L));
 add(plate(6, 'Cuffs Pouch', pelvis, [0.1, 0.9, 0], [0.3, 0, -1], 0.11, 0.1, 0.05, BLACK));
 void band2;
+
+applyStyle(parts, [
+  [/^(Eye White|Iris|Pupil|Eye Highlight|Mouth)/, { smooth: true }],
+  [/^(Head|Neck|Ear |Hand |Thumb |Nose|Cheek)/, { smooth: true, paint: 0.4 }],
+  [/^(Hair|Sideburn|Mustache|Eyebrow)/, { smooth: true, paint: 0.55 }],
+  [/^(Torso|Sleeve|Shoulder|Elbow|Pocket|Collar|Placket|Tie|Leg |Pelvis|Knee Pad)/, { paint: 0.5 }],
+  [/^(Cap)/, { paint: 0.4 }],
+  [/^(Boot)/, { paint: 0.35 }],
+  [/^(Belt|Holster|Baton|Radio|Cuff|Epaulette)/, { paint: 0.2 }],
+]);
 
 export const POLICE: AssetDef = {
   id: 'police',

@@ -195,42 +195,50 @@ export const pivotX = (pivot: V, deg: number) => (local: V): V => {
 
 export { add as vadd, sub as vsub, mul as vmul, norm as vnorm, len as vlen, cross as vcross };
 
-/** The face: eyes with whites and pupils, brows, a nose, a smile and ears, all sitting on the real head surface. */
-export function faceOn(step: number, head: PolyMesh, c: V, o: { skin: string; skinDark: string; brow: string; lip?: string; pupil?: string; eye?: number; sep?: number; eyeY?: number; browTilt?: number; smile?: number; frown?: number }): AssetPart[] {
+/**
+ * The face, in the soft stylised way of illustrated characters: big eyes built in layers (white, iris, pupil and a
+ * glint of light), thick brows, a rounded nose, a smile and rosy cheeks, all sitting on the real head surface.
+ */
+export function faceOn(step: number, head: PolyMesh, c: V, o: { skin: string; skinDark: string; brow: string; lip?: string; pupil?: string; iris?: string; blush?: string; eye?: number; sep?: number; eyeY?: number; browTilt?: number; smile?: number; frown?: number }): AssetPart[] {
   const eye = o.eye ?? 1;
   const sep = o.sep ?? 0.43;
   const ey = o.eyeY ?? 0.1;
   const parts: AssetPart[] = [];
   for (const s of [1, -1] as const) {
     const side = s === 1 ? 'Left' : 'Right';
-    const w = onSurface(head, c, [s * sep, ey, 1], -0.012);
-    parts.push(toPart(step, `Eye White ${side}`, blob(w.p, [0.047 * eye, 0.043 * eye, 0.028 * eye], 6), '#fafafa'));
-    const p = onSurface(head, c, [s * sep * 0.96, ey - 0.005, 1], 0.014);
-    parts.push(toPart(step, `Pupil ${side}`, blob(p.p, [0.026 * eye, 0.027 * eye, 0.016 * eye], 5), o.pupil ?? '#1e2125'));
+    const dirE: V = [s * sep, ey, 1];
+    const w = onSurface(head, c, dirE, -0.014);
+    parts.push(toPart(step, `Eye White ${side}`, blob(w.p, [0.04 * eye, 0.038 * eye, 0.026 * eye], 8), '#fafafa'));
+    const ir = onSurface(head, c, [s * sep * 0.97, ey - 0.004, 1], 0.004);
+    parts.push(toPart(step, `Iris ${side}`, blob(ir.p, [0.023 * eye, 0.026 * eye, 0.016 * eye], 8), o.iris ?? '#6b4326'));
+    const pu = onSurface(head, c, [s * sep * 0.96, ey - 0.006, 1], 0.014);
+    parts.push(toPart(step, `Pupil ${side}`, blob(pu.p, [0.014 * eye, 0.016 * eye, 0.01 * eye], 6), o.pupil ?? '#1a1a1d'));
+    const gl = onSurface(head, c, [s * sep * 0.9, ey + 0.03, 1], 0.016);
+    parts.push(toPart(step, `Eye Highlight ${side}`, blob(gl.p, [0.011 * eye, 0.011 * eye, 0.008 * eye], 5), '#ffffff'));
     const tilt = (o.browTilt ?? 0.05) * s;
     const brow = ribbon(
       head,
       [
-        { from: c, dir: [s * (sep + 0.2), ey + 0.3 - tilt * 0.6, 1] },
-        { from: c, dir: [s * (sep + 0.02), ey + 0.34, 1] },
-        { from: c, dir: [s * (sep - 0.2), ey + 0.3 + tilt * 0.6, 1] },
+        { from: c, dir: [s * (sep + 0.22), ey + 0.3 - tilt * 0.6, 1] },
+        { from: c, dir: [s * (sep + 0.02), ey + 0.355, 1] },
+        { from: c, dir: [s * (sep - 0.2), ey + 0.31 + tilt * 0.6, 1] },
       ],
-      [0.014, 0.01],
+      [0.02, 0.012],
       0.004,
-      { sides: 4, taper: 0.15 },
+      { sides: 5, taper: 0.25 },
     );
     parts.push(toPart(step, `Eyebrow ${side}`, brow, o.brow));
     const ear = onSurface(head, c, [s, 0.02, -0.05], -0.02);
-    parts.push(toPart(step, `Ear ${side}`, blob(ear.p, [0.03, 0.055, 0.04], 5), o.skin));
+    parts.push(toPart(step, `Ear ${side}`, blob(ear.p, [0.032, 0.058, 0.042], 6), o.skin));
+    const cheek = onSurface(head, c, [s * 0.62, -0.12, 1], -0.012);
+    parts.push(toPart(step, `Cheek ${side}`, blob(cheek.p, [0.036 * eye, 0.024 * eye, 0.012], 6), o.blush ?? '#e59a86'));
   }
-  const nose = onSurface(head, c, [0, ey - 0.12, 1], -0.012);
-  const noseLen = 0.06 * eye;
-  const { rot } = aim([0, 0, 0], nose.n);
-  parts.push({ step, name: 'Nose', shape: 'pyramid', pos: round3(add(nose.p, mul(nose.n, noseLen * 0.35))), size: [0.07 * eye, noseLen, 0.07 * eye], color: o.skinDark, rot });
+  const nose = onSurface(head, c, [0, ey - 0.12, 1], -0.01);
+  parts.push(toPart(step, 'Nose', blob(add(nose.p, mul(nose.n, 0.012 * eye)), [0.024 * eye, 0.026 * eye, 0.024 * eye], 6), o.skinDark));
   const sm = o.smile ?? 0.02;
   const mouth = ribbon(
     head,
-    [-0.14, -0.07, 0, 0.07, 0.14].map((x) => ({ from: c, dir: [x, -0.4 + sm * (Math.abs(x) * 6 - 0.5) - (o.frown ?? 0) * (1 - Math.abs(x) * 6), 1] as V })),
+    [-0.15, -0.075, 0, 0.075, 0.15].map((x) => ({ from: c, dir: [x, -0.42 + sm * (Math.abs(x) * 6 - 0.5) - (o.frown ?? 0) * (1 - Math.abs(x) * 6), 1] as V })),
     [0.009, 0.006],
     0.003,
     { sides: 4, taper: 0 },

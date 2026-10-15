@@ -1,5 +1,5 @@
 import type { AssetDef, AssetPart } from '../assets';
-import { LR, ball, box, frustum, part, tube, limb } from './kit';
+import { LR, applyStyle, ball, box, frustum, part, tube, limb } from './kit';
 
 const BODY = '#d9503a';
 const BODY_D = '#b83e2c';
@@ -89,6 +89,14 @@ const parts: AssetPart[] = [
   limb(7, 'Antenna', [-0.6, 1.4, -0.85], [-0.62, 1.78, -0.9], 0.03, 0.012, DARK, 5),
   ball(7, 'Antenna Tip', [-0.62, 1.79, -0.9], [0.05, 0.05, 0.05], ORANGE, 5),
 ];
+
+applyStyle(parts, [
+  [/^(Body|Hood|Trunk Lid|Cabin|Mirror$|Mirror Left|Mirror Right)/, { paint: 0.3 }],
+  [/^(Roof$)/, { paint: 0.18 }],
+  [/Tire/, { paint: 0.12 }],
+  [/^(Headlight$|Headlight Left|Headlight Right|Fog Light)/, { smooth: true }],
+  [/Rim$|Rim Left|Rim Right/, { paint: 0.1 }],
+]);
 
 export const CAR: AssetDef = {
   id: 'car',

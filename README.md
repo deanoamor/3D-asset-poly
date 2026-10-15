@@ -134,3 +134,8 @@ src/engine  three.js viewport (camera, gizmo, picking, snapping), scene build, g
 src/ui      top bar, Layers, Properties, toolbar, poly counter, dialogs, onboarding
 tests       unit tests      e2e   browser tests
 ```
+
+## Surface look (smooth + painted color)
+Select a shape (or a group) and open **Surface** in Properties: **Flat / Smooth** shading and **Color variation**
+(painted per-vertex gradients, not image textures). Ready-made assets use smooth faces/skin/hair and faceted painted clothes.
+GLB/glTF export carries normals and `COLOR_0`; OBJ/MTL only carries the base color.

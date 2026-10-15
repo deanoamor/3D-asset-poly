@@ -7,7 +7,7 @@ import type { SceneObject, ShapeType, Vec3 } from '../core/types';
 import { GeometryCache, MaterialCache, applyTransform } from './sceneBuild';
 import { EditController } from './editMode';
 import { meshSignature } from '../core/mesh';
-import { needsDoubleSide } from '../core/shapes';
+import { lookOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
 
 const R2D = 180 / Math.PI;
 const round = (n: number, d = 1e4) => Math.round(n * d) / d;
@@ -203,8 +203,10 @@ export class Viewport {
 
   private nodeSignature(o: SceneObject): string {
     if (o.kind !== 'shape') return 'group';
-    if (o.mesh) return `mesh:${meshSignature(o.mesh)}:${o.color}:${needsDoubleSide(o)}`;
-    return `${o.shape}:${o.params.segments}:${o.params.taper}:${o.color}`;
+    const look = lookOf(o);
+    const l = `${look.smooth ? 's' : 'f'}${look.paint}`;
+    if (o.mesh) return `mesh:${meshSignature(o.mesh)}:${o.color}:${needsDoubleSide(o)}:${l}`;
+    return `${o.shape}:${o.params.segments}:${o.params.taper}:${o.color}:${l}`;
   }
 
   sync(): void {
@@ -215,7 +217,7 @@ export class Viewport {
       let node = this.nodes.get(o.id);
       const sig = this.nodeSignature(o);
       if (!node) {
-        node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, needsDoubleSide(o))) : new THREE.Group();
+        node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o))) : new THREE.Group();
         node.userData.id = o.id;
         node.castShadow = true;
         node.receiveShadow = true;
@@ -225,7 +227,7 @@ export class Viewport {
         const old = node.geometry;
         node.geometry = this.geos.get(o);
         if (old.userData.faceOfTri) old.dispose(); // edited meshes own their geometry
-        node.material = this.mats.get(o.color, needsDoubleSide(o));
+        node.material = this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o));
         this.sig.set(o.id, sig);
         this.refreshOutlines();
       }
@@ -252,7 +254,7 @@ export class Viewport {
   resetNodeLook(id: string): void {
     const o = this.store.get(id);
     const node = this.nodes.get(id);
-    if (o && node instanceof THREE.Mesh) node.material = this.mats.get(o.color, needsDoubleSide(o));
+    if (o && node instanceof THREE.Mesh) node.material = this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o));
     this.requestRender();
   }
 

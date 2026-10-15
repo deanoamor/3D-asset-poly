@@ -6,6 +6,7 @@ import { objectTriangles } from '../core/shapes';
 import { edgeMap, vertCount } from '../core/mesh';
 import { MIN_SEGMENTS, SHAPE_LABELS, type SceneObject, type Vec3 } from '../core/types';
 import { clear, fmt, h, icon } from './dom';
+import { descendantIds } from '../core/docmath';
 
 interface Field {
   update: () => void;
@@ -124,6 +125,45 @@ export function mountProps(root: HTMLElement, store: Store): void {
     return row;
   }
 
+  /** Flat / Smooth and Color variation for the given objects (and every shape inside groups). */
+  function surfaceSection(ids: string[], title = 'Surface'): HTMLElement {
+    const shapesOf = () => {
+      const all = new Set<string>();
+      for (const id of ids) {
+        all.add(id);
+        descendantIds(store.doc, id).forEach((c) => all.add(c));
+      }
+      return store.doc.objects.filter((o) => all.has(o.id) && o.kind === 'shape');
+    };
+    const flat = h('button', { class: 'segbtn', id: 'surf-flat', 'data-surface': 'flat', title: 'Show the facets', onclick: () => store.setSurface(ids, { smooth: false }) }, 'Flat');
+    const smooth = h('button', { class: 'segbtn', id: 'surf-smooth', 'data-surface': 'smooth', title: 'Round off the shading. Sharp corners (like a box edge) stay sharp.', onclick: () => store.setSurface(ids, { smooth: true }) }, 'Smooth');
+    const range = h('input', { type: 'range', min: '0', max: '100', step: '5', id: 'surf-paint', 'aria-label': 'Color variation' }) as HTMLInputElement;
+    const val = h('output', { class: 'rval' });
+    range.addEventListener('input', () => store.setSurface(ids, { paint: +range.value / 100 }, false));
+    range.addEventListener('change', () => store.commit());
+    fields.push({
+      update: () => {
+        const shapes = shapesOf();
+        if (!shapes.length) return;
+        const allSmooth = shapes.every((o) => o.smooth);
+        const noneSmooth = shapes.every((o) => !o.smooth);
+        flat.classList.toggle('on', noneSmooth);
+        smooth.classList.toggle('on', allSmooth);
+        flat.setAttribute('aria-pressed', String(noneSmooth));
+        smooth.setAttribute('aria-pressed', String(allSmooth));
+        const avg = shapes.reduce((a, o) => a + (o.paint ?? 0), 0) / shapes.length;
+        if (document.activeElement !== range) range.value = String(Math.round(avg * 100));
+        val.textContent = `${Math.round(avg * 100)}%`;
+      },
+    });
+    return section(
+      title,
+      h('div', { class: 'segrow', role: 'group', 'aria-label': 'Shading' }, flat, smooth),
+      h('label', { class: 'prow' }, h('span', {}, 'Color variation'), range, val),
+      h('div', { class: 'tris' }, 'Smooth rounds the shading. Color variation paints soft differences across the surface, like a hand-painted look.'),
+    );
+  }
+
   function buildSingle(o: SceneObject): void {
     const locked = isLockedChain(store.map, o);
     const isShape = o.kind === 'shape';
@@ -165,6 +205,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
     fs.append(section('Position (m)', vec3Row(o, 'position', AXES, 0.25)));
     fs.append(section('Size (m)', vec3Row(o, 'size', isShape && o.shape === 'plane' ? ['W', '–', 'D'] : SIZE_AXES, 0.25, 0.01)));
     fs.append(section('Rotation', vec3Row(o, 'rotation', AXES, 5, undefined, '°')));
+    if (!isShape) fs.append(surfaceSection([o.id], 'Surface (all parts)'));
     if (isShape) {
       const shape = o.shape!;
       const colorIn = h('input', { type: 'color', value: o.color, 'aria-label': 'Color', class: 'colorin' }) as HTMLInputElement;
@@ -186,6 +227,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
           swatches((hx) => store.update(o.id, { color: hx }), o.color),
         ),
       );
+      fs.append(surfaceSection([o.id]));
       const params: HTMLElement[] = [];
       if (!o.mesh && ['cylinder', 'cone', 'sphere'].includes(shape)) {
         const label = shape === 'sphere' ? 'Smoothness' : 'Sides';
@@ -254,7 +296,9 @@ export function mountProps(root: HTMLElement, store: Store): void {
           });
         }),
       ),
+      surfaceSection(ids, 'Surface for all'),
     );
+    fields.forEach((f) => f.update());
   }
 
   function buildEdit(): void {

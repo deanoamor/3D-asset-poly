@@ -26,6 +26,10 @@ export interface SceneObject {
   /** Present once the shape has been edited point by point. Unit-sized; `size` scales it. */
   mesh?: PolyMesh;
   color: string;
+  /** Round the facets: soft shading on curved parts while sharp corners (a box edge) stay sharp. */
+  smooth?: boolean;
+  /** 0..1: soft color differences across the surface (a hand-painted look), stored as vertex colors. */
+  paint?: number;
   visible: boolean;
   locked: boolean;
   parent: string | null;

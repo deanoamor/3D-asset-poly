@@ -1,5 +1,5 @@
 import type { AssetDef, AssetPart } from '../assets';
-import { LR, ball, box, gable, part, tube } from './kit';
+import { LR, applyStyle, ball, box, gable, part, tube } from './kit';
 import type { Vec3 } from '../types';
 
 const LAWN = '#7fb04f';
@@ -151,6 +151,16 @@ add(
   box(5, 'Mailbox', [1.7, 1.2, 8.1], [0.32, 0.26, 0.5], '#3a5a9a'),
   box(5, 'Mailbox Flag', [1.9, 1.3, 8.0], [0.04, 0.2, 0.04], '#d64545'),
 );
+
+applyStyle(parts, [
+  [/^(Lawn)/, { paint: 0.4 }],
+  [/^(Walls|Dormer$)/, { paint: 0.3 }],
+  [/^(Roof$|Dormer Roof|Porch Roof)/, { paint: 0.45 }],
+  [/^(Tree Foliage)/, { paint: 0.55 }],
+  [/^(Tree Trunk)/, { smooth: true, paint: 0.4 }],
+  [/^(Bush|Smoke|Flower \d)/, { smooth: true, paint: 0.5 }],
+  [/Stone|^Foundation$|^Chimney$|Path/, { paint: 0.35 }],
+]);
 
 export const HOUSE: AssetDef = {
   id: 'house',
