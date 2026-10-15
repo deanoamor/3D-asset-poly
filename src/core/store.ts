@@ -507,10 +507,27 @@ export class Store {
         const lastIdx = Math.max(...ids.map((id) => d.objects.findIndex((o) => o.id === id)));
         d.objects.splice(lastIdx + 1, 0, ...clones);
         created.push(top.id);
+        this.copyRig(d, idMap, root, top.id);
       }
     });
     this.select(created);
     return created;
+  }
+
+  /** A duplicated character gets its own copy of the skeleton (and pose), standing where the copy stands. */
+  private copyRig(d: Doc, idMap: Map<string, string>, sourceTop: string, cloneTop: string): void {
+    const owned = (d.rig ?? []).filter((j) => j.owner && idMap.has(j.owner));
+    if (!owned.length) return;
+    const ids = new Map(owned.map((j) => [j.id, newId()]));
+    const delta = worldMatrix(d, cloneTop).multiply(worldMatrix(d, sourceTop).invert());
+    const v = new THREE.Vector3();
+    const r = (n: number) => Math.round(n * 1e5) / 1e5;
+    const copies: Joint[] = owned.map((j) => {
+      v.set(...j.pos).applyMatrix4(delta);
+      return { ...j, id: ids.get(j.id)!, parent: j.parent && ids.has(j.parent) ? ids.get(j.parent)! : null, owner: idMap.get(j.owner!)!, pos: [r(v.x), r(v.y), r(v.z)] as Vec3 };
+    });
+    d.rig = [...(d.rig ?? []), ...copies];
+    if (d.pose) for (const j of owned) if (d.pose[j.id]) d.pose[ids.get(j.id)!] = [...d.pose[j.id]] as Vec3;
   }
 
   /** Selected objects whose ancestors are not also selected. */

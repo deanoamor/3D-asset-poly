@@ -121,6 +121,35 @@ ok(gltf.meshes[skinNodes[0].mesh].primitives.every((p) => p.attributes.JOINTS_0 
 ok(gltf.nodes.some((n) => /Armature/.test(n.name || '')), 'there is an Armature node');
 ok(gltf.skins[0].inverseBindMatrices !== undefined, 'inverse bind matrices are stored');
 
+console.log('# duplicating a character copies its skeleton');
+await page.keyboard.press('Escape');
+await page.evaluate(() => { const s = window.__app.store; const g = s.doc.objects.find((o) => o.name === 'Police Officer'); s.select([g.id]); });
+await page.click('#btn-duplicate');
+await page.waitForTimeout(500);
+d = await D();
+ok(d.rig.length === 44, `the copy has its own skeleton (${d.rig.length} joints)`);
+const owners = new Set(d.rig.map((j) => j.owner));
+ok(owners.size === 2, 'two characters, two skeletons');
+const copyGroup = d.objects.find((o) => o.name === 'Police Officer 2');
+const copyHips = d.rig.find((j) => j.owner === copyGroup.id && j.name === 'Hips');
+const origGroup = d.objects.find((o) => o.name === 'Police Officer');
+const origHips = d.rig.find((j) => j.owner === origGroup.id && j.name === 'Hips');
+ok(Math.abs(copyHips.pos[0] - origHips.pos[0] - 0.5) < 1e-3 && Math.abs(copyHips.pos[2] - origHips.pos[2] - 0.5) < 1e-3, 'the copy skeleton stands on the copy');
+await page.evaluate(() => { const s = window.__app.store; s.select([]); });
+await page.click('#btn-export');
+await page.click('[data-tab="software"]');
+await page.click('.card[data-preset="blender"]');
+await page.selectOption('#export-format', 'glb');
+await page.waitForFunction(() => document.querySelector('#verify')?.dataset.ok !== undefined, null, { timeout: 30000 });
+const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#btn-download')]);
+await dl2.saveAs('e2e/out/rig/two.glb');
+const b2 = new Uint8Array(fs.readFileSync('e2e/out/rig/two.glb'));
+const r2 = await validator.validateBytes(b2);
+ok(r2.issues.numErrors === 0, `two characters: glTF validator ${r2.issues.numErrors} errors, ${r2.issues.numWarnings} warnings`);
+const dv2 = new DataView(b2.buffer, b2.byteOffset);
+const g2 = JSON.parse(new TextDecoder().decode(b2.subarray(20, 20 + dv2.getUint32(12, true))));
+ok(g2.skins?.length === 2 && g2.skins.every((k) => k.joints.length === 22), `two skins of 22 joints (${g2.skins?.length})`);
+
 ok(errs.length === 0, 'no console errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
 await browser.close();
 process.exit(failed ? 1 : 0);

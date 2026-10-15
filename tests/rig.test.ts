@@ -234,3 +234,40 @@ describe('a skeleton follows its character', () => {
     expect(st.joint('a')!.pos).toEqual([0, 2, 0]);
   });
 });
+
+describe('duplicating a character', () => {
+  it('copies the skeleton and the pose, standing where the copy stands', () => {
+    const st = new Store(emptyDoc());
+    const g = st.addShape('box', { name: 'Hero' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; });
+    st.addJoints(arm().map((j) => ({ ...j, owner: g.id })));
+    st.setJointPose('b', [0, 0, 40]);
+    st.select([g.id]);
+    const [copy] = st.duplicateSelected([5, 0, 0]);
+    const rig = st.doc.rig!;
+    expect(rig).toHaveLength(6);
+    const mine = rig.filter((j) => j.owner === copy);
+    expect(mine).toHaveLength(3);
+    expect(new Set(rig.map((j) => j.id)).size).toBe(6); // every joint has its own id
+    expect(mine.find((j) => j.name === 'Shoulder')!.pos).toEqual([5, 2, 0]);
+    expect(mine.find((j) => j.name === 'Wrist')!.parent).toBe(mine.find((j) => j.name === 'Elbow')!.id); // the tree is rebuilt on the copy
+    expect(rig.filter((j) => j.owner === g.id).map((j) => j.pos)).toEqual([[0, 2, 0], [0, 1, 0], [0, 0, 0]]); // the original stays put
+    expect(Object.keys(st.doc.pose!)).toHaveLength(2);
+    // moving the copy leaves the original's skeleton alone
+    st.update(copy, { position: [8, 0, 0] });
+    expect(st.doc.rig!.find((j) => j.owner === g.id && j.name === 'Shoulder')!.pos).toEqual([0, 2, 0]);
+    expect(st.doc.rig!.find((j) => j.owner === copy && j.name === 'Shoulder')!.pos).toEqual([8, 2, 0]);
+    st.undo();
+    st.undo();
+    expect(st.doc.rig).toHaveLength(3); // undo removes the copy and its skeleton together
+  });
+
+  it('a character without a skeleton duplicates as before', () => {
+    const st = new Store(emptyDoc());
+    const o = st.addShape('box', { name: 'Crate' });
+    st.select([o.id]);
+    st.duplicateSelected();
+    expect(st.doc.rig).toBeUndefined();
+    expect(st.doc.objects).toHaveLength(2);
+  });
+});
