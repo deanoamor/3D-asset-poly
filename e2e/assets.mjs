@@ -47,15 +47,9 @@ await page.evaluate(() => { const { vp } = window.__app; vp.camera.position.set(
 await page.evaluate(() => { const s = window.__app.store; s.select([]); });
 await page.waitForTimeout(300);
 await shot('02-all-four');
-const st4 = await page.getAttribute('#polypill', 'data-status');
-ok(st4 === 'red' && (await page.isVisible('.polybanner')), `all four together exceed the Mobile budget, so the counter warns (${await page.textContent('#polypill')})`);
-await page.evaluate(() => window.__app.store.setTarget('pc'));
-ok((await page.getAttribute('#polypill', 'data-status')) === 'green', 'and it is green again on the PC budget');
-await page.evaluate(() => window.__app.store.setTarget('mobile'));
-for (const id of ['police', 'car', 'house', 'footballer']) {
-  const t = await page.evaluate((id) => { const s = window.__app.store; const g = s.doc.objects.find((o) => o.kind === 'group' && o.name === ({ police: 'Police Officer', car: 'Car', house: 'House', footballer: 'Football Player' })[id]); const ids = new Set([g.id, ...s.doc.objects.filter((o) => o.parent === g.id).map((o) => o.id)]); return s.doc.objects.filter((o) => ids.has(o.id) && o.kind === 'shape').length; }, id);
-  void t;
-}
+const total = +(await page.getAttribute('#polypill', 'data-total'));
+ok(total > 5000, `the counter just counts, with no limit: ${await page.textContent('#polypill')}`);
+ok(!(await page.isVisible('.polybanner')) && !(await page.isVisible('#btn-reduce')), 'there is no budget warning or reduce button any more');
 
 console.log('# edit an asset part');
 await page.evaluate(() => { const s = window.__app.store; const cab = s.doc.objects.find((o) => o.name === 'Cabin'); s.select([cab.id]); });
@@ -126,7 +120,7 @@ const rep = await validator.validateBytes(bytes);
 ok(rep.issues.numErrors === 0, `glTF validator: ${rep.issues.numErrors} errors, ${rep.issues.numWarnings} warnings, ${rep.info.totalTriangleCount} triangles`);
 const dv = new DataView(bytes.buffer);
 const j = JSON.parse(new TextDecoder().decode(bytes.slice(20, 20 + dv.getUint32(12, true))));
-ok(['Police Officer', 'Torso', 'Cap Badge', 'Head', 'Eye White Left', 'Thigh Right'].every((n) => j.nodes.some((x) => x.name === n)), 'part names survive into the glTF');
+ok(['Police Officer', 'Torso', 'Cap Badge', 'Head', 'Eye White Left', 'Leg Right', 'Boot Sole Left'].every((n) => j.nodes.some((x) => x.name === n)), 'part names survive into the glTF');
 
 ok(errs.length === 0, 'no console errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
 await browser.close();

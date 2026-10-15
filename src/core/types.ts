@@ -2,7 +2,6 @@ import type { PolyMesh } from './mesh';
 
 export type ShapeType = 'box' | 'cylinder' | 'sphere' | 'cone' | 'pyramid' | 'plane';
 export type Vec3 = [number, number, number];
-export type TargetId = 'mobile' | 'pc' | 'custom';
 export type EnginePreset = 'unity' | 'godot' | 'unreal' | 'web';
 
 export interface ShapeParams {
@@ -35,23 +34,10 @@ export interface SceneObject {
 export interface Doc {
   version: 1;
   name: string;
-  target: TargetId;
-  customBudget: number;
   enginePreset: EnginePreset;
   /** Flat list; sibling order is the order of appearance. */
   objects: SceneObject[];
 }
-
-export const TARGET_BUDGETS: Record<Exclude<TargetId, 'custom'>, number> = {
-  mobile: 5000,
-  pc: 50000,
-};
-
-export const TARGET_LABELS: Record<TargetId, string> = {
-  mobile: 'Mobile',
-  pc: 'PC',
-  custom: 'Custom',
-};
 
 export const SHAPE_LABELS: Record<ShapeType, string> = {
   box: 'Box',

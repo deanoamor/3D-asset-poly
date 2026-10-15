@@ -80,8 +80,8 @@ function STEPS_CHEST(): Step[] {
     },
   },
   {
-    title: 'Check the polygon budget',
-    text: 'The counter at the top-left stays green: a chest is only a few dozen triangles. When it turns red, the app shows the heaviest part and how to simplify it.',
+    title: 'Watch the triangle count',
+    text: 'The counter at the top-left shows how many triangles your model has. Click it to see which parts use the most. There is no limit; it is just good to know.',
     highlight: '#polypill',
     manual: true,
     done: () => false,

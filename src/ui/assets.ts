@@ -55,7 +55,7 @@ export function mountLearn(root: HTMLElement, store: Store, vp: Viewport, others
       card.append(
         h('div', { class: 'coach-head' }, h('span', { class: 'coach-count' }, `Learn · ${d.name}`), h('button', { class: 'tbtn xs', 'aria-label': 'Close', onclick: stop }, icon('close', 14))),
         h('strong', {}, `You have built a ${d.name.toLowerCase()}`),
-        h('p', {}, `${st.parts} parts and ${fmt(st.triangles)} triangles. That is a small fraction of a mobile budget, which is how game props are made: simple shapes, used well.`),
+        h('p', {}, `${st.parts} parts and ${fmt(st.triangles)} triangles. Every part is a plain shape you can recolor, reshape or replace. Try changing one.`),
         h('div', { class: 'lchallenge' }, h('b', {}, 'Challenge'), h('span', {}, d.challenge)),
         h('div', { class: 'coach-actions' },
           h('button', { class: 'btn primary sm', id: 'learn-export', onclick: () => { stop(); openExportDialog(store); } }, icon('export', 14), 'Export it'),

@@ -1,5 +1,4 @@
 import type { Store } from '../core/store';
-import { polyStats } from '../core/store';
 import { childrenOf, descendantIds } from '../core/docmath';
 import type { SceneObject } from '../core/types';
 import { clear, h, icon, toast } from './dom';
@@ -36,7 +35,7 @@ export function mountLayers(root: HTMLElement, store: Store): void {
     mkBtn('trash', 'Delete', 'Delete (Del)', () => store.deleteSelected()),
   );
 
-  function row(o: SceneObject, depth: number, heavyId: string | null, redBudget: boolean): HTMLElement {
+  function row(o: SceneObject, depth: number): HTMLElement {
     const selected = store.selection.includes(o.id);
     const isGroup = o.kind === 'group';
     const open = !collapsed.has(o.id);
@@ -73,7 +72,7 @@ export function mountLayers(root: HTMLElement, store: Store): void {
     const el = h(
       'div',
       {
-        class: `layer${selected ? ' sel' : ''}${o.visible && !store.learnHidden?.has(o.id) ? '' : ' dim'}${heavyId === o.id && redBudget ? ' heavy' : ''}`,
+        class: `layer${selected ? ' sel' : ''}${o.visible && !store.learnHidden?.has(o.id) ? '' : ' dim'}`,
         role: 'treeitem',
         'aria-selected': String(selected),
         'aria-level': String(depth + 1),
@@ -175,11 +174,9 @@ export function mountLayers(root: HTMLElement, store: Store): void {
       );
       return;
     }
-    const stats = polyStats(doc);
-    const heavy = stats.perObject[0]?.id ?? null;
     const walk = (parent: string | null, depth: number) => {
       for (const o of childrenOf(doc, parent)) {
-        list.append(row(o, depth, heavy, stats.status === 'red'));
+        list.append(row(o, depth));
         if (o.kind === 'group' && !collapsed.has(o.id)) walk(o.id, depth + 1);
       }
     };

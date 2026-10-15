@@ -106,19 +106,15 @@ await page.click('.flyout.palette .sw[data-hex="#8b5a2b"]');
 s = await st();
 ok(s.objs.filter((o) => o.kind === 'shape').every((o) => o.color === '#8b5a2b'), 'swatch paints the selected group');
 
-console.log('# poly budget');
+console.log('# triangle counter');
 await page.keyboard.press('v');
-await page.evaluate(() => { const { store } = window.__app; store.select([]); const o = store.addShape('sphere'); store.updateParams(o.id, { segments: 64 }); store.setTarget('mobile'); store.mutate((d) => { d.objects.filter((x) => x.shape === 'sphere').forEach((x) => (x.size = [1, 1, 1])); }); const s2 = store.addShape('cylinder'); store.updateParams(s2.id, { segments: 48 }); });
+await page.evaluate(() => { const { store } = window.__app; store.select([]); const o = store.addShape('sphere'); store.updateParams(o.id, { segments: 64 }); const s2 = store.addShape('cylinder'); store.updateParams(s2.id, { segments: 48 }); });
 await page.waitForTimeout(100);
-const status = await page.getAttribute('#polypill', 'data-status');
-ok(status === 'red' || status === 'yellow', `counter is ${status} with a heavy sphere (${await page.textContent('#polypill')})`);
-if (status === 'red') {
-  ok(await page.isVisible('.polybanner'), 'over-budget banner suggests a fix');
-  await shot('05-red');
-  await page.click('#btn-reduce');
-  const st2 = await page.getAttribute('#polypill', 'data-status');
-  ok(st2 !== 'red' || true, `after Reduce: ${st2}`);
-}
+ok(+(await page.getAttribute('#polypill', 'data-total')) > 4000, `counter shows the total with no limit (${await page.textContent('#polypill')})`);
+ok(!(await page.isVisible('.polybanner')), 'and never warns about a budget');
+await page.click('#polypill');
+ok(await page.isVisible('.polypop'), 'clicking it lists the heaviest parts');
+await page.keyboard.press('Escape');
 await page.evaluate(() => { const { store } = window.__app; store.select(store.doc.objects.filter((o) => o.shape === 'sphere' || o.shape === 'cylinder').map((o) => o.id)); store.deleteSelected(); });
 
 console.log('# export');

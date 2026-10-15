@@ -3,8 +3,8 @@ import type { Store } from '../core/store';
 import { emptyDoc, polyStats } from '../core/store';
 import { runChecks, type Check } from '../core/checks';
 import { PRESETS, defaultFormat, importGuide, type ExportFormat } from '../core/presets';
-import { removeTinyParts, reduceDetail } from '../core/suggest';
-import { TARGET_BUDGETS, TARGET_LABELS, type EnginePreset, type TargetId } from '../core/types';
+import { removeTinyParts } from '../core/suggest';
+import type { EnginePreset } from '../core/types';
 import { download, exportFiles, slug } from '../engine/exporter';
 import { verifyExport } from '../engine/verify';
 import { hasEvent, logEvent, readEvents } from '../core/analytics';
@@ -17,70 +17,34 @@ export const emit = (name: string, detail?: unknown) => bus.dispatchEvent(new Cu
 // ---------- new project ----------
 
 export function openProjectDialog(store: Store, opts: { first: boolean }): void {
-  let target: TargetId = 'mobile';
   let close: () => void = () => {};
-  const name = h('input', { type: 'text', value: 'Wooden chest', maxlength: '60', 'aria-label': 'Project name', id: 'proj-name' }) as HTMLInputElement;
-  const custom = h('input', { type: 'number', min: '100', step: '500', value: '10000', 'aria-label': 'Custom triangle budget', disabled: true }) as HTMLInputElement;
+  const name = h('input', { type: 'text', value: 'My prop', maxlength: '60', 'aria-label': 'Project name', id: 'proj-name' }) as HTMLInputElement;
   const guide = h('input', { type: 'checkbox', checked: !hasEvent('first_export'), id: 'proj-guide' }) as HTMLInputElement;
-  const cards = (['mobile', 'pc', 'custom'] as TargetId[]).map((t) => {
-    const c = h('button', {
-      class: `card${t === target ? ' on' : ''}`,
-      'data-target': t,
-      type: 'button',
-      onclick: () => {
-        target = t;
-        cards.forEach((x) => x.classList.toggle('on', x.dataset.target === t));
-        custom.disabled = t !== 'custom';
-        customRow.classList.toggle('hidden', t !== 'custom');
-      },
-    }, h('strong', {}, TARGET_LABELS[t]), h('span', {}, t === 'mobile' ? `${fmt(TARGET_BUDGETS.mobile)} triangles. Phones, tablets, web.` : t === 'pc' ? `${fmt(TARGET_BUDGETS.pc)} triangles. Desktop and console.` : 'Set your own budget.'));
-    return c;
-  });
-  const customRow = h('label', { class: 'prow hidden' }, h('span', {}, 'Custom budget'), custom, h('span', { class: 'unit' }, 'tris'));
   const backup =
     !opts.first && store.doc.objects.length
       ? h('p', { class: 'fnote' }, 'Your current project is replaced. ', h('button', { class: 'link', onclick: () => saveProjectFile(store) }, 'Download a backup first'))
       : null;
+  const create = (guided: boolean, openAssets: boolean) => {
+    clearSaved();
+    store.load(emptyDoc(name.value.trim() || 'Untitled prop'));
+    store.setUi({ tool: 'select' });
+    logEvent('project_created', { guided });
+    close();
+    emit('project-created', { guided });
+    if (openAssets) emit('open-assets');
+  };
   const body = h('div', { class: 'dlg' },
     h('h2', {}, opts.first ? 'Welcome. Let’s make a game prop.' : 'New project'),
-    h('p', { class: 'lead' }, 'Pick a target and the polygon budget appears right away. You can change it any time.'),
+    h('p', { class: 'lead' }, 'Draw shapes, reshape them point by point, and export to your game engine. Start empty, or use a ready-made character or prop.'),
     h('label', { class: 'field' }, h('span', {}, 'Project name'), name),
-    h('div', { class: 'field' }, h('span', {}, 'Target'), h('div', { class: 'cards' }, ...cards), customRow),
     h('label', { class: 'check' }, guide, h('span', {}, 'Guide me through my first prop (a wooden chest, about 10 minutes)')),
     backup,
     h('div', { class: 'dlg-actions' },
       opts.first ? null : h('button', { class: 'btn', onclick: () => close() }, 'Cancel'),
       opts.first
-        ? h('button', {
-            class: 'btn',
-            id: 'btn-create-assets',
-            title: 'Start a project and open the library of ready-made characters and props',
-            onclick: () => {
-              const doc = emptyDoc(name.value.trim() || 'Untitled prop', target);
-              doc.customBudget = Math.max(100, +custom.value || 10000);
-              clearSaved();
-              store.load(doc);
-              logEvent('project_created', { target, guided: false });
-              close();
-              emit('project-created', { guided: false });
-              emit('open-assets');
-            },
-          }, 'Browse ready-made assets')
+        ? h('button', { class: 'btn', id: 'btn-create-assets', title: 'Start a project and open the library of ready-made characters and props', onclick: () => create(false, true) }, 'Browse ready-made assets')
         : null,
-      h('button', {
-        class: 'btn primary',
-        id: 'btn-create',
-        onclick: () => {
-          const doc = emptyDoc(name.value.trim() || 'Untitled prop', target);
-          doc.customBudget = Math.max(100, +custom.value || 10000);
-          clearSaved();
-          store.load(doc);
-          store.setUi({ tool: 'select' });
-          logEvent('project_created', { target, guided: guide.checked });
-          close();
-          emit('project-created', { guided: guide.checked });
-        },
-      }, 'Create project'),
+      h('button', { class: 'btn primary', id: 'btn-create', onclick: () => create(guide.checked, false) }, 'Create project'),
     ),
   );
   close = modal(body, { dismissable: !opts.first });
@@ -255,10 +219,7 @@ function checkRow(c: OkRow, store: Store, rerender: () => void, closeDlg: () => 
       closeDlg();
     } }, 'Show me') : null,
     c.fix ? h('button', { class: 'btn sm', onclick: () => {
-      if (c.fix!.id === 'reduce-detail') {
-        const msg = reduceDetail(store);
-        toast(msg ?? 'Nothing left to simplify automatically.');
-      } else if (c.fix!.id === 'remove-tiny') {
+      if (c.fix!.id === 'remove-tiny') {
         toast(`Removed ${removeTinyParts(store)} tiny part(s).`);
       }
       rerender();

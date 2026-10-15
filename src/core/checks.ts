@@ -1,6 +1,5 @@
 import type { Doc } from './types';
 import { byId, effectivelyVisible } from './docmath';
-import { polyStats } from './store';
 import { SHAPE_LABELS } from './types';
 
 export interface Check {
@@ -8,7 +7,7 @@ export interface Check {
   message: string;
   /** Object to select when the user clicks "Show me". */
   objectId?: string;
-  fix?: { label: string; id: 'reduce-detail' | 'rename-defaults' | 'remove-tiny' };
+  fix?: { label: string; id: 'remove-tiny' };
 }
 
 /** Human-language checks that run before export. */
@@ -54,22 +53,6 @@ export function runChecks(doc: Doc): Check[] {
       level: 'warn',
       message: `Group "${skewed.name}" is stretched unevenly and contains rotated parts. They may shear (look slanted) in the engine.`,
       objectId: skewed.id,
-    });
-  }
-
-  const stats = polyStats(doc);
-  if (stats.status === 'red') {
-    const heavy = stats.perObject[0];
-    out.push({
-      level: 'warn',
-      message: `The model has ${stats.total.toLocaleString()} triangles, over the ${stats.budget.toLocaleString()} budget. "${heavy.name}" is the heaviest part (${heavy.tris.toLocaleString()}).`,
-      objectId: heavy.id,
-      fix: { label: 'Reduce detail', id: 'reduce-detail' },
-    });
-  } else if (stats.status === 'yellow') {
-    out.push({
-      level: 'info',
-      message: `The model uses ${Math.round(stats.ratio * 100)}% of the polygon budget. Still fine, but there is little room left.`,
     });
   }
 

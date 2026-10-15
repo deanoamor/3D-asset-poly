@@ -1,7 +1,7 @@
 # Poly Studio (working title)
 
 A browser editor for low-poly game props, built from the PRD "Platform 3D Polygon Asset untuk Pemula".
-A beginner can draw shapes, size and color them, watch a live triangle budget, and export a game-ready
+A beginner can draw shapes, size and color them, watch a live triangle count, and export a game-ready
 glTF in one click. It runs fully in the browser; nothing is uploaded and there are no accounts.
 
 ## Run it
@@ -35,11 +35,11 @@ Stack: Vite, TypeScript, three.js. No UI framework. The glTF output is checked w
 | FR-05 Contextual Properties | Done | Group shows transform only; shapes add color and shape settings (sides, smoothness, top size). |
 | FR-06 Snapping + duplicate | Done | Grid snap (0.25 m), snap to other objects' faces, Ctrl+D. Both toggles are in the canvas corner. |
 | FR-07 Color per object | Done | Color picker plus a 24-swatch palette; Color tool paints on click. |
-| FR-08 Real-time polygon counter | Done | Mobile 5,000 / PC 50,000 / Custom. Green under 70%, yellow 70-100%, red over. Names the heaviest part and offers a one-click "Reduce". |
+| FR-08 Real-time triangle counter | Changed | Shows the total and the heaviest parts. The budget feature (targets, limits, warnings, auto-reduce) was removed on request: there is no limit. |
 | FR-09 One-click export to a game engine | Done | Pick Unity, Godot, Unreal or Web, then a format (below). Pivot is the bottom center, 1 unit = 1 m. Before download the app re-opens the generated file and checks triangle count, size and pivot. |
 | FR-10 Unlimited undo/redo + auto-save | Done | History is capped at 500 steps. Project and history survive closing the tab. |
 | FR-11 Guided first project | Done | 7 steps for a wooden chest. Each step detects completion, and "Do it for me" performs it. |
-| FR-12 Pre-export checks | Partial | Empty scene, near-flat parts, skewed groups, over budget, default names, hidden parts. Auto-fix for budget and tiny parts. |
+| FR-12 Pre-export checks | Partial | Empty scene, near-flat parts, skewed groups, default names, hidden parts. Auto-fix for tiny parts. |
 | FR-16 Edit Shape mode | Done | See "Edit Shape" below. Entering and leaving never damages the model, and every step can be undone. |
 | FR-13, FR-14, FR-15, FR-17, FR-18 | Not started | Boolean/bevel (mirror exists only inside Edit Shape), template library, style presets, version history, FBX/OBJ. |
 
@@ -53,25 +53,26 @@ The **Assets** button (top bar) opens four detailed, ready-made assets, lit with
 
 | Asset | Parts | Triangles | What it shows off |
 |---|---|---|---|
-| **Police Officer** | 78 | ~1,400 | tapered limbs, a head with a jaw, a face (eyes, brows, nose, mouth), layered uniform, cap and gear |
-| **Car** | 83 | ~1,700 | sloped hood and glass, wheel wells, tire + rim + hub wheels, lights, grille, trim, roof rack |
-| **House** | 143 | ~1,900 | half-timber walls, tiled roof with a dormer, door, windows, shutters, porch, chimney with smoke, garden, fence, tree |
-| **Football Player** | 86 | ~1,600 | a mid-kick pose (limbs aimed between joints, a tilted boot), kit with number and stripes, spiky hair, a patched ball |
+| **Police Officer** | ~85 | ~2,400 | one-piece tapered limbs, a head with a jaw and a face that sits on its surface, layered uniform, cap, gear |
+| **Car** | ~84 | ~1,700 | sloped hood and glass, wheel wells, tire + rim + hub wheels, lights, grille, trim, roof rack |
+| **House** | ~155 | ~2,000 | half-timber walls, tiled roof with a dormer, doors, windows, shutters, porch, chimney with smoke, garden, fence, tree |
+| **Football Player** | ~85 | ~2,600 | a mid-kick pose with bent one-piece limbs, a boot that follows the foot, kit with number and stripes, spiky hair, a patched ball |
 
-Everything is made only with what the editor offers: cylinders with few sides and a Top size, flattened spheres, pyramids, thin
-boxes, and shapes reshaped with Edit shape (chests, heads, hoods, the car cabin, the gable roof). Each asset is far below the PC
-budget and fits the Mobile budget on its own (all four together are over it, which makes a good lesson in the polygon counter).
+**Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
+gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test
+(`tests/connected.test.ts`) fails if any part of an asset is left detached from the rest.
+Everything is a closed, editable mesh: open any part with Edit shape.
 
 - **Add to project** puts the asset into the current project as a group, to the right of what is already there. Every part has a
-  clear name (Torso, Eye White Left, Front Tire Right, Roof, Chimney Cap…), so you can recolor, resize, reshape or export it.
+  clear name (Torso, Eye White Left, Front Tire Right, Roof…), so you can recolor, resize, reshape or export it.
 - **Learn how it is made** rebuilds the asset in 6 to 8 steps. Each step shows the new parts (highlighted on the canvas), the tools
-  and ideas used, and a closing challenge. The lesson only hides parts on screen: the project data is never changed, so a reload
-  cannot leave anything hidden.
-- The first-run dialog has **Browse ready-made assets** so new users see what the editor can do straight away.
-- **Preview** now shows the model with a warm backdrop, soft light and a real floor shadow.
+  and ideas used, and a closing challenge. The lesson only hides parts on screen: the project data is never changed.
+- The first-run dialog has **Browse ready-made assets**.
+- **Preview** shows the model with a warm backdrop, soft light and a real floor shadow.
 
-Assets are data in `src/core/library/*.ts`, built from the helpers in `src/core/library/kit.ts` (`limb` aims a tapered cylinder between
-two points, `band` wraps a ring around it, `face` places eyes/brows/nose/mouth, `frustum`/`wedge`/`headMesh`/`gable` are edited shapes).
+Assets are data in `src/core/library/*.ts`. `organic.ts` has the seamless builders (`sweep` a tube along a path, `blob`, `headBlob`,
+`plate`/`ribbon`/`onSurface` for details on a surface, `faceOn`), `body.ts` builds boots, and `kit.ts` has the box-based helpers
+the car and house use.
 
 ## Edit Shape (turn a box into something else)
 
@@ -110,7 +111,7 @@ Not covered by official docs, so left out: collision naming inside glTF for Unre
 - Model: parametric (shape + size + a few parameters), no free-form mesh yet.
 - Storage: local only (localStorage for the project, IndexedDB for undo history), no login.
 - UI language: English.
-- Budgets: Mobile 5,000 and PC 50,000 triangles are placeholders to validate with real developers.
+- No triangle budget: the counter only shows the total.
 - Product name: "Poly Studio" is a working title (`APP_NAME` in `src/ui/topbar.ts`).
 
 ## Known limits
@@ -128,7 +129,7 @@ Not covered by official docs, so left out: collision naming inside glTF for Unre
 ## Layout
 
 ```
-src/core    document model, undo/redo, persistence, shapes, budget, checks, presets (no DOM)
+src/core    document model, undo/redo, persistence, shapes, checks, presets, asset library (no DOM)
 src/engine  three.js viewport (camera, gizmo, picking, snapping), scene build, glTF export
 src/ui      top bar, Layers, Properties, toolbar, poly counter, dialogs, onboarding
 tests       unit tests      e2e   browser tests

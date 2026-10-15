@@ -1,5 +1,6 @@
 import type { AssetDef, AssetPart } from '../assets';
-import { FLIP, LR, add3, ball, band, box, face, frustum, headMesh, lerp3, limb, mirrorRot, part, tube, wedge } from './kit';
+import { band2, bootParts } from './body';
+import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
 
 const NAVY = '#22304f';
@@ -15,95 +16,127 @@ const SKIN = '#e8b58a';
 const SKIN_D = '#d29a70';
 const HAIR = '#3a2a20';
 
-// joints (left side, +x)
-const HIP: Vec3 = [0.1, 0.86, 0];
-const KNEE: Vec3 = [0.12, 0.58, 0.03];
-const ANKLE: Vec3 = [0.115, 0.37, -0.005];
-const SHOULDER: Vec3 = [0.3, 1.34, 0];
-const ELBOW: Vec3 = [0.39, 1.08, 0.05];
-const WRIST: Vec3 = [0.4, 0.85, 0.17];
-const HEAD: Vec3 = [0, 1.66, 0];
+const parts: AssetPart[] = [];
+const add = (...p: AssetPart[]) => parts.push(...p);
+const R = (p: Vec3, r: number | [number, number]): Ring => ({ p, r });
 
-const side = (s: 1 | -1, p: Vec3): Vec3 => [p[0] * s, p[1], p[2]];
+// ---- the body, built first so details can sit on its surface ----
+const torso = sweep([R([0, 0.87, 0], [0.2, 0.135]), R([0, 0.95, 0], [0.208, 0.14]), R([0, 1.12, 0.004], [0.232, 0.148]), R([0, 1.28, 0.008], [0.27, 0.152]), R([0, 1.4, 0.012], [0.262, 0.14])], { sides: 8, phase: Math.PI / 8 });
+const pelvis = blob([0, 0.86, 0], [0.215, 0.1, 0.14], 8);
+const K = 1.22; // a big head, as in stylised characters
+const HC: Vec3 = [0, 1.7, 0.014];
+const H = (v: Vec3): Vec3 => [HC[0] + v[0] * K, HC[1] + v[1] * K, HC[2] + v[2] * K];
+const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 8);
 
-const parts: AssetPart[] = [
-  // 0 boots
-  ...LR('Boot Foot', (s, n) => box(0, n, [s * 0.115, 0.075, 0.07], [0.17, 0.15, 0.34], BLACK, { mesh: () => wedge(0.14) })),
-  ...LR('Boot Sole', (s, n) => box(0, n, [s * 0.115, 0.018, 0.07], [0.185, 0.036, 0.365], GRAY)),
-  ...LR('Boot Shaft', (s, n) => tube(0, n, [s * 0.115, 0.25, -0.01], [0.195, 0.22, 0.195], BLACK, 7, { taper: 0.9 })),
-  ...LR('Boot Top', (s, n) => tube(0, n, [s * 0.115, 0.365, -0.01], [0.21, 0.04, 0.21], GRAY_L, 7)),
-  ...LR('Boot Laces', (s, n) => box(0, n, [s * 0.115, 0.2, 0.093], [0.095, 0.17, 0.02], GRAY_L, { rot: [-14, 0, 0] })),
-  // 1 legs and belt
-  ...LR('Thigh', (s, n) => limb(1, n, side(s, HIP), side(s, KNEE), 0.225, 0.175, NAVY, 7)),
-  ...LR('Shin', (s, n) => limb(1, n, side(s, KNEE), side(s, ANKLE), 0.175, 0.15, NAVY, 7)),
-  ...LR('Knee Pad', (s, n) => ball(1, n, [s * 0.12, 0.58, 0.1], [0.14, 0.13, 0.08], NAVY_L, 5)),
-  ...LR('Leg Stripe', (s, n) => box(1, n, [s * 0.215, 0.68, 0.01], [0.014, 0.28, 0.06], SHIRT_L, { rot: [0, 0, s * -4] })),
-  part(1, 'Pelvis', 'box', [0, 0.86, 0], [0.42, 0.17, 0.27], NAVY, { mesh: () => frustum(1, 1, 1.04, 1.02) }),
-  box(1, 'Belt', [0, 0.95, 0], [0.45, 0.075, 0.295], BLACK),
-  box(1, 'Buckle', [0, 0.95, 0.15], [0.08, 0.06, 0.02], GOLD),
-  box(1, 'Buckle Center', [0, 0.95, 0.162], [0.04, 0.03, 0.012], GRAY),
-  // 2 shirt
-  part(2, 'Torso', 'box', [0, 1.19, 0], [0.5, 0.5, 0.29], SHIRT, { mesh: () => frustum(0.82, 0.86, 1, 1) }),
-  box(2, 'Placket', [0, 1.18, 0.148], [0.026, 0.46, 0.012], SHIRT_L),
-  ...LR('Pocket', (s, n) => box(2, n, [s * 0.125, 1.26, 0.15], [0.105, 0.105, 0.02], SHIRT_D)),
-  ...LR('Pocket Flap', (s, n) => box(2, n, [s * 0.125, 1.325, 0.152], [0.11, 0.028, 0.026], NAVY_L)),
-  ...LR('Collar', (s, n) => box(2, n, [s * 0.065, 1.445, 0.135], [0.12, 0.07, 0.04], SHIRT_L, { rot: [14, 0, s * -30] })),
-  box(2, 'Tie', [0, 1.29, 0.156], [0.055, 0.27, 0.02], NAVY),
-  box(2, 'Tie Knot', [0, 1.42, 0.152], [0.06, 0.05, 0.034], NAVY_L),
-  ...LR('Epaulette', (s, n) => box(2, n, [s * 0.285, 1.445, 0.0], [0.14, 0.03, 0.13], NAVY, { rot: [0, 0, s * -10] })),
-  ...LR('Epaulette Stripe', (s, n) => box(2, n, [s * 0.285, 1.463, 0.0], [0.11, 0.012, 0.03], GOLD, { rot: [0, 0, s * -10] })),
-  // 3 arms and hands
-  ...LR('Upper Arm', (s, n) => limb(3, n, side(s, SHOULDER), side(s, ELBOW), 0.165, 0.135, SHIRT, 7)),
-  ...LR('Elbow', (s, n) => ball(3, n, side(s, ELBOW), [0.14, 0.14, 0.14], SHIRT, 5)),
-  ...LR('Forearm', (s, n) => limb(3, n, side(s, ELBOW), side(s, WRIST), 0.135, 0.11, SHIRT, 7)),
-  ...LR('Cuff', (s, n) => band(3, n, side(s, ELBOW), side(s, WRIST), 0.9, 0.035, 0.125, NAVY, 7)),
-  ...LR('Hand', (s, n) => ball(3, n, add3(side(s, WRIST), [0.005, -0.06, 0.035]), [0.115, 0.125, 0.105], SKIN, 5)),
-  ...LR('Thumb', (s, n) => box(3, n, add3(side(s, WRIST), [-s * 0.045, -0.055, 0.075]), [0.04, 0.075, 0.045], SKIN, { rot: [-20, 0, s * 12] })),
-  // 4 head and face
-  tube(4, 'Neck', [0, 1.49, 0], [0.135, 0.11, 0.135], SKIN, 6),
-  part(4, 'Head', 'sphere', HEAD, [0.35, 0.39, 0.36], SKIN, { mesh: headMesh }),
-  ...LR('Ear', (s, n) => ball(4, n, [s * 0.178, 1.655, -0.005], [0.06, 0.1, 0.065], SKIN, 5)),
-  ...face(4, HEAD, 1.08, SKIN_D, HAIR, { eyeY: 0.02 }),
-  box(4, 'Mustache', [0, 1.592, 0.176], [0.15, 0.04, 0.05], HAIR, { mesh: () => frustum(0.8, 1, 1, 1) }),
-  // 5 hair and cap
-  ball(5, 'Hair', [0, 1.7, -0.025], [0.375, 0.22, 0.385], HAIR, 7),
-  tube(5, 'Cap Band', [0, 1.79, 0], [0.395, 0.055, 0.385], BLACK, 8),
-  tube(5, 'Cap Crown', [0, 1.875, 0], [0.42, 0.125, 0.405], NAVY, 8, { taper: 0.86, rot: [FLIP, 0, 0] }),
-  tube(5, 'Cap Top', [0, 1.945, 0], [0.425, 0.022, 0.41], NAVY_L, 8),
-  box(5, 'Cap Peak', [0, 1.775, 0.215], [0.31, 0.024, 0.17], BLACK, { rot: [12, 0, 0], mesh: () => frustum(1, 1, 0.8, 0.9) }),
-  box(5, 'Cap Badge', [0, 1.87, 0.212], [0.085, 0.09, 0.02], GOLD, { rot: [-4, 0, 0] }),
-  box(5, 'Cap Badge Center', [0, 1.87, 0.224], [0.04, 0.045, 0.012], SHIRT_L),
-  // 6 gear
-  box(6, 'Holster', [-0.245, 0.8, 0.02], [0.09, 0.22, 0.11], BLACK),
-  box(6, 'Holster Grip', [-0.245, 0.935, 0.03], [0.045, 0.085, 0.06], GRAY),
-  tube(6, 'Baton', [0.245, 0.75, 0.05], [0.042, 0.36, 0.042], BLACK, 6, { rot: [0, 0, -4] }),
-  tube(6, 'Baton Grip', [0.241, 0.9, 0.05], [0.048, 0.08, 0.048], GRAY_L, 6, { rot: [0, 0, -4] }),
-  box(6, 'Cuffs Pouch', [0.1, 0.92, -0.16], [0.11, 0.1, 0.06], BLACK),
-  box(6, 'Chest Badge', [0.135, 1.2, 0.152], [0.085, 0.1, 0.02], GOLD),
-  box(6, 'Badge Star', [0.135, 1.2, 0.163], [0.045, 0.055, 0.012], GRAY_L),
-  box(6, 'Name Tag', [-0.125, 1.2, 0.152], [0.11, 0.03, 0.02], BLACK),
-  box(6, 'Radio', [-0.185, 1.37, 0.14], [0.075, 0.125, 0.06], BLACK),
-  limb(6, 'Antenna', [-0.185, 1.43, 0.14], [-0.2, 1.56, 0.13], 0.016, 0.01, BLACK, 5),
-];
+// ---- 0 boots ----
+for (const s of [1, -1] as const) add(...bootParts(0, s, [s * 0.115, 0.215, 0], 0, { boot: BLACK, sole: GRAY, cuff: GRAY_L, laces: GRAY_L }));
+
+// ---- 1 legs and belt ----
+const legPath = (s: 1 | -1): Ring[] => [R([s * 0.105, 0.9, 0], 0.118), R([s * 0.11, 0.72, 0.012], 0.11), R([s * 0.118, 0.52, 0.035], 0.09), R([s * 0.116, 0.36, 0.015], 0.082), R([s * 0.115, 0.215, 0], 0.075), R([s * 0.115, 0.14, 0], 0.075)];
+for (const s of [1, -1] as const) {
+  const side = s === 1 ? 'Left' : 'Right';
+  const leg = sweep(legPath(s), { sides: 8 });
+  add(toPart(1, `Leg ${side}`, leg, NAVY));
+  const knee = onSurface(leg, [s * 0.118, 0.52, 0.035], [0, 0, 1], -0.012);
+  add(toPart(1, `Knee Pad ${side}`, blob(knee.p, [0.07, 0.06, 0.038], 5), NAVY_L));
+  add(toPart(1, `Leg Stripe ${side}`, ribbon(leg, [0.86, 0.7, 0.58].map((y) => ({ from: [s * 0.1, y, 0.012], dir: [s, 0, 0.0] as Vec3 })), [0.011, 0.008], 0.004, { sides: 4 }), SHIRT_L));
+}
+add(toPart(1, 'Pelvis', pelvis, NAVY));
+const belt = sweep([R([0, 0.915, 0], [0.222, 0.154]), R([0, 0.985, 0], [0.222, 0.154])], { sides: 8, phase: Math.PI / 8 });
+add(toPart(1, 'Belt', belt, BLACK));
+add(plate(1, 'Buckle', belt, [0, 0.95, 0], [0, 0, 1], 0.085, 0.062, 0.022, GOLD));
+add(plate(1, 'Buckle Center', belt, [0, 0.95, 0], [0, 0, 1], 0.042, 0.032, 0.012, GRAY, 0.02));
+
+// ---- 2 shirt ----
+add(toPart(2, 'Torso', torso, SHIRT));
+for (const s of [1, -1] as const) {
+  const side = s === 1 ? 'Left' : 'Right';
+  const S: Vec3 = [s * 0.3, 1.32, 0.01];
+  add(toPart(2, `Shoulder ${side}`, blob(S, [0.1, 0.095, 0.1], 6), SHIRT));
+  add(plate(2, `Pocket ${side}`, torso, [s * 0.115, 1.1, 0], [0, 0, 1], 0.1, 0.105, 0.016, SHIRT_D));
+  add(plate(2, `Pocket Flap ${side}`, torso, [s * 0.115, 1.165, 0], [0, 0, 1], 0.105, 0.03, 0.022, NAVY_L));
+  add(plate(2, `Collar ${side}`, torso, [s * 0.06, 1.39, 0], [s * 0.45, 0.15, 1], 0.11, 0.065, 0.022, SHIRT_L));
+  const ep = onSurface(blob(S, [0.1, 0.095, 0.1], 6), S, [s * 0.15, 1, 0], 0.0);
+  add({ ...plate(2, `Epaulette ${side}`, blob(S, [0.1, 0.095, 0.1], 6), S, [s * 0.15, 1, 0], 0.115, 0.14, 0.022, NAVY), pos: vadd(ep.p, vmul(ep.n, 0.006)) as Vec3 });
+}
+add(toPart(2, 'Placket', ribbon(torso, [1.37, 1.2, 1.03].map((y) => ({ from: [0, y, 0], dir: [0, 0, 1] as Vec3 })), [0.013, 0.006], 0.004, { sides: 4 }), SHIRT_L));
+add(toPart(2, 'Tie', ribbon(torso, [1.36, 1.28, 1.2, 1.12].map((y) => ({ from: [0, y, 0], dir: [0, 0, 1] as Vec3 })), [0.028, 0.009], 0.008, { sides: 4, taper: 0 }), NAVY));
+for (const [i, y] of [1.3, 1.05, 0.99].entries()) add(toPart(2, `Button ${i + 1}`, blob(onSurface(torso, [0.0, y, 0], [0.12, 0, 1], 0.004).p, [0.014, 0.014, 0.01], 5), SHIRT_L));
+add(toPart(2, 'Tie Knot', blob(onSurface(torso, [0, 1.37, 0], [0, 0, 1], 0.004).p, [0.035, 0.03, 0.02], 5), NAVY_L));
+
+// ---- 3 arms and hands ----
+for (const s of [1, -1] as const) {
+  const side = s === 1 ? 'Left' : 'Right';
+  const S: Vec3 = [s * 0.3, 1.32, 0.01];
+  const M: Vec3 = [s * 0.345, 1.2, 0.025];
+  const E: Vec3 = [s * 0.385, 1.08, 0.05];
+  const M2: Vec3 = [s * 0.395, 0.97, 0.105];
+  const W: Vec3 = [s * 0.4, 0.865, 0.155];
+  add(toPart(3, `Sleeve ${side}`, sweep([R(S, 0.084), R(M, 0.08), R(E, 0.072), R(M2, 0.066), R(W, 0.059)], { sides: 7 }), SHIRT));
+  add(toPart(3, `Elbow ${side}`, blob(E, [0.074, 0.074, 0.074], 6), SHIRT));
+  const d = vnorm(vsub(W, M2));
+  add(toPart(3, `Cuff ${side}`, sweep([R(vsub(W, vmul(d, 0.03)), 0.066), R(vadd(W, vmul(d, 0.012)), 0.066)], { sides: 7 }), NAVY));
+  add(toPart(3, `Hand ${side}`, sweep([R(vadd(W, [0, 0.01, 0]), [0.05, 0.033]), R(vadd(W, [0.003, -0.05, 0.02]), [0.057, 0.036]), R(vadd(W, [0.006, -0.105, 0.045]), [0.047, 0.026])], { sides: 6, end: 'dome' }), SKIN));
+  add(toPart(3, `Thumb ${side}`, sweep([R(vadd(W, [-s * 0.03, -0.03, 0.02]), 0.02), R(vadd(W, [-s * 0.042, -0.07, 0.058]), 0.016), R(vadd(W, [-s * 0.036, -0.095, 0.082]), 0.012)], { sides: 5, end: 'dome' }), SKIN));
+}
+
+// ---- 4 head and face ----
+add(toPart(4, 'Neck', sweep([R([0, 1.37, 0], [0.07, 0.064]), R([0, 1.5, 0.012], [0.066, 0.06])], { sides: 6 }), SKIN));
+add(toPart(4, 'Head', head, SKIN));
+add(...faceOn(4, head, HC, { skin: SKIN, skinDark: SKIN_D, brow: HAIR, eye: 1.55, browTilt: 0.06, smile: 0.015 }));
+
+// ---- 5 hair, mustache and cap ----
+add(toPart(5, 'Hair Top', blob(H([0, 0.085, -0.03]), vmul([0.192, 0.14, 0.2], K), 7), HAIR));
+add(toPart(5, 'Hair Nape', blob(H([0, -0.07, -0.115]), vmul([0.15, 0.11, 0.085], K), 6), HAIR));
+for (const s of [1, -1] as const) {
+  const side = s === 1 ? 'Left' : 'Right';
+  add(toPart(5, `Hair Side ${side}`, blob(H([s * 0.15, 0.0, -0.06]), vmul([0.05, 0.1, 0.07], K), 5), HAIR));
+  add(toPart(5, `Sideburn ${side}`, ribbon(head, [{ from: HC, dir: [s, 0.12, 0.3] }, { from: HC, dir: [s, -0.05, 0.34] }], [0.03, 0.016], 0.012, { sides: 5 }), HAIR));
+  add(toPart(5, `Mustache ${side}`, ribbon(head, [{ from: HC, dir: [s * 0.02, -0.19, 1] }, { from: HC, dir: [s * 0.11, -0.2, 1] }, { from: HC, dir: [s * 0.22, -0.27, 0.95] }], [0.032, 0.019], 0.016, { sides: 5, taper: 0.3 }), HAIR));
+}
+const CAP_R: [number, number] = [0.205 * K, 0.2 * K];
+const capY = (y: number): Vec3 => [0, HC[1] + (y - 1.69) * K, HC[2] - 0.004];
+add(toPart(5, 'Cap Band', sweep([R(capY(1.775), CAP_R), R(capY(1.832), CAP_R)], { sides: 10 }), BLACK));
+const crown = sweep([R(capY(1.832), [0.206 * K, 0.2 * K]), R(capY(1.895), [0.222 * K, 0.215 * K]), R(capY(1.94), [0.218 * K, 0.212 * K])], { sides: 10 });
+add(toPart(5, 'Cap Crown', crown, NAVY));
+add(toPart(5, 'Cap Top', sweep([R(capY(1.94), [0.219 * K, 0.213 * K]), R(capY(1.955), [0.219 * K, 0.213 * K])], { sides: 10 }), NAVY_L));
+add(toPart(5, 'Cap Peak', sweep([R(vadd(capY(1.8), [0, 0, 0.17 * K]), [0.12 * K, 0.014]), R(vadd(capY(1.79), [0, 0, 0.255 * K]), [0.118 * K, 0.012]), R(vadd(capY(1.775), [0, 0, 0.31 * K]), [0.088 * K, 0.01])], { sides: 6, end: 'dome' }), BLACK));
+add(plate(5, 'Cap Badge', crown, capY(1.88), [0, 0, 1], 0.09, 0.1, 0.022, GOLD));
+add(plate(5, 'Cap Badge Center', crown, capY(1.88), [0, 0, 1], 0.042, 0.048, 0.012, SHIRT_L, 0.02));
+
+// ---- 6 gear ----
+add(plate(6, 'Chest Badge', torso, [0.12, 1.25, 0], [0, 0, 1], 0.085, 0.1, 0.02, GOLD));
+add(plate(6, 'Badge Star', torso, [0.12, 1.25, 0], [0, 0, 1], 0.045, 0.055, 0.012, GRAY_L, 0.02));
+add(plate(6, 'Name Tag', torso, [-0.12, 1.25, 0], [0, 0, 1], 0.11, 0.032, 0.02, BLACK));
+const radio = plate(6, 'Radio', torso, [-0.185, 1.3, 0], [-0.25, 0, 1], 0.08, 0.125, 0.055, BLACK);
+add(radio);
+add(toPart(6, 'Antenna', sweep([R(vadd(radio.pos, [0, 0.05, 0]), 0.014), R(vadd(radio.pos, [-0.012, 0.13, -0.01]), 0.009)], { sides: 5, end: 'dome' }), BLACK));
+add(toPart(6, 'Radio Strap', ribbon(torso, [{ from: [-0.2, 1.38, 0], dir: [-0.2, 0, 1] }, { from: [-0.1, 1.28, 0], dir: [0, 0, 1] }, { from: [0.0, 1.17, 0], dir: [0, 0, 1] }, { from: [0.1, 1.06, 0], dir: [0.15, 0, 1] }], [0.016, 0.008], 0.006, { sides: 4 }), BLACK));
+add(plate(6, 'Holster', pelvis, [-0.1, 0.8, 0], [-1, 0, 0.1], 0.1, 0.22, 0.06, BLACK, 0));
+add(plate(6, 'Holster Grip', pelvis, [-0.1, 0.9, 0], [-1, 0.3, 0.1], 0.05, 0.09, 0.05, GRAY, 0));
+add(toPart(6, 'Baton', sweep([R([0.215, 0.9, 0.04], 0.024), R([0.232, 0.76, 0.055], 0.021), R([0.245, 0.58, 0.07], 0.02)], { sides: 6, end: 'dome', start: 'dome' }), BLACK));
+add(toPart(6, 'Baton Grip', sweep([R([0.216, 0.9, 0.04], 0.027), R([0.221, 0.84, 0.044], 0.027)], { sides: 6 }), GRAY_L));
+add(plate(6, 'Cuffs Pouch', pelvis, [0.1, 0.9, 0], [0.3, 0, -1], 0.11, 0.1, 0.05, BLACK));
+void band2;
 
 export const POLICE: AssetDef = {
   id: 'police',
   name: 'Police Officer',
-  tagline: 'A detailed character: tapered limbs, a face, a uniform and gear',
-  level: 'Medium',
-  thumb: { dir: [0.55, 0.22, 1], zoom: 1.0 },
-  learn: ['Build tapered arms and legs between two points', 'Reshape a sphere into a head with a jaw', 'Layer collar, tie, pockets and badges on a shirt', 'Add gear that tells the story (belt, baton, radio)'],
+  tagline: 'A friendly officer: one-piece limbs, a real face, uniform and gear',
+  level: 'Detailed',
+  thumb: { dir: [0.5, 0.2, 1], zoom: 1.0 },
+  learn: ['Bend a limb from one tapered tube', 'Shape a head and put a face on it', 'Layer uniform, tie, pockets and badges', 'Add gear that tells the story'],
   steps: [
-    { title: 'Boots', text: 'Each boot is five parts. The foot is a Box reshaped with Edit shape so the toe slopes down. Under it goes a thin lighter sole, then a Cylinder with 7 sides for the shaft, a lighter ring on top, and a flat plate for the laces. Chunky boots are what give low-poly characters their stance.', tools: ['Shape: Cylinder, 7 sides', 'Edit shape: lower the toe points', 'Thin boxes for soles and laces'] },
-    { title: 'Legs and belt', text: 'Legs are tapered Cylinders: wide at the hip, narrower at the ankle. Lower the Top size slider and rotate the cylinder so it points from the hip to the knee. A sphere with 5 sides makes the knee pad. The pelvis is a box a little wider at the top, with a black belt and a gold buckle.', tools: ['Cylinder: Top size slider', 'Rotate (E)', 'Duplicate Ctrl+D', 'Shape: Sphere, 5 sides'] },
-    { title: 'Shirt', text: 'The shirt starts as a Box. In Edit shape, select the bottom face and scale it smaller so the shoulders are wider than the waist. Then layer thin boxes: a placket down the middle, two pockets with flaps, tilted collar pieces, a tie with a knot, and shoulder boards with a gold stripe.', tools: ['Edit shape: select a face, Size (R)', 'Thin boxes for layers', 'Rotate (E) for the collar'] },
-    { title: 'Arms and hands', text: 'Arms use the same trick as legs, but bent: the upper arm runs from shoulder to elbow and the forearm from elbow to wrist. A small sphere hides the joint. Hands are 5-sided spheres with a small box for the thumb. Rolling a cuff ring around the wrist adds a neat uniform detail.', tools: ['Cylinder: Top size', 'Bend by using two parts', 'Shape: Sphere, 5 sides'] },
-    { title: 'Head and face', text: 'The head is a Sphere with 8 sides. In Edit shape the lower points are pulled in to make a jaw. Features sit just on the surface: white eye spheres with smaller dark pupils, angled eyebrows, a Pyramid for the nose turned to point forward, a thin mouth and a mustache. Big eyes give the cartoon feel.', tools: ['Edit shape: move points', 'Mirror for symmetrical edits', 'Shape: Pyramid + Rotate', 'Small parts = expression'] },
-    { title: 'Hair and cap', text: 'Hair is a flattened sphere (squash it with the Size handles) peeking out under the cap. The cap has four parts: a dark band, a crown that is wider at the top (an upside-down cylinder with a lowered Top size), a lighter top disc, and a flat peak in front. A gold badge goes on the front.', tools: ['Squash with Size (R)', 'Cylinder: 8 sides + Top size', 'Rotation X 180°'] },
-    { title: 'Gear', text: 'Gear tells you who this is: a holster on one side and a baton on the other, a pouch at the back, a gold chest badge with a star, a name tag, and a radio with an antenna on the shoulder. Name every part in Layers, then group them as Police Officer.', tools: ['Rename in Layers', 'Group Ctrl+G', 'Color palette'] },
+    { title: 'Boots', text: 'A boot is one shape that flows from the shaft into the foot, with a flat sole under it and a lighter cuff on top. Start with a Cylinder (8 sides) for the shaft, then pull its bottom face out toward the toe with Pull out and shape it. Duplicate it for the other foot.', tools: ['Shape: Cylinder', 'Edit shape: Pull out (P)', 'Duplicate Ctrl+D'] },
+    { title: 'Legs and belt', text: 'Each leg is one tube, wide at the hip and narrow at the ankle, with a small bend at the knee. Make it from a Cylinder: lower the Top size, then use Edit shape to pull the points at the knee a little forward. The leg runs into the boot, so there is no gap. The belt is a short, wide ring around the waist with a gold buckle.', tools: ['Cylinder: Top size', 'Edit shape: move points', 'Mirror for the other leg'] },
+    { title: 'Shirt', text: 'The torso is one shape that is wider at the shoulders than at the waist: a Box or Cylinder with the top face scaled up in Edit shape. Round blobs (spheres with 6 sides) cap the shoulders. Pockets, flaps, collar, tie and badge are thin parts laid on the surface of the shirt.', tools: ['Edit shape: scale a face (R)', 'Shape: Sphere, 6 sides', 'Thin boxes for layers'] },
+    { title: 'Arms and hands', text: 'Each arm is one tube from the shoulder to the wrist, bent at the elbow. Extrude the end of a Cylinder (Pull out) twice and move the new face to bend it. The hand is a flat, rounded shape with a separate thumb. A cuff ring hides where sleeve and hand meet.', tools: ['Edit shape: Pull out, Move (W)', 'Cylinder: Top size', 'Shape: Sphere'] },
+    { title: 'Head and face', text: 'The head is a Sphere with 8 sides and a narrower jaw, reshaped in Edit shape. Every facial feature sits on the surface so nothing floats: white eye blobs with smaller pupils, curved eyebrows, a Pyramid nose pointing outward, and a curved mouth.', tools: ['Edit shape: narrow the jaw', 'Shape: Pyramid + Rotate (E)', 'Mirror for symmetry'] },
+    { title: 'Hair, mustache and cap', text: 'Hair is a few flattened spheres on and behind the head. The mustache and sideburns are thin curved strips that follow the face. The cap is a band, a crown that widens toward the top, a flat top and a peak that is attached to the band. A gold badge goes on the front.', tools: ['Squash with Size (R)', 'Cylinder: 10 sides + Top size', 'Rotate (E)'] },
+    { title: 'Gear', text: 'A chest badge with a star, a name tag, a radio with an antenna, a holster, a baton, and a pouch at the back. Each is a small part pressed onto the surface it hangs from. Name every part in Layers and group them as Police Officer.', tools: ['Rename in Layers', 'Group Ctrl+G', 'Color palette'] },
   ],
-  challenge: 'Make a detective: remove the cap, add a hat with a wide brim, and change the uniform to a long coat using a bigger Box around the torso.',
+  challenge: 'Make a detective: remove the cap, give the officer a hat with a wide brim, and swap the shirt for a long coat by scaling a copy of the torso larger.',
   parts,
 };
-void mirrorRot;
-void lerp3;
+void GOLD;
+void SHIRT_D;

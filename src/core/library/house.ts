@@ -91,15 +91,27 @@ add(
   ...LR('Window Bar Horizontal', (s, n) => box(3, n, [s * 2.45, 2.0, 3.14], [1.38, 0.06, 0.06], WHITE)),
   ...LR('Window Sill', (s, n) => box(3, n, [s * 2.45, 1.28, 3.16], [1.8, 0.1, 0.28], STONE[2])),
   ...LR('Shutter Outer', (s, n) => box(3, n, [s * 3.5, 2.0, 3.1], [0.4, 1.3, 0.06], SHUTTER)),
-  ...LR('Shutter Inner', (s, n) => box(3, n, [s * 1.4, 2.0, 3.1], [0.4, 1.3, 0.06], SHUTTER)),
+  ...LR('Shutter Inner', (s, n) => box(3, n, [s * 1.3, 2.0, 3.1], [0.4, 1.3, 0.06], SHUTTER)),
   ...LR('Side Window Frame', (s, n) => box(3, n, [s * 4.04, 2.0, 0], [0.1, 1.3, 1.6], WHITE)),
   ...LR('Side Window Glass', (s, n) => box(3, n, [s * 4.08, 2.0, 0], [0.08, 1.08, 1.38], GLASS)),
+);
+
+// 3b back of the house
+add(
+  ...LR('Back Window Frame', (s, n) => box(3, n, [s * 2.45, 2.0, -3.04], [1.6, 1.35, 0.1], WHITE)),
+  ...LR('Back Window Glass', (s, n) => box(3, n, [s * 2.45, 2.0, -3.08], [1.38, 1.13, 0.08], GLASS)),
+  ...LR('Back Window Bar Vertical', (s, n) => box(3, n, [s * 2.45, 2.0, -3.13], [0.06, 1.13, 0.06], WHITE)),
+  ...LR('Back Window Bar Horizontal', (s, n) => box(3, n, [s * 2.45, 2.0, -3.14], [1.38, 0.06, 0.06], WHITE)),
+  ...LR('Back Window Sill', (s, n) => box(3, n, [s * 2.45, 1.28, -3.16], [1.8, 0.1, 0.28], STONE[2])),
+  box(3, 'Back Door Frame', [0, 1.55, -3.04], [1.2, 2.2, 0.1], WHITE),
+  box(3, 'Back Door', [0, 1.5, -3.1], [0.96, 2.0, 0.1], DOOR),
+  box(3, 'Back Door Step', [0, 0.28, -3.5], [1.4, 0.2, 0.55], STONE[2]),
 );
 
 // 4 chimney and porch
 add(
   box(4, 'Chimney', [2.8, 4.7, -1.4], [0.95, 2.2, 0.95], STONE[0]),
-  ...[0, 1, 2, 3].map((i) => box(4, `Chimney Stone ${i + 1}`, [2.8, 3.95 + i * 0.5, -0.9], [0.8, 0.22, 0.04], STONE[(i + 2) % 4])),
+  ...[0, 1, 2, 3].map((i) => box(4, `Chimney Stone ${i + 1}`, [2.8, 3.95 + i * 0.5, -0.93], [0.8, 0.22, 0.04], STONE[(i + 2) % 4])),
   box(4, 'Chimney Cap', [2.8, 5.85, -1.4], [1.15, 0.16, 1.15], '#2f3437'),
   ball(4, 'Smoke 1', [2.8, 6.3, -1.4], [0.5, 0.42, 0.5], SMOKE, 6),
   ball(4, 'Smoke 2', [2.95, 6.85, -1.35], [0.62, 0.5, 0.6], SMOKE, 6),
@@ -110,8 +122,9 @@ add(
   box(4, 'Porch Roof', [0, 3.2, 4.2], [3.9, 0.16, 2.2], ROOF, { rot: [8, 0, 0] }),
   box(4, 'Porch Beam', [0, 3.0, 4.85], [3.5, 0.2, 0.18], TIMBER),
   ...LR('Porch Rail', (s, n) => box(4, n, [s * 1.55, 0.95, 4.1], [0.07, 0.07, 1.5], WHITE)),
-  box(4, 'Lantern', [1.15, 2.5, 3.2], [0.14, 0.2, 0.14], '#2f3437'),
-  ball(4, 'Lantern Glow', [1.15, 2.5, 3.2], [0.16, 0.18, 0.16], '#ffe58a', 5),
+  box(4, 'Lantern Bracket', [0.78, 2.78, 3.18], [0.05, 0.28, 0.05], '#2f3437'),
+  box(4, 'Lantern', [0.78, 2.56, 3.2], [0.14, 0.2, 0.14], '#2f3437'),
+  ball(4, 'Lantern Glow', [0.78, 2.56, 3.2], [0.16, 0.18, 0.16], '#ffe58a', 5),
 );
 
 // 5 garden

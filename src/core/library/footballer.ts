@@ -1,47 +1,31 @@
 import type { AssetDef, AssetPart } from '../assets';
-import { D2R, LR, add3, aim, ball, band, box, face, frustum, headMesh, lerp3, limb, part, tube, wedge } from './kit';
+import { bootParts } from './body';
+import { blob, faceOn, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, vcross, vmul, vnorm, vsub, type Ring } from './organic';
 import type { Vec3 } from '../types';
 
 const RED = '#d64545';
 const RED_D = '#b53434';
 const WHITE = '#fafafa';
 const SKIN = '#c98e64';
-const SKIN_D = '#b57a52';
+const SKIN_D = '#a8693f';
 const HAIR = '#2a2420';
 const BLACK = '#1e2125';
 const GRAY = '#3b3f46';
 const GOLD = '#f2c14e';
-const NAVY = '#22304f';
 
+const PH = Math.PI / 8; // turn the facets so the front of the body is flat
+const parts: AssetPart[] = [];
+const add = (...p: AssetPart[]) => parts.push(...p);
+const R = (p: Vec3, r: number | [number, number]): Ring => ({ p, r });
+const lerp = (a: Vec3, b: Vec3, t: number): Vec3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const lean = (y: number) => Math.max(0, y - 0.9) * 0.12; // the body leans forward as it goes up
 const L = (y: number, x = 0, z = 0): Vec3 => [x, y, z + lean(y)];
 
-/** Offset (dy, dz) turned by `deg` about X, so boot parts follow a tilted foot. */
-const turn = (dy: number, dz: number, deg: number): [number, number] => {
-  const a = deg * D2R;
-  return [dy * Math.cos(a) - dz * Math.sin(a), dy * Math.sin(a) + dz * Math.cos(a)];
-};
-
-function boot(s: 1 | -1, ankle: Vec3, tilt: number): AssetPart[] {
-  const name = s === 1 ? 'Left' : 'Right';
-  const at = (dy: number, dz: number, dx = 0): Vec3 => {
-    const [y, z] = turn(dy, dz, tilt);
-    return [ankle[0] + dx, ankle[1] + y, ankle[2] + z];
-  };
-  return [
-    box(0, `Boot ${name}`, at(-0.09, 0.07), [0.17, 0.15, 0.36], BLACK, { mesh: () => wedge(0.16), rot: [tilt, 0, 0] }),
-    box(0, `Boot Sole ${name}`, at(-0.17, 0.07), [0.18, 0.035, 0.38], WHITE, { rot: [tilt, 0, 0] }),
-    box(0, `Boot Stripe ${name}`, at(-0.09, 0.05, s * 0.088), [0.012, 0.06, 0.2], WHITE, { rot: [tilt, 0, 0] }),
-    box(0, `Boot Tongue ${name}`, at(-0.03, 0.1), [0.1, 0.09, 0.03], GRAY, { rot: [tilt - 22, 0, 0] }),
-    ...[-0.1, 0.0, 0.1].map((dz, i) => box(0, `Stud ${name} ${i + 1}`, at(-0.2, 0.07 + dz * 1.4), [0.05, 0.03, 0.05], GRAY, { rot: [tilt, 0, 0] })),
-  ];
-}
-
 // joints
-const HIP_L: Vec3 = [0.1, 0.86, 0.0];
+const HIP_L: Vec3 = [0.105, 0.88, 0.0];
 const KNEE_L: Vec3 = [0.115, 0.52, 0.07];
-const ANKLE_L: Vec3 = [0.115, 0.215, -0.03];
-const HIP_R: Vec3 = [-0.1, 0.86, 0.0];
+const ANKLE_L: Vec3 = [0.115, 0.235, -0.02];
+const HIP_R: Vec3 = [-0.105, 0.88, 0.0];
 const KNEE_R: Vec3 = [-0.15, 0.6, 0.36];
 const ANKLE_R: Vec3 = [-0.17, 0.33, 0.72];
 const SH_L: Vec3 = L(1.37, 0.31);
@@ -50,99 +34,122 @@ const WR_L: Vec3 = [0.43, 1.34, 0.42];
 const SH_R: Vec3 = L(1.37, -0.31);
 const EL_R: Vec3 = [-0.43, 1.2, -0.1];
 const WR_R: Vec3 = [-0.37, 0.99, -0.27];
-const HEAD: Vec3 = L(1.68);
-const BALL: Vec3 = [-0.17, 0.14, 1.02];
+const BALL: Vec3 = [-0.17, 0.14, 0.97];
 
-const sockStripe = (knee: Vec3, ankle: Vec3, name: string): AssetPart[] => [
-  band(1, `Sock Band ${name}`, knee, ankle, 0.12, 0.05, 0.19, WHITE, 7),
-  band(1, `Sock Band 2 ${name}`, knee, ankle, 0.27, 0.035, 0.18, WHITE, 7),
-];
+// body shells
+const torso = sweep([R(L(0.88), [0.2, 0.135]), R(L(0.98), [0.212, 0.14]), R(L(1.14), [0.24, 0.15]), R(L(1.3), [0.275, 0.155]), R(L(1.42), [0.265, 0.14])], { sides: 8, phase: PH });
+const pelvis = blob(L(0.88, 0, 0.01), [0.228, 0.12, 0.152], 8);
+const K = 1.22;
+const HC: Vec3 = [0, 1.72, 0.105];
+const H = (v: Vec3): Vec3 => [HC[0] + v[0] * K, HC[1] + v[1] * K, HC[2] + v[2] * K];
+const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 8);
 
-const parts: AssetPart[] = [
-  // 0 boots
-  ...boot(1, add3(ANKLE_L, [0, 0.0, 0]), 0),
-  ...boot(-1, ANKLE_R, 30),
-  // 1 socks, legs and shorts
-  limb(1, 'Sock Left', KNEE_L, ANKLE_L, 0.18, 0.15, RED, 7),
-  limb(1, 'Sock Right', KNEE_R, ANKLE_R, 0.18, 0.15, RED, 7),
-  ...sockStripe(KNEE_L, ANKLE_L, 'Left'),
-  ...sockStripe(KNEE_R, ANKLE_R, 'Right'),
-  ball(1, 'Knee Left', KNEE_L, [0.18, 0.17, 0.18], SKIN, 5),
-  ball(1, 'Knee Right', KNEE_R, [0.18, 0.17, 0.18], SKIN, 5),
-  limb(1, 'Thigh Left', HIP_L, KNEE_L, 0.22, 0.17, SKIN, 7),
-  limb(1, 'Thigh Right', HIP_R, KNEE_R, 0.22, 0.17, SKIN, 7),
-  limb(1, 'Shorts Leg Left', HIP_L, lerp3(HIP_L, KNEE_L, 0.6), 0.27, 0.25, WHITE, 7),
-  limb(1, 'Shorts Leg Right', HIP_R, lerp3(HIP_R, KNEE_R, 0.6), 0.27, 0.25, WHITE, 7),
-  part(1, 'Shorts', 'box', [0, 0.9, 0.012], [0.47, 0.25, 0.3], WHITE, { mesh: () => frustum(0.96, 0.96, 1.02, 1) }),
-  box(1, 'Waistband', [0, 1.0, 0.022], [0.485, 0.055, 0.31], RED_D),
-  ...LR('Shorts Stripe', (s, n) => box(1, n, [s * 0.238, 0.88, 0.01], [0.014, 0.22, 0.12], RED)),
-  // 2 jersey
-  part(2, 'Jersey', 'box', L(1.22), [0.55, 0.5, 0.31], RED, { mesh: () => frustum(0.86, 0.9, 1, 1), rot: [6, 0, 0] }),
-  box(2, 'Jersey Hem', L(1.0, 0, 0.0), [0.5, 0.045, 0.285], RED_D, { rot: [6, 0, 0] }),
-  ...LR('Collar', (s, n) => box(2, n, L(1.455, s * 0.05, 0.14), [0.12, 0.04, 0.04], WHITE, { rot: [10, 0, s * -35] })),
-  box(2, 'Collar Back', L(1.46, 0, -0.1), [0.18, 0.05, 0.05], WHITE),
-  box(2, 'Chest Band', L(1.28, 0, 0.0), [0.558, 0.05, 0.318], WHITE, { rot: [6, 0, 0] }),
-  box(2, 'Crest', L(1.35, 0.15, 0.162), [0.065, 0.075, 0.014], GOLD),
-  // number 10 on the chest
-  box(2, 'Number 1', L(1.14, -0.045, 0.158), [0.028, 0.14, 0.014], WHITE),
-  box(2, 'Number 0 Top', L(1.2, 0.05, 0.158), [0.075, 0.026, 0.014], WHITE),
-  box(2, 'Number 0 Bottom', L(1.08, 0.05, 0.158), [0.075, 0.026, 0.014], WHITE),
-  box(2, 'Number 0 Left', L(1.14, 0.015, 0.158), [0.026, 0.14, 0.014], WHITE),
-  box(2, 'Number 0 Right', L(1.14, 0.085, 0.158), [0.026, 0.14, 0.014], WHITE),
-  // 3 arms
-  limb(3, 'Sleeve Left', SH_L, lerp3(SH_L, EL_L, 0.62), 0.2, 0.17, RED, 7),
-  limb(3, 'Sleeve Right', SH_R, lerp3(SH_R, EL_R, 0.62), 0.2, 0.17, RED, 7),
-  band(3, 'Sleeve Cuff Left', SH_L, EL_L, 0.62, 0.035, 0.175, WHITE, 7),
-  band(3, 'Sleeve Cuff Right', SH_R, EL_R, 0.62, 0.035, 0.175, WHITE, 7),
-  limb(3, 'Upper Arm Left', lerp3(SH_L, EL_L, 0.62), EL_L, 0.15, 0.13, SKIN, 7),
-  limb(3, 'Upper Arm Right', lerp3(SH_R, EL_R, 0.62), EL_R, 0.15, 0.13, SKIN, 7),
-  ball(3, 'Elbow Left', EL_L, [0.14, 0.14, 0.14], SKIN, 5),
-  ball(3, 'Elbow Right', EL_R, [0.14, 0.14, 0.14], SKIN, 5),
-  limb(3, 'Forearm Left', EL_L, WR_L, 0.135, 0.11, SKIN, 7),
-  limb(3, 'Forearm Right', EL_R, WR_R, 0.135, 0.11, SKIN, 7),
-  band(3, 'Captain Band', lerp3(SH_L, EL_L, 0.62), EL_L, 0.55, 0.05, 0.16, GOLD, 7),
-  ball(3, 'Hand Left', add3(WR_L, [0, 0.06, 0.02]), [0.12, 0.13, 0.11], SKIN, 5),
-  ball(3, 'Hand Right', add3(WR_R, [0, -0.06, -0.02]), [0.12, 0.13, 0.11], SKIN, 5),
-  box(3, 'Thumb Left', add3(WR_L, [-0.05, 0.08, 0.06]), [0.04, 0.075, 0.045], SKIN, { rot: [-20, 0, 12] }),
-  box(3, 'Thumb Right', add3(WR_R, [0.05, -0.02, 0.0]), [0.04, 0.075, 0.045], SKIN, { rot: [-20, 0, -12] }),
-  // 4 head and face
-  tube(4, 'Neck', L(1.5), [0.135, 0.11, 0.135], SKIN, 6),
-  part(4, 'Head', 'sphere', HEAD, [0.36, 0.4, 0.37], SKIN, { mesh: headMesh }),
-  ...LR('Ear', (s, n) => ball(4, n, add3(HEAD, [s * 0.18, -0.01, -0.005]), [0.06, 0.1, 0.065], SKIN, 5)),
-  ...face(4, HEAD, 1.1, SKIN_D, HAIR, { eyeY: 0.02, mouth: '#7a3a30' }),
-  box(4, 'Smile', add3(HEAD, [0, -0.118, 0.17]), [0.1, 0.018, 0.014], '#7a3a30'),
-  // 5 hair and headband
-  ball(5, 'Hair', add3(HEAD, [0, 0.1, -0.02]), [0.385, 0.22, 0.395], HAIR, 7),
-  ball(5, 'Hair Back', add3(HEAD, [0, 0.0, -0.08]), [0.36, 0.3, 0.3], HAIR, 7),
-  ...[[-0.1, 0.0], [0, 0.03], [0.1, 0.0], [-0.05, -0.05], [0.06, -0.06]].map(([x, z], i) => part(5, `Hair Spike ${i + 1}`, 'pyramid', add3(HEAD, [x, 0.215, z + 0.05]), [0.09, 0.12, 0.09], HAIR, { rot: [i * 9 - 18, i * 20, (i % 2 ? 1 : -1) * 12] })),
-  tube(5, 'Headband', add3(HEAD, [0, 0.085, 0]), [0.39, 0.05, 0.385], RED, 8),
-  // 6 ball
-  ball(6, 'Ball', BALL, [0.28, 0.28, 0.28], WHITE, 10),
-  ...[[0, 1, 0], [0.9, 0.45, 0], [-0.9, 0.45, 0], [0, 0.45, 0.9], [0, 0.45, -0.9], [0.65, -0.5, 0.6], [-0.65, -0.5, -0.6]].map((d, i) => {
-    const n = Math.hypot(d[0], d[1], d[2]);
-    const dir: Vec3 = [d[0] / n, d[1] / n, d[2] / n];
-    const { rot } = aim([0, 0, 0], dir);
-    return box(6, `Ball Patch ${i + 1}`, add3(BALL, [dir[0] * 0.128, dir[1] * 0.128, dir[2] * 0.128]), [0.08, 0.022, 0.08], BLACK, { rot });
-  }),
-];
-void NAVY;
+// ---- 0 boots ----
+add(...bootParts(0, 1, ANKLE_L, 0, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
+add(...bootParts(0, -1, ANKLE_R, 30, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
+
+// ---- 1 socks, legs and shorts ----
+const legL = [R(HIP_L, 0.12), R(lerp(HIP_L, KNEE_L, 0.5), 0.108), R(KNEE_L, 0.09), R(lerp(KNEE_L, ANKLE_L, 0.5), 0.08), R(ANKLE_L, 0.071), R(vadd(ANKLE_L, [0, -0.1, -0.005]), 0.071)];
+const dirR = vnorm(vsub(ANKLE_R, KNEE_R));
+const legR = [R(HIP_R, 0.12), R(lerp(HIP_R, KNEE_R, 0.5), 0.108), R(KNEE_R, 0.09), R(lerp(KNEE_R, ANKLE_R, 0.5), 0.08), R(ANKLE_R, 0.071), R(vadd(ANKLE_R, vmul(dirR, 0.1)), 0.071)];
+for (const [side, leg, hip, knee, ankle] of [['Left', legL, HIP_L, KNEE_L, ANKLE_L], ['Right', legR, HIP_R, KNEE_R, ANKLE_R]] as const) {
+  add(toPart(1, `Leg ${side}`, sweep(leg.map((q) => q), { sides: 8 }), SKIN));
+  const sockTop = lerp(knee, ankle, 0.16);
+  const sockPath = [R(sockTop, 0.094), R(lerp(knee, ankle, 0.5), 0.087), R(ankle, 0.079), R(vadd(ankle, vmul(vnorm(vsub(ankle, knee)), 0.1)), 0.079)];
+  add(toPart(1, `Sock ${side}`, sweep(sockPath, { sides: 8 }), RED));
+  for (const [i, t] of [0.2, 0.34].entries()) {
+    const c = lerp(knee, ankle, t);
+    const d = vmul(vnorm(vsub(ankle, knee)), 0.018 + i * 0.004);
+    add(toPart(1, `Sock Band ${side} ${i + 1}`, sweep([R(vsub(c, d), 0.098 - i * 0.004), R(vadd(c, d), 0.098 - i * 0.004)], { sides: 8 }), WHITE));
+  }
+  const hemAt = lerp(hip, knee, 0.58);
+  add(toPart(1, `Shorts Leg ${side}`, sweep([R(vadd(hip, [0, 0.02, 0]), 0.14), R(lerp(hip, knee, 0.3), 0.134), R(hemAt, 0.128)], { sides: 8 }), WHITE));
+  const dh = vmul(vnorm(vsub(knee, hip)), 0.012);
+  add(toPart(1, `Shorts Hem ${side}`, sweep([R(vsub(hemAt, dh), 0.131), R(vadd(hemAt, dh), 0.131)], { sides: 8 }), RED));
+  add(toPart(1, `Knee ${side}`, blob(knee, [0.085, 0.085, 0.085], 6), SKIN));
+}
+add(toPart(1, 'Shorts', pelvis, WHITE));
+add(toPart(1, 'Waistband', sweep([R(L(0.97), [0.226, 0.158]), R(L(1.02), [0.226, 0.158])], { sides: 8, phase: PH }), RED_D));
+
+// ---- 2 jersey ----
+add(toPart(2, 'Jersey', torso, RED));
+add(toPart(2, 'Jersey Hem', sweep([R(L(1.0), [0.222, 0.152]), R(L(1.03), [0.222, 0.152])], { sides: 8, phase: PH }), RED_D));
+add(toPart(2, 'Chest Band', sweep([R(L(1.255), [0.286, 0.163]), R(L(1.3), [0.288, 0.164])], { sides: 8, phase: PH }), WHITE));
+add(toPart(2, 'Collar', ribbon(torso, [-0.1, -0.05, 0, 0.05, 0.1].map((x, i) => ({ from: L(1.405 - (2 - Math.abs(i - 2)) * 0.035, x, 0), dir: [x * 2, 0.0, 1] as Vec3 })), [0.017, 0.009], 0.006, { sides: 4 }), WHITE));
+add(plate(2, 'Crest', torso, L(1.36, 0.15), [0, 0, 1], 0.07, 0.08, 0.016, GOLD));
+add(plate(2, 'Number 1', torso, L(1.15, -0.05), [0, 0, 1], 0.03, 0.15, 0.014, WHITE));
+add(plate(2, 'Number 0 Top', torso, L(1.225, 0.045), [0, 0, 1], 0.08, 0.028, 0.014, WHITE));
+add(plate(2, 'Number 0 Bottom', torso, L(1.075, 0.045), [0, 0, 1], 0.08, 0.028, 0.014, WHITE));
+add(plate(2, 'Number 0 Left', torso, L(1.15, 0.01), [0, 0, 1], 0.028, 0.15, 0.014, WHITE));
+add(plate(2, 'Number 0 Right', torso, L(1.15, 0.08), [0, 0, 1], 0.028, 0.15, 0.014, WHITE));
+
+// ---- 3 arms ----
+function arm(side: 'Left' | 'Right', S: Vec3, E: Vec3, W: Vec3, captain: boolean): void {
+  const M = lerp(S, E, 0.5);
+  add(toPart(3, `Shoulder ${side}`, blob(S, [0.105, 0.1, 0.105], 6), RED));
+  add(toPart(3, `Arm ${side}`, sweep([R(S, 0.078), R(M, 0.073), R(E, 0.066), R(lerp(E, W, 0.5), 0.059), R(W, 0.052)], { sides: 7 }), SKIN));
+  add(toPart(3, `Elbow ${side}`, blob(E, [0.07, 0.07, 0.07], 6), SKIN));
+  const hem = lerp(S, E, 0.62);
+  add(toPart(3, `Sleeve ${side}`, sweep([R(S, 0.094), R(M, 0.09), R(hem, 0.085)], { sides: 7 }), RED));
+  const dd = vmul(vnorm(vsub(E, S)), 0.02);
+  add(toPart(3, `Sleeve Hem ${side}`, sweep([R(vsub(hem, dd), 0.088), R(vadd(hem, dd), 0.088)], { sides: 7 }), WHITE));
+  if (captain) {
+    const c = lerp(S, E, 0.8);
+    const d = vmul(vnorm(vsub(E, S)), 0.022);
+    add(toPart(3, 'Captain Armband', sweep([R(vsub(c, d), 0.077), R(vadd(c, d), 0.077)], { sides: 7 }), GOLD));
+  }
+  const d = vnorm(vsub(W, E));
+  const perp = vnorm(vcross(d, [0, 1, 0]));
+  add(toPart(3, `Hand ${side}`, sweep([R(vsub(W, vmul(d, 0.01)), [0.052, 0.036]), R(vadd(W, vmul(d, 0.05)), [0.06, 0.04]), R(vadd(W, vmul(d, 0.105)), [0.05, 0.03])], { sides: 6, end: 'dome' }), SKIN));
+  add(toPart(3, `Thumb ${side}`, sweep([R(vadd(vadd(W, vmul(d, 0.025)), vmul(perp, 0.03)), 0.02), R(vadd(vadd(W, vmul(d, 0.062)), vmul(perp, 0.045)), 0.016), R(vadd(vadd(W, vmul(d, 0.09)), vmul(perp, 0.042)), 0.012)], { sides: 5, end: 'dome' }), SKIN));
+}
+arm('Left', SH_L, EL_L, WR_L, true);
+arm('Right', SH_R, EL_R, WR_R, false);
+
+// ---- 4 head and face ----
+add(toPart(4, 'Neck', sweep([R(L(1.38), [0.07, 0.064]), R(L(1.52), [0.066, 0.06])], { sides: 6 }), SKIN));
+add(toPart(4, 'Head', head, SKIN));
+add(...faceOn(4, head, HC, { skin: SKIN, skinDark: SKIN_D, brow: HAIR, eye: 1.55, browTilt: 0.03, smile: 0.07, lip: '#7a3a30' }));
+
+// ---- 5 hair and headband ----
+add(toPart(5, 'Hair Top', blob(H([0, 0.09, -0.03]), vmul([0.19, 0.13, 0.2], K), 7), HAIR));
+add(toPart(5, 'Hair Back', blob(H([0, -0.04, -0.1]), vmul([0.17, 0.16, 0.1], K), 7), HAIR));
+for (const s of [1, -1] as const) {
+  const side = s === 1 ? 'Left' : 'Right';
+  add(toPart(5, `Sideburn ${side}`, ribbon(head, [{ from: HC, dir: [s, 0.14, 0.3] }, { from: HC, dir: [s, -0.06, 0.34] }], [0.028, 0.015], 0.012, { sides: 5 }), HAIR));
+}
+const spikes: [number, number, number][] = [[-0.5, 1, 0.5], [0, 1, 0.7], [0.5, 1, 0.5], [-0.8, 1, -0.2], [0.8, 1, -0.2], [0, 1, -0.7], [-0.3, 1, 0], [0.3, 1, 0.1]];
+spikes.forEach((d, i) => {
+  const dir = vnorm(d);
+  const base = onSurface(head, HC, dir, -0.035);
+  const tip = vadd(base.p, vmul(vnorm(vadd(dir, [0, 0.9, 0])), 0.14 + (i % 3) * 0.03));
+  add(toPart(5, `Hair Spike ${i + 1}`, sweep([R(base.p, 0.05), R(lerp(base.p, tip, 0.55), 0.034), R(tip, 0.004)], { sides: 4, end: 'dome' }), HAIR));
+});
+add(toPart(5, 'Headband', sweep([R(H([0, 0.1, -0.005]), [0.19 * K * 0.86 + 0.012, 0.2 * K * 0.86 + 0.012]), R(H([0, 0.155, -0.005]), [0.19 * K * 0.8 + 0.012, 0.2 * K * 0.8 + 0.012])], { sides: 10 }), RED));
+
+// ---- 6 the ball ----
+const ball = blob(BALL, [0.14, 0.14, 0.14], 10);
+add(toPart(6, 'Ball', ball, WHITE));
+[[0, 1, 0], [0.9, 0.45, 0], [-0.9, 0.45, 0], [0, 0.45, 0.9], [0, 0.45, -0.9], [0.65, -0.5, 0.6], [-0.65, -0.5, -0.6]].forEach((d, i) => {
+  add(plate(6, `Ball Patch ${i + 1}`, ball, BALL, d as Vec3, 0.085, 0.085, 0.02, BLACK));
+});
 
 export const FOOTBALLER: AssetDef = {
   id: 'footballer',
   name: 'Football Player',
-  tagline: 'A player mid-kick: posed limbs, a kit with details and a ball',
+  tagline: 'A player mid-kick: posed one-piece limbs, a kit with details, a ball',
   level: 'Detailed',
   thumb: { dir: [0.9, 0.3, 1], zoom: 0.8 },
-  learn: ['Pose a character by aiming limbs between joints', 'Tilt a boot with Rotate to match a kick', 'Build a kit from layered thin boxes', 'Make hair from a flattened sphere and spikes'],
+  learn: ['Pose a character with bent, one-piece limbs', 'Tilt a boot to match a kick', 'Build a kit from shells, bands and plates', 'Make spiky hair from tapered tubes'],
   steps: [
-    { title: 'Boots', text: 'Each boot is a Box reshaped so the toe slopes down, plus a white sole, a side stripe, a tongue and three small studs. The kicking foot is tilted with Rotate (E) so the toe points down toward the ball. Put the parts on the foot first, then tilt them together.', tools: ['Edit shape: lower the toe points', 'Rotate (E)', 'Thin boxes'] },
-    { title: 'Socks, legs and shorts', text: 'A pose is about where the joints are. Each leg has a hip, a knee and an ankle, and every part is a tapered Cylinder aimed from one joint to the next. The standing leg is nearly straight; the kicking leg bends forward. White bands wrap the socks, and the shorts are a Box with two short leg tubes.', tools: ['Cylinder: Top size slider', 'Rotate (E) to aim', 'Shape: Sphere, 5 sides for knees'] },
-    { title: 'Jersey', text: 'The jersey is a Box reshaped to be narrower at the waist, leaning forward a little. A white chest band, a V collar made from two tilted boxes, a gold crest, and the number 10 drawn with six thin white boxes finish the front.', tools: ['Edit shape: scale the bottom face', 'Thin boxes for numbers', 'Rotate (E)'] },
-    { title: 'Arms', text: 'The arms swing in opposition to the legs: the left arm up in front for balance, the right arm back. Each arm is a red sleeve, a skin-colored upper arm, an elbow sphere and a forearm, with a small sphere hand and a box thumb. A gold armband marks the captain.', tools: ['Cylinder: Top size', 'Bend with two parts', 'Shape: Sphere'] },
-    { title: 'Head and face', text: 'The head is an 8-sided Sphere with a narrower jaw made in Edit shape. The face is white eye spheres with dark pupils, eyebrows, a Pyramid nose pointing forward, and a smile made from thin boxes. Ears are small spheres on each side.', tools: ['Edit shape: move points', 'Mirror for symmetrical edits', 'Shape: Pyramid + Rotate'] },
-    { title: 'Hair and headband', text: 'Hair is a flattened sphere on top of a second one behind the head, with five small Pyramids rotated in different directions for spikes. A red headband is a thin 8-sided Cylinder around the head. Different rotations are what stop the spikes from looking copied.', tools: ['Squash with Size (R)', 'Shape: Pyramid', 'Rotate (E)', 'Duplicate Ctrl+D'] },
-    { title: 'The ball', text: 'The ball is a white Sphere with 10 sides. Seven thin black Boxes sit on its surface as patches, each turned to face outward. Rotate each patch so it lies flat on the sphere. Name every part in Layers and group them as Football Player.', tools: ['Shape: Sphere, 10 sides', 'Rotate (E)', 'Group Ctrl+G'] },
+    { title: 'Boots', text: 'A football boot is one low shape with a white sole and small studs under it. The kicking boot is tilted so the toe points down at the ball. Build the boot first, then tilt it with Rotate (E).', tools: ['Shape: Cylinder or Sphere', 'Edit shape: Pull out (P)', 'Rotate (E)'] },
+    { title: 'Socks, legs and shorts', text: 'A pose is about where the joints are. Each leg is one tube from the hip, through the knee, to the ankle, and it runs into the boot. The standing leg is almost straight and the kicking leg bends forward. The red sock and the white shorts are slightly thicker tubes over the same leg.', tools: ['Cylinder: Top size', 'Edit shape: Pull out, Move (W)', 'Duplicate Ctrl+D'] },
+    { title: 'Jersey', text: 'The jersey is one shape that is wider at the shoulders than at the waist, leaning forward a little. A white chest band and hem are thin rings around it, the V collar is a curved strip, and the crest and the number 10 are thin plates lying on the front.', tools: ['Edit shape: scale a face (R)', 'Thin boxes for numbers', 'Rotate (E)'] },
+    { title: 'Arms', text: 'Arms swing against the legs: the left arm up in front for balance and the right arm back. Each arm is one tube bent at the elbow, with a thicker red sleeve over its upper half and a white hem. A gold band marks the captain. Hands are rounded with a thumb on the side.', tools: ['Edit shape: Pull out + Move', 'Cylinder: Top size', 'Shape: Sphere'] },
+    { title: 'Head and face', text: 'The head is a Sphere with 8 sides and a narrower jaw. Eyes, eyebrows, the nose and the smile are placed on the surface of the head so they never float. Big eyes give it a friendly, cartoon feel.', tools: ['Edit shape: narrow the jaw', 'Mirror for symmetry', 'Shape: Pyramid + Rotate'] },
+    { title: 'Hair and headband', text: 'Hair is two flattened spheres plus eight spikes. Each spike is a short tube that starts inside the head and tapers to a point, tilted a different way so they do not look copied. A red headband is a thin ring around the forehead.', tools: ['Cylinder: Top size near 0', 'Rotate (E)', 'Duplicate Ctrl+D'] },
+    { title: 'The ball', text: 'A white Sphere with 10 sides and seven black patches pressed onto its surface. Each patch is turned to face outward, then moved until it sits flat on the ball. The kicking toe touches the ball, and nothing floats. Name every part and group them as Football Player.', tools: ['Shape: Sphere, 10 sides', 'Rotate (E)', 'Group Ctrl+G'] },
   ],
-  challenge: 'Make the goalkeeper: change the kit colors, add two gloves with bigger spheres at the hands, and move both arms out to the sides.',
+  challenge: 'Make the goalkeeper: change the kit colors, add gloves by making the hands bigger, and move both arms out to the sides.',
   parts,
 };

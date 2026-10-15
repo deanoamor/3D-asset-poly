@@ -38,8 +38,8 @@ const parts: AssetPart[] = [
   // 2 cabin and roof
   part(2, 'Cabin', 'box', [0, CY, CZ], [1.6, 0.55, 2.0], BODY, { mesh: () => frustum(1, 1, CABIN_TX, CABIN_TZ) }),
   box(2, 'Roof', [0, 1.395, CZ], [1.26, 0.05, 1.28], ROOF),
-  ...LR('Roof Rail', (s, n) => box(2, n, [s * 0.5, 1.45, CZ], [0.045, 0.045, 1.2], TRIM)),
-  ...[0.45, -0.45].map((z, i) => box(2, `Roof Bar ${i + 1}`, [0, 1.47, CZ + z], [1.08, 0.04, 0.05], TRIM)),
+  ...LR('Roof Rail', (s, n) => box(2, n, [s * 0.5, 1.435, CZ], [0.045, 0.045, 1.2], TRIM)),
+  ...[0.45, -0.45].map((z, i) => box(2, `Roof Bar ${i + 1}`, [0, 1.45, CZ + z], [1.08, 0.04, 0.05], TRIM)),
   // 3 windows and pillars
   part(3, 'Windshield', 'box', [0, 1.116, 0.622], [1.34, 0.6, 0.03], GLASS, { rot: [-34.6, 0, 0] }),
   part(3, 'Rear Window', 'box', [0, 1.116, -1.022], [1.34, 0.6, 0.03], GLASS, { rot: [34.6, 0, 0] }),
@@ -77,12 +77,12 @@ const parts: AssetPart[] = [
   box(6, 'Rear Bumper', [0, 0.32, -2.08], [1.92, 0.22, 0.2], TRIM, { mesh: () => frustum(1, 1, 1, 0.8) }),
   ...LR('Taillight', (s, n) => box(6, n, [s * 0.68, 0.72, -2.1], [0.4, 0.17, 0.05], TAIL)),
   ...LR('Reverse Light', (s, n) => box(6, n, [s * 0.46, 0.72, -2.105], [0.08, 0.1, 0.04], '#fafafa')),
-  box(6, 'Rear Plate', [0, 0.52, -2.12], [0.42, 0.13, 0.02], '#fafafa'),
+  box(6, 'Rear Plate', [0, 0.52, -2.105], [0.42, 0.13, 0.02], '#fafafa'),
   tube(6, 'Exhaust', [-0.55, 0.28, -2.17], [0.09, 0.14, 0.09], CHROME, 8, { rot: [90, 0, 0] }),
   box(6, 'Trunk Handle', [0, 0.82, -2.03], [0.22, 0.03, 0.03], CHROME),
   // 7 details
-  ...LR('Mirror', (s, n) => box(7, n, [s * 1.0, 1.02, 0.5], [0.12, 0.1, 0.07], BODY)),
-  ...LR('Mirror Arm', (s, n) => box(7, n, [s * 0.9, 0.99, 0.52], [0.12, 0.03, 0.04], TRIM)),
+  ...LR('Mirror', (s, n) => box(7, n, [s * 0.93, 0.98, 0.5], [0.12, 0.1, 0.07], BODY)),
+  ...LR('Mirror Arm', (s, n) => box(7, n, [s * 0.8, 0.93, 0.52], [0.16, 0.03, 0.04], TRIM)),
   ...LR('Door Handle', (s, n) => box(7, n, [s * 0.94, 0.74, 0.05], [0.02, 0.03, 0.16], CHROME)),
   ...LR('Rear Door Handle', (s, n) => box(7, n, [s * 0.94, 0.74, -0.6], [0.02, 0.03, 0.16], CHROME)),
   ...LR('Wiper', (s, n) => box(7, n, [s * 0.3, 0.97, 0.71], [0.5, 0.014, 0.025], DARK, { rot: [0, 0, s * 8] })),

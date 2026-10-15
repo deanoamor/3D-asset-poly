@@ -2,12 +2,10 @@ import * as THREE from 'three';
 import {
   DEFAULT_SEGMENTS,
   SHAPE_LABELS,
-  TARGET_BUDGETS,
   type Doc,
   type EnginePreset,
   type SceneObject,
   type ShapeType,
-  type TargetId,
   type Vec3,
 } from './types';
 import { byId, childrenOf, decomposeTo, descendantIds, effectivelyVisible, isLockedChain, localMatrix, worldMatrix } from './docmath';
@@ -27,22 +25,16 @@ export function newId(): string {
   return `o${Date.now().toString(36)}${idCounter.toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
 }
 
-export function emptyDoc(name = 'Untitled prop', target: TargetId = 'mobile'): Doc {
-  return { version: 1, name, target, customBudget: 10000, enginePreset: 'unity', objects: [] };
-}
-
-export function budgetOf(doc: Doc): number {
-  return doc.target === 'custom' ? Math.max(1, doc.customBudget) : TARGET_BUDGETS[doc.target];
+export function emptyDoc(name = 'Untitled prop'): Doc {
+  return { version: 1, name, enginePreset: 'unity', objects: [] };
 }
 
 export interface PolyStats {
   total: number;
-  budget: number;
-  ratio: number;
-  status: 'green' | 'yellow' | 'red';
   perObject: { id: string; name: string; tris: number }[];
 }
 
+/** Triangles in the visible shapes, with the heaviest first. */
 export function polyStats(doc: Doc): PolyStats {
   const map = byId(doc);
   const perObject: PolyStats['perObject'] = [];
@@ -55,10 +47,7 @@ export function polyStats(doc: Doc): PolyStats {
     perObject.push({ id: o.id, name: o.name, tris });
   }
   perObject.sort((a, b) => b.tris - a.tris);
-  const budget = budgetOf(doc);
-  const ratio = total / budget;
-  const status = ratio > 1 ? 'red' : ratio >= 0.7 ? 'yellow' : 'green';
-  return { total, budget, ratio, status, perObject };
+  return { total, perObject };
 }
 
 export type Tool = 'select' | 'shape' | 'move' | 'rotate' | 'scale' | 'color';
@@ -284,12 +273,6 @@ export class Store {
     }, commit);
   }
 
-  setTarget(target: TargetId): void {
-    this.mutate((d) => (d.target = target));
-  }
-  setCustomBudget(n: number): void {
-    this.mutate((d) => (d.customBudget = Math.max(1, Math.round(n))));
-  }
   setPreset(p: EnginePreset): void {
     this.mutate((d) => (d.enginePreset = p), false);
   }

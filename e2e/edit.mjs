@@ -127,7 +127,7 @@ await page.click('#edit-roundoff');
 s = await S();
 ok(s.mesh.f > f1 * 2, `Round off subdivides (${f1} -> ${s.mesh.f} faces)`);
 const tris = await page.evaluate(() => document.querySelector('#polypill').textContent);
-ok(/tris/.test(tris), `the poly counter follows: ${tris}`);
+ok(/triangles/.test(tris), `the triangle counter follows: ${tris}`);
 await page.keyboard.press('4');
 await shot('06-rounded');
 

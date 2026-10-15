@@ -105,17 +105,15 @@ describe('grouping', () => {
   });
 });
 
-describe('poly budget', () => {
-  it('turns yellow and red with the target', () => {
-    const st = new Store(emptyDoc('t', 'mobile'));
-    expect(polyStats(st.doc).status).toBe('green');
+describe('triangle count', () => {
+  it('adds up the visible shapes, heaviest first', () => {
+    const st = new Store(emptyDoc('t'));
+    st.addShape('box');
     const s = st.addShape('sphere');
     st.updateParams(s.id, { segments: 64 });
     const stats = polyStats(st.doc);
-    expect(stats.total).toBe(triangleCount('sphere', st.get(s.id)!.params));
-    expect(['yellow', 'red']).toContain(stats.status);
-    st.setTarget('pc');
-    expect(polyStats(st.doc).status).toBe('green');
+    expect(stats.total).toBe(12 + triangleCount('sphere', st.get(s.id)!.params));
+    expect(stats.perObject[0].name).toBe('Sphere');
   });
 
   it('ignores hidden objects', () => {
@@ -123,6 +121,12 @@ describe('poly budget', () => {
     const s = st.addShape('sphere');
     st.update(s.id, { visible: false });
     expect(polyStats(st.doc).total).toBe(0);
+  });
+
+  it('has no budget or limit any more', () => {
+    const st = new Store(emptyDoc());
+    expect(Object.keys(st.doc)).not.toContain('target');
+    expect(Object.keys(polyStats(st.doc))).toEqual(['total', 'perObject']);
   });
 });
 
