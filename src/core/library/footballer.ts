@@ -35,7 +35,7 @@ const WR_L: Vec3 = [0.43, 1.34, 0.42];
 const SH_R: Vec3 = L(1.37, -0.31);
 const EL_R: Vec3 = [-0.43, 1.2, -0.1];
 const WR_R: Vec3 = [-0.37, 0.99, -0.27];
-const BALL: Vec3 = [-0.17, 0.14, 0.97];
+const BALL: Vec3 = [-0.17, 0.14, 0.93];
 
 // body shells
 const torso = sweep([R(L(0.88), [0.2, 0.135]), R(L(0.98), [0.212, 0.14]), R(L(1.14), [0.24, 0.15]), R(L(1.3), [0.275, 0.155]), R(L(1.42), [0.265, 0.14])], { sides: 8, phase: PH });
@@ -47,16 +47,24 @@ const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 12);
 
 // ---- 0 boots ----
 add(...bootParts(0, 1, ANKLE_L, 0, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
-add(...bootParts(0, -1, ANKLE_R, 30, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
+add(...bootParts(0, -1, ANKLE_R, 42, { boot: BLACK, sole: WHITE, cuff: GRAY, laces: WHITE, studs: GRAY }, { shaft: false }));
+
+// the kicking boot: a collar that follows the shin so the sock ends inside the boot, not beside it
+{
+  const d = vnorm(vsub(ANKLE_R, KNEE_R));
+  const collar = sweep([R(vsub(ANKLE_R, vmul(d, 0.06)), 0.088), R(vsub(ANKLE_R, vmul(d, 0.0)), 0.09), R(vadd(ANKLE_R, vmul(d, 0.05)), 0.088)], { sides: 8 });
+  add(toPart(0, 'Boot Collar Right', collar, BLACK));
+  add(toPart(0, 'Boot Cuff Right', sweep([R(vsub(ANKLE_R, vmul(d, 0.075)), 0.094), R(vsub(ANKLE_R, vmul(d, 0.05)), 0.094)], { sides: 8 }), GRAY));
+}
 
 // ---- 1 socks, legs and shorts ----
 const legL = [R(HIP_L, 0.12), R(lerp(HIP_L, KNEE_L, 0.5), 0.108), R(KNEE_L, 0.09), R(lerp(KNEE_L, ANKLE_L, 0.5), 0.08), R(ANKLE_L, 0.071), R(vadd(ANKLE_L, [0, -0.1, -0.005]), 0.071)];
 const dirR = vnorm(vsub(ANKLE_R, KNEE_R));
-const legR = [R(HIP_R, 0.12), R(lerp(HIP_R, KNEE_R, 0.5), 0.108), R(KNEE_R, 0.09), R(lerp(KNEE_R, ANKLE_R, 0.5), 0.08), R(ANKLE_R, 0.071), R(vadd(ANKLE_R, vmul(dirR, 0.1)), 0.071)];
+const legR = [R(HIP_R, 0.12), R(lerp(HIP_R, KNEE_R, 0.5), 0.108), R(KNEE_R, 0.09), R(lerp(KNEE_R, ANKLE_R, 0.5), 0.08), R(vsub(ANKLE_R, vmul(dirR, 0.05)), 0.071), R(vsub(ANKLE_R, vmul(dirR, 0.03)), 0.07)];
 for (const [side, leg, hip, knee, ankle] of [['Left', legL, HIP_L, KNEE_L, ANKLE_L], ['Right', legR, HIP_R, KNEE_R, ANKLE_R]] as const) {
   add(toPart(1, `Leg ${side}`, sweep(leg.map((q) => q), { sides: 8 }), SKIN));
   const sockTop = lerp(knee, ankle, 0.16);
-  const sockPath = [R(sockTop, 0.094), R(lerp(knee, ankle, 0.5), 0.087), R(ankle, 0.079), R(vadd(ankle, vmul(vnorm(vsub(ankle, knee)), 0.1)), 0.079)];
+  const sockPath = [R(sockTop, 0.094), R(lerp(knee, ankle, 0.5), 0.087), R(vsub(ankle, vmul(vnorm(vsub(ankle, knee)), 0.07)), 0.08), R(vadd(ankle, vmul(vnorm(vsub(ankle, knee)), 0.04)), 0.08)];
   add(toPart(1, `Sock ${side}`, sweep(sockPath, { sides: 8 }), RED));
   for (const [i, t] of [0.2, 0.34].entries()) {
     const c = lerp(knee, ankle, t);
