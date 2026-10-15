@@ -5,6 +5,9 @@ import type { Store } from '../core/store';
 import { effectivelyVisible, isLockedChain } from '../core/docmath';
 import type { SceneObject, ShapeType, Vec3 } from '../core/types';
 import { GeometryCache, MaterialCache, applyTransform } from './sceneBuild';
+import { EditController } from './editMode';
+import { meshSignature } from '../core/mesh';
+import { needsDoubleSide } from '../core/shapes';
 
 const R2D = 180 / Math.PI;
 const round = (n: number, d = 1e4) => Math.round(n * d) / d;
@@ -39,23 +42,24 @@ export class Viewport {
   readonly tc: TransformControls;
   private model = new THREE.Group();
   private grid: THREE.Object3D;
-  private nodes = new Map<string, THREE.Object3D>();
+  readonly nodes = new Map<string, THREE.Object3D>();
+  readonly edit: EditController;
   private sig = new Map<string, string>();
   private geos = new GeometryCache();
-  private mats = new MaterialCache();
+  readonly mats = new MaterialCache();
   private outlines: THREE.LineSegments[] = [];
   private outlineMat = new THREE.LineBasicMaterial({ color: 0x0d99ff });
   private ghost: THREE.Mesh | null = null;
   private raycaster = new THREE.Raycaster();
   private dirty = true;
   private raf = 0;
-  private spaceDown = false;
+  spaceDown = false;
   private tween: { t0: number; dur: number; from: THREE.Vector3; to: THREE.Vector3; tFrom: THREE.Vector3; tTo: THREE.Vector3 } | null = null;
   private disposers: (() => void)[] = [];
   private otherBoxes: THREE.Box3[] = [];
   private gizmoDragging = false;
 
-  constructor(private container: HTMLElement, private store: Store) {
+  constructor(readonly container: HTMLElement, private store: Store) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.domElement.className = 'gl';
@@ -90,16 +94,19 @@ export class Viewport {
     this.tc.size = 0.85;
     const helper = this.tc.getHelper();
     this.scene.add(helper);
+    this.edit = new EditController(this, store);
     this.tc.addEventListener('change', () => this.requestRender());
     this.tc.addEventListener('dragging-changed', (e) => {
       const dragging = (e as unknown as { value: boolean }).value;
       this.controls.enabled = !dragging;
       if (dragging) {
         this.gizmoDragging = true;
-        this.cacheOtherBoxes();
+        if (this.store.edit) this.edit.beginDrag();
+        else this.cacheOtherBoxes();
       } else if (this.gizmoDragging) {
         this.gizmoDragging = false;
-        this.store.commit();
+        if (this.store.edit) this.edit.endDrag();
+        else this.store.commit();
       }
     });
     this.tc.addEventListener('objectChange', () => this.onGizmoChange());
@@ -129,6 +136,10 @@ export class Viewport {
       if (e === 'doc' || e === 'reset') this.sync();
       if (e === 'selection' || e === 'reset') this.onSelection();
       if (e === 'tool') this.onToolChange();
+      if (e === 'edit') {
+        this.edit.rebuild();
+        this.onToolChange();
+      }
     });
     this.resize();
     this.sync();
@@ -175,7 +186,9 @@ export class Viewport {
   }
 
   private nodeSignature(o: SceneObject): string {
-    return o.kind === 'shape' ? `${o.shape}:${o.params.segments}:${o.params.taper}:${o.color}` : 'group';
+    if (o.kind !== 'shape') return 'group';
+    if (o.mesh) return `mesh:${meshSignature(o.mesh)}:${o.color}:${needsDoubleSide(o)}`;
+    return `${o.shape}:${o.params.segments}:${o.params.taper}:${o.color}`;
   }
 
   sync(): void {
@@ -186,13 +199,15 @@ export class Viewport {
       let node = this.nodes.get(o.id);
       const sig = this.nodeSignature(o);
       if (!node) {
-        node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, o.shape === 'plane')) : new THREE.Group();
+        node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, needsDoubleSide(o))) : new THREE.Group();
         node.userData.id = o.id;
         this.nodes.set(o.id, node);
         this.sig.set(o.id, sig);
       } else if (this.sig.get(o.id) !== sig && node instanceof THREE.Mesh) {
+        const old = node.geometry;
         node.geometry = this.geos.get(o);
-        node.material = this.mats.get(o.color, o.shape === 'plane');
+        if (old.userData.faceOfTri) old.dispose(); // edited meshes own their geometry
+        node.material = this.mats.get(o.color, needsDoubleSide(o));
         this.sig.set(o.id, sig);
         this.refreshOutlines();
       }
@@ -210,7 +225,16 @@ export class Viewport {
         this.sig.delete(id);
       }
     }
+    if (this.store.edit) this.edit.rebuild();
     this.refreshGizmoTarget();
+    this.requestRender();
+  }
+
+  /** Back to the normal material after leaving Edit Shape. */
+  resetNodeLook(id: string): void {
+    const o = this.store.get(id);
+    const node = this.nodes.get(id);
+    if (o && node instanceof THREE.Mesh) node.material = this.mats.get(o.color, needsDoubleSide(o));
     this.requestRender();
   }
 
@@ -230,7 +254,7 @@ export class Viewport {
       l.geometry.dispose();
     }
     this.outlines = [];
-    if (this.store.ui.preview) return;
+    if (this.store.ui.preview || this.store.edit) return;
     for (const m of this.selectedMeshes()) {
       const edges = new THREE.EdgesGeometry(m.geometry, 12);
       const line = new THREE.LineSegments(edges, this.outlineMat);
@@ -264,10 +288,24 @@ export class Viewport {
     this.requestRender();
   }
 
-  private refreshGizmoTarget(): void {
+  refreshGizmoTarget(): void {
     const { tool, preview } = this.store.ui;
     const sel = this.store.selection;
     let attach: THREE.Object3D | null = null;
+    if (this.store.edit) {
+      const e = this.store.edit;
+      if (!preview && e.sel.length && (tool === 'move' || tool === 'rotate' || tool === 'scale')) attach = this.edit.proxy;
+      const helper = this.tc.getHelper();
+      if (attach) {
+        if (this.tc.object !== attach) this.tc.attach(attach);
+        helper.visible = true;
+      } else {
+        if (this.tc.object) this.tc.detach();
+        helper.visible = false;
+      }
+      this.requestRender();
+      return;
+    }
     if (!preview && (tool === 'move' || tool === 'rotate' || tool === 'scale') && sel.length === 1) {
       const o = this.store.get(sel[0]);
       const map = this.store.map;
@@ -289,6 +327,10 @@ export class Viewport {
   private onGizmoChange(): void {
     const node = this.tc.object;
     if (!node) return;
+    if (this.store.edit) {
+      this.edit.applyDrag();
+      return;
+    }
     const id = node.userData.id as string;
     if (this.tc.getMode() === 'translate' && this.store.ui.snapObjects) this.snapNodeToObjects(node, id);
     const s = node.scale;
@@ -409,6 +451,7 @@ export class Viewport {
   private onPointerDown(e: PointerEvent): void {
     if (e.button !== 0 || this.store.ui.preview || this.tc.dragging || this.spaceDown) return;
     if ((e.target as HTMLElement).closest('.overlay')) return;
+    if (this.store.edit) return this.edit.pointerDown(e);
     const tool = this.store.ui.tool;
 
     if (tool === 'shape') return this.beginDraw(e);
@@ -455,9 +498,12 @@ export class Viewport {
 
   private onDoubleClick(e: MouseEvent): void {
     const ui = this.store.ui;
-    if (ui.preview || ui.tool === 'shape' || ui.tool === 'color') return;
+    if (ui.preview || ui.tool === 'shape' || ui.tool === 'color' || this.store.edit) return;
     const pick = this.pickAt(e);
-    if (pick) this.store.select([pick.id]);
+    if (!pick) return;
+    const already = this.store.selection.length === 1 && this.store.selection[0] === pick.id;
+    this.store.select([pick.id]);
+    if (already && this.store.get(pick.id)?.kind === 'shape') this.store.enterEdit(pick.id); // double-click again = Edit Shape
   }
 
   private paint(id: string, only?: string): void {
@@ -682,6 +728,7 @@ export class Viewport {
   dispose(): void {
     cancelAnimationFrame(this.raf);
     this.disposers.forEach((d) => d());
+    this.edit.dispose();
     this.geos.dispose();
     this.mats.dispose();
     this.renderer.dispose();

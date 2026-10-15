@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import type { ShapeParams, ShapeType } from './types';
+import type { SceneObject, ShapeParams, ShapeType } from './types';
+import { isClosed, meshTriangles, triangulate, type PolyMesh } from './mesh';
 import { MAX_SEGMENTS, MIN_SEGMENTS } from './types';
 
 export function clampSegments(shape: ShapeType, n: number): number {
@@ -75,4 +76,24 @@ export function buildGeometry(shape: ShapeType, p: ShapeParams): THREE.BufferGeo
 
 export function geometryTriangles(g: THREE.BufferGeometry): number {
   return g.index ? g.index.count / 3 : g.getAttribute('position').count / 3;
+}
+
+export function objectTriangles(o: SceneObject): number {
+  if (o.kind !== 'shape' || !o.shape) return 0;
+  return o.mesh ? meshTriangles(o.mesh) : triangleCount(o.shape, o.params);
+}
+
+/** Flat-shaded geometry for an edited mesh. `faceOfTri` lets the editor map a clicked triangle back to its polygon. */
+export function buildMeshGeometry(m: PolyMesh): THREE.BufferGeometry {
+  const { positions, faceOfTri } = triangulate(m);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  g.computeVertexNormals();
+  g.userData.faceOfTri = faceOfTri;
+  return g;
+}
+
+/** Planes and meshes with holes are drawn from both sides. */
+export function needsDoubleSide(o: SceneObject): boolean {
+  return o.shape === 'plane' || (!!o.mesh && !isClosed(o.mesh));
 }

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Doc, SceneObject } from '../core/types';
-import { buildGeometry } from '../core/shapes';
+import { buildGeometry, buildMeshGeometry, needsDoubleSide } from '../core/shapes';
 import { effectivelyVisible } from '../core/docmath';
 
 const D2R = Math.PI / 180;
@@ -8,6 +8,7 @@ const D2R = Math.PI / 180;
 export class GeometryCache {
   private map = new Map<string, THREE.BufferGeometry>();
   get(o: SceneObject): THREE.BufferGeometry {
+    if (o.mesh) return buildMeshGeometry(o.mesh); // edited meshes are not shared
     const shape = o.shape!;
     const key = `${shape}:${o.params.segments}:${shape === 'cylinder' ? o.params.taper.toFixed(3) : 0}`;
     let g = this.map.get(key);
@@ -65,7 +66,7 @@ export function buildExportScene(doc: Doc, name: string): THREE.Group {
     if (!effectivelyVisible(map, o)) continue;
     let node: THREE.Object3D;
     if (o.kind === 'shape') {
-      const mesh = new THREE.Mesh(geos.get(o), mats.get(o.color, o.shape === 'plane'));
+      const mesh = new THREE.Mesh(geos.get(o), mats.get(o.color, needsDoubleSide(o)));
       node = mesh;
     } else {
       node = new THREE.Group();

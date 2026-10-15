@@ -117,6 +117,7 @@ export function mountLayers(root: HTMLElement, store: Store): void {
       caret,
       h('span', { class: 'lico' }, icon(isGroup ? 'group' : o.shape!, 15)),
       name,
+      o.mesh ? h('span', { class: 'editbadge', title: 'Edited shape' }, icon('edit', 12)) : null,
       h('span', { class: 'lspacer' }),
       h('button', {
         class: `tbtn xs ${o.locked ? 'on' : 'faint'}`,

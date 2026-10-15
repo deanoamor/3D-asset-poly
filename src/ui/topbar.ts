@@ -5,7 +5,7 @@ import type { Viewport } from '../engine/viewport';
 
 export const APP_NAME = 'Poly Studio';
 
-export function mountTopbar(root: HTMLElement, store: Store, vp: Viewport): { setSaved: (s: 'saved' | 'saving') => void } {
+export function mountTopbar(root: HTMLElement, store: Store, vp: Viewport, hooks: { editTour: () => void }): { setSaved: (s: 'saved' | 'saving') => void } {
   const name = h('input', { class: 'projname', id: 'projname', value: store.doc.name, maxlength: '60', 'aria-label': 'Project name', spellcheck: false }) as HTMLInputElement;
   name.addEventListener('change', () => store.rename(name.value));
   name.addEventListener('keydown', (e) => {
@@ -20,6 +20,7 @@ export function mountTopbar(root: HTMLElement, store: Store, vp: Viewport): { se
     h('button', { role: 'menuitem', onclick: () => { hideMenu(); openProjectFile(store); } }, 'Open project file…'),
     h('button', { role: 'menuitem', onclick: () => { hideMenu(); saveProjectFile(store); } }, 'Save project file'),
     h('hr'),
+    h('button', { role: 'menuitem', id: 'menu-edit-tour', onclick: () => { hideMenu(); hooks.editTour(); } }, 'Tour: reshape a box'),
     h('button', { role: 'menuitem', onclick: () => { hideMenu(); openShortcuts(); } }, 'Keyboard shortcuts'),
   );
   const hideMenu = () => menuList.classList.add('hidden');

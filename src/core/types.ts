@@ -1,3 +1,5 @@
+import type { PolyMesh } from './mesh';
+
 export type ShapeType = 'box' | 'cylinder' | 'sphere' | 'cone' | 'pyramid' | 'plane';
 export type Vec3 = [number, number, number];
 export type TargetId = 'mobile' | 'pc' | 'custom';
@@ -22,6 +24,8 @@ export interface SceneObject {
   rotation: Vec3;
   /** Width / height / depth. Scale applied to a unit-sized shape. */
   size: Vec3;
+  /** Present once the shape has been edited point by point. Unit-sized; `size` scales it. */
+  mesh?: PolyMesh;
   color: string;
   visible: boolean;
   locked: boolean;

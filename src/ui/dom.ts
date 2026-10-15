@@ -71,6 +71,17 @@ export const ICONS: Record<string, string> = {
   error: P('M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM5.8 5.8l4.4 4.4M10.2 5.8l-4.4 4.4'),
   folder: P('M2 4.5h4l1.5 1.5H14v6.5H2z'),
   plus: P('M8 3v10M3 8h10'),
+  edit: P('M3 13l1-3.5L11 2.5 13.5 5 6.5 12zM9.5 4L12 6.5'),
+  pointsMode: P('M3.5 3.5h9v9h-9z') + '<circle cx="3.5" cy="3.5" r="1.8" fill="currentColor"/><circle cx="12.5" cy="3.5" r="1.8" fill="currentColor"/><circle cx="3.5" cy="12.5" r="1.8" fill="currentColor"/><circle cx="12.5" cy="12.5" r="1.8" fill="currentColor"/>',
+  edgesMode: P('M3.5 3.5h9v9h-9z') + '<path d="M3.5 12.5h9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>',
+  facesMode: '<path d="M3 3h10v10H3z" fill="currentColor" fill-opacity=".3" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>',
+  pullout: P('M3 13.5h10M5 13.5V10h6v3.5M8 9V2.5M5.5 5L8 2.5 10.5 5'),
+  shrink: P('M2.5 2.5h11v11h-11zM5.5 5.5h5v5h-5z'),
+  cut: P('M3 3h10v10H3zM3 8h10') + '<path d="M8 5.2v5.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1 2"/>',
+  merge: P('M2.5 3l5 5-5 5M13.5 3l-5 5 5 5'),
+  roundoff: P('M5 3h6l2 2v6l-2 2H5l-2-2V5z'),
+  mirror: P('M8 2v12M5.5 4.5L2 8l3.5 3.5zM10.5 4.5L14 8l-3.5 3.5z'),
+  xray: P('M3 3h10v10H3zM6 6h7v7H6z'),
 };
 
 export function icon(name: string, size = 16): HTMLElement {

@@ -263,6 +263,9 @@ export function openShortcuts(): void {
     ['Space + drag', 'Orbit while a tool is active'],
     ['Right-drag · Scroll', 'Pan · Zoom'],
     ['Shift-click', 'Add to selection'],
+    ['Tab', 'Edit shape on / off'],
+    ['P · I · K · M · Delete', 'In Edit shape: Pull out, Shrink face, Add cut, Merge points, Delete'],
+    ['Shift-click · Shift-drag', 'In Edit shape: add to selection · select an area'],
     ['Esc', 'Deselect, cancel, leave preview'],
   ];
   const body = h('div', { class: 'dlg' }, h('h2', {}, 'Keyboard shortcuts'), h('p', { class: 'lead' }, 'Everything here also has a button. Shortcuts are optional.'),

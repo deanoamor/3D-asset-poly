@@ -8,7 +8,8 @@ import { mountProps } from './ui/props';
 import { mountToolbar } from './ui/toolbar';
 import { mountPolyCounter } from './ui/polycounter';
 import { mountTopbar } from './ui/topbar';
-import { mountOnboarding } from './ui/onboarding';
+import { mountEditTour, mountOnboarding, type Tour } from './ui/onboarding';
+import { mountEditBar } from './ui/editbar';
 import { openExportDialog, openProjectDialog, openShortcuts } from './ui/dialogs';
 import { toast } from './ui/dom';
 
@@ -28,12 +29,23 @@ async function boot(): Promise<void> {
   app.append(topbar, layers, stage, props);
 
   const vp = new Viewport(stage, store);
-  const bar = mountTopbar(topbar, store, vp);
+  const tours: Tour[] = [];
+  const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour() });
   mountLayers(layers, store);
   mountProps(props, store);
   mountToolbar(stage, store, vp);
   mountPolyCounter(stage, store);
-  mountOnboarding(stage, store);
+  tours.push(mountOnboarding(stage, store, () => tours.filter((t) => t !== tours[0])));
+  const editTour = mountEditTour(stage, store, () => tours.filter((t) => t !== editTour));
+  tours.push(editTour);
+  mountEditBar(stage, store, () => startEditTour());
+  function startEditTour(): void {
+    if (store.edit || store.selection.length || store.doc.objects.length) editTour.start();
+    else {
+      store.addShape('box', { name: 'Head', position: [0, 0.5, 0] });
+      editTour.start();
+    }
+  }
   startAutosave(store, bar.setSaved);
 
   // Debug / test hook
@@ -44,6 +56,59 @@ async function boot(): Promise<void> {
     if (document.querySelector('.modal-back')) return;
     const mod = e.ctrlKey || e.metaKey;
     const k = e.key.toLowerCase();
+    if (!mod && k === 'tab') {
+      e.preventDefault();
+      if (store.edit) store.exitEdit();
+      else {
+        const why = store.whyNotEditable(store.selection.length === 1 ? store.selection[0] : undefined);
+        if (why) toast(why);
+        else store.enterEdit(store.selection[0]);
+      }
+      return;
+    }
+    if (store.edit) {
+      const say = (m: string | null) => m && toast(m);
+      if (mod) {
+        if (k === 'a') {
+          e.preventDefault();
+          store.editSelectAll();
+        } else if (k === 'z') {
+          e.preventDefault();
+          e.shiftKey ? store.redo() : store.undo();
+        } else if (k === 'y') {
+          e.preventDefault();
+          store.redo();
+        }
+        return;
+      }
+      switch (k) {
+        case 'v': store.setUi({ tool: 'select' }); break;
+        case 'w': store.setUi({ tool: 'move' }); break;
+        case 'e': store.setUi({ tool: 'rotate' }); break;
+        case 'r': store.setUi({ tool: 'scale' }); break;
+        case 'p': say(store.pullOut()); break;
+        case 'i': say(store.shrinkFace()); break;
+        case 'k': say(store.addCut()); break;
+        case 'm': say(store.mergePoints()); break;
+        case 'a': store.editSelectAll(); break;
+        case 'f': vp.focus(); break;
+        case '1': vp.setView('front'); break;
+        case '2': vp.setView('side'); break;
+        case '3': vp.setView('top'); break;
+        case '4': vp.setView('persp'); break;
+        case 'delete':
+        case 'backspace':
+        case 'x':
+          e.preventDefault();
+          say(store.deleteSelection());
+          break;
+        case 'escape':
+          if (store.edit.sel.length) store.editSelect([]);
+          else store.exitEdit();
+          break;
+      }
+      return;
+    }
     if (mod) {
       if (k === 'z') {
         e.preventDefault();

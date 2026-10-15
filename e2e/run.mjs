@@ -160,12 +160,12 @@ await page.check('#proj-guide');
 await page.click('#btn-create');
 await page.waitForSelector('.coach:not(.hidden)');
 await shot('07-coach');
-for (let i = 0; i < 10 && (await page.textContent('#coach-auto')) !== 'Open export'; i++) {
-  await page.click('#coach-auto');
+for (let i = 0; i < 10 && (await page.textContent('#coach-onboarding-auto')) !== 'Open export'; i++) {
+  await page.click('#coach-onboarding-auto');
   await page.waitForTimeout(150);
 }
 await shot('08-coach-export');
-await page.click('#coach-auto'); // open export
+await page.click('#coach-onboarding-auto'); // open export
 await page.waitForSelector('#btn-download');
 await Promise.all([page.waitForEvent('download'), page.click('#btn-download')]);
 await page.waitForTimeout(200);

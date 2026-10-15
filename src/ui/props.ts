@@ -2,8 +2,9 @@ import type { Store } from '../core/store';
 import { polyStats } from '../core/store';
 import { isLockedChain } from '../core/docmath';
 import { PALETTE } from '../core/palette';
-import { triangleCount } from '../core/shapes';
-import { MAX_SEGMENTS, MIN_SEGMENTS, SHAPE_LABELS, type SceneObject, type Vec3 } from '../core/types';
+import { objectTriangles } from '../core/shapes';
+import { edgeMap, vertCount } from '../core/mesh';
+import { MIN_SEGMENTS, SHAPE_LABELS, type SceneObject, type Vec3 } from '../core/types';
 import { clear, fmt, h, icon } from './dom';
 
 interface Field {
@@ -141,6 +142,16 @@ export function mountProps(root: HTMLElement, store: Store): void {
         }, 'Unlock')),
       );
     }
+    if (isShape) {
+      body.append(
+        h('div', { class: 'editcard' },
+          h('strong', {}, o.mesh ? 'Custom shape' : 'Change this shape'),
+          h('p', {}, o.mesh ? 'You edited its points, so the Sides setting no longer applies.' : 'Turn it into something else: pull faces out, add cuts, round it off.'),
+          h('button', { class: 'btn primary block', id: 'btn-edit-shape', disabled: locked, title: 'Edit shape (Tab)', onclick: () => store.enterEdit(o.id) }, icon('edit', 14), 'Edit shape'),
+          o.mesh ? h('button', { class: 'link', id: 'btn-reset-shape', disabled: locked, onclick: () => store.resetShape(o.id) }, 'Reset to the original shape') : null,
+        ),
+      );
+    }
     const fs = h('fieldset', { class: 'fs', disabled: locked });
     fs.append(section('Position (m)', vec3Row(o, 'position', AXES, 0.25)));
     fs.append(section('Size (m)', vec3Row(o, 'size', isShape && o.shape === 'plane' ? ['W', '–', 'D'] : SIZE_AXES, 0.25, 0.01)));
@@ -167,7 +178,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
         ),
       );
       const params: HTMLElement[] = [];
-      if (MIN_SEGMENTS[shape] !== MAX_SEGMENTS && ['cylinder', 'cone', 'sphere'].includes(shape)) {
+      if (!o.mesh && ['cylinder', 'cone', 'sphere'].includes(shape)) {
         const label = shape === 'sphere' ? 'Smoothness' : 'Sides';
         const range = h('input', { type: 'range', min: String(MIN_SEGMENTS[shape]), max: '48', step: '1', 'aria-label': label }) as HTMLInputElement;
         const val = h('output', { class: 'rval' });
@@ -183,7 +194,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
         sync();
         params.push(h('label', { class: 'prow' }, h('span', {}, label), range, val));
       }
-      if (shape === 'cylinder') {
+      if (!o.mesh && shape === 'cylinder') {
         const range = h('input', { type: 'range', min: '0', max: '100', step: '5', 'aria-label': 'Top size' }) as HTMLInputElement;
         const val = h('output', { class: 'rval' });
         const sync = () => {
@@ -202,7 +213,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
       fields.push({
         update: () => {
           const cur = store.get(o.id);
-          if (cur?.shape) tris.textContent = `${fmt(triangleCount(cur.shape, cur.params))} triangles in this shape`;
+          if (cur?.shape) tris.textContent = `${fmt(objectTriangles(cur))} triangles in this shape`;
         },
       });
       fs.append(section('Shape', ...params, tris));
@@ -237,6 +248,43 @@ export function mountProps(root: HTMLElement, store: Store): void {
     );
   }
 
+  function buildEdit(): void {
+    const ed = store.edit!;
+    const o = store.get(ed.id)!;
+    body.append(
+      h('div', { class: 'pheader' },
+        h('span', { class: 'lico big' }, icon('edit', 18)),
+        h('div', { class: 'ptitle' }, h('strong', { class: 'pname' }, o.name), h('span', { class: 'psub' }, 'Edit shape')),
+      ),
+    );
+    const counts = h('div', { class: 'tris', id: 'edit-counts' });
+    const picked = h('div', { class: 'tris', id: 'edit-picked' });
+    fields.push({
+      update: () => {
+        const cur = store.get(ed.id)?.mesh;
+        const e = store.edit;
+        if (!cur || !e) return;
+        counts.textContent = `${fmt(vertCount(cur))} points · ${fmt(edgeMap(cur).size)} edges · ${fmt(cur.f.length)} faces`;
+        const word = e.mode === 'vertex' ? 'point' : e.mode;
+        picked.textContent = e.sel.length ? `${e.sel.length} ${word}${e.sel.length === 1 ? '' : 's'} selected` : 'Nothing selected yet';
+      },
+    });
+    body.append(
+      section('Shape', counts, picked),
+      section('Color', swatches((hx) => store.update(o.id, { color: hx }), o.color)),
+      section('How it works',
+        h('ol', { class: 'steps-list' },
+          h('li', {}, 'Choose Points, Edges or Faces in the bar below the canvas.'),
+          h('li', {}, 'Click what you want to change. Shift-click adds more.'),
+          h('li', {}, 'Drag the colored arrows, or press Pull out to grow a new part.'),
+          h('li', {}, 'Press Done when you are finished.'),
+        ),
+        h('div', { class: 'actrow' }, h('button', { class: 'btn', onclick: () => store.exitEdit() }, icon('check', 14), 'Done')),
+      ),
+    );
+    fields.forEach((f) => f.update());
+  }
+
   function buildEmpty(): void {
     const stats = polyStats(store.doc);
     body.append(
@@ -252,7 +300,8 @@ export function mountProps(root: HTMLElement, store: Store): void {
     clear(body);
     fields = [];
     const sel = store.selection;
-    if (sel.length === 0) buildEmpty();
+    if (store.edit && store.get(store.edit.id)?.mesh) buildEdit();
+    else if (sel.length === 0) buildEmpty();
     else if (sel.length === 1) {
       const o = store.get(sel[0]);
       if (o) buildSingle(o);
@@ -260,14 +309,15 @@ export function mountProps(root: HTMLElement, store: Store): void {
   }
 
   function signature(): string {
+    if (store.edit) return `edit:${store.edit.id}:${store.get(store.edit.id)?.color}`;
     const sel = store.selection;
     if (sel.length !== 1) return `${sel.length}:${sel.join(',')}:${sel.length === 0 ? store.doc.objects.length : ''}`;
     const o = store.get(sel[0]);
-    return o ? `1:${o.id}:${o.kind}:${o.shape}:${o.locked}:${isLockedChain(store.map, o)}:${o.name}` : 'x';
+    return o ? `1:${o.id}:${o.kind}:${o.shape}:${o.locked}:${isLockedChain(store.map, o)}:${o.name}:${!!o.mesh}` : 'x';
   }
 
   store.subscribe((e) => {
-    if (e === 'selection' || e === 'doc' || e === 'reset') {
+    if (e === 'selection' || e === 'doc' || e === 'reset' || e === 'edit') {
       const s = signature();
       if (s !== sigKey) {
         sigKey = s;

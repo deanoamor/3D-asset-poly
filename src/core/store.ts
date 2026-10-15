@@ -10,8 +10,13 @@ import {
   type TargetId,
   type Vec3,
 } from './types';
-import { byId, childrenOf, decomposeTo, descendantIds, effectivelyVisible, localMatrix, worldMatrix } from './docmath';
-import { clampSegments, triangleCount } from './shapes';
+import { byId, childrenOf, decomposeTo, descendantIds, effectivelyVisible, isLockedChain, localMatrix, worldMatrix } from './docmath';
+import { clampSegments, objectTriangles } from './shapes';
+import {
+  bakeScale, cloneMesh, convertSelection, deleteEdges, deleteFaces, deleteVerts, edgeMap, extrudeEdges, extrudeFaces, insetFaces, loopCut, meshTriangles,
+  boundsOf, mergeVerts, normalizeMesh, polyMeshFor, subdivide, vertCount, verticesOfSelection,
+  type EditMode, type PolyMesh, type Sel, type V3,
+} from './mesh';
 
 export const DEFAULT_COLOR = '#c9ced6';
 const HISTORY_CAP = 500;
@@ -45,7 +50,7 @@ export function polyStats(doc: Doc): PolyStats {
   for (const o of doc.objects) {
     if (o.kind !== 'shape' || !o.shape) continue;
     if (!effectivelyVisible(map, o)) continue;
-    const tris = triangleCount(o.shape, o.params);
+    const tris = objectTriangles(o);
     total += tris;
     perObject.push({ id: o.id, name: o.name, tris });
   }
@@ -68,7 +73,19 @@ export interface UiState {
   gridStep: number;
 }
 
-export type StoreEvent = 'doc' | 'selection' | 'tool' | 'history' | 'reset';
+export type StoreEvent = 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit';
+
+export interface EditState {
+  id: string;
+  mode: EditMode;
+  sel: Sel;
+  /** Moving a point also moves its mirror image across the object's X = 0 plane. */
+  symmetry: boolean;
+  /** Draw the model see-through so points on the far side can be picked. */
+  xray: boolean;
+}
+
+const MAX_EDIT_TRIANGLES = 60000;
 
 export class Store {
   doc: Doc;
@@ -82,6 +99,7 @@ export class Store {
     preview: false,
     gridStep: 0.25,
   };
+  edit: EditState | null = null;
   private committed: string;
   undoStack: string[] = [];
   redoStack: string[] = [];
@@ -118,6 +136,7 @@ export class Store {
     this.committed = JSON.stringify(doc);
     this.undoStack = history?.undo.slice(-HISTORY_CAP) ?? [];
     this.redoStack = history?.redo.slice(-HISTORY_CAP) ?? [];
+    this.edit = null;
     this.selection = [];
     this.emit('reset');
     this.emit('selection');
@@ -160,6 +179,7 @@ export class Store {
       this.committed = prev;
     }
     this.pruneSelection();
+    this.afterTimeTravel();
     this.emit('doc');
     this.emit('history');
   }
@@ -171,8 +191,19 @@ export class Store {
     this.doc = JSON.parse(next);
     this.committed = next;
     this.pruneSelection();
+    this.afterTimeTravel();
     this.emit('doc');
     this.emit('history');
+  }
+
+  /** Point and face numbers may mean something else after undo/redo, so the edit selection starts over. */
+  private afterTimeTravel(): void {
+    if (!this.edit) return;
+    const o = this.get(this.edit.id);
+    if (!o || !o.mesh) {
+      this.edit = null;
+      this.emit('edit');
+    } else this.edit.sel = [];
   }
 
   private pruneSelection(): void {
@@ -182,6 +213,10 @@ export class Store {
       this.selection = next;
       this.emit('selection');
     }
+    if (this.edit && !ids.has(this.edit.id)) {
+      this.edit = null;
+      this.emit('edit');
+    }
   }
 
   setUi(patch: Partial<UiState>): void {
@@ -190,6 +225,7 @@ export class Store {
   }
 
   select(ids: string[]): void {
+    if (this.edit && !(ids.length === 1 && ids[0] === this.edit.id)) this.exitEdit();
     const same = ids.length === this.selection.length && ids.every((v, i) => v === this.selection[i]);
     if (same) return;
     this.selection = ids;
@@ -432,6 +468,208 @@ export class Store {
     this.reparent(id, o.parent, dir < 0 ? j : j + 1);
   }
 
+  // ----- shape editing -----
+
+  /** Why this object can't be edited, or null when it can. */
+  whyNotEditable(id: string | undefined): string | null {
+    const o = id ? this.get(id) : undefined;
+    if (!o || o.kind !== 'shape') return 'Select a single shape to edit its points.';
+    if (isLockedChain(this.map, o)) return 'Unlock this shape first.';
+    if (!effectivelyVisible(this.map, o)) return 'Show this shape first.';
+    return null;
+  }
+
+  enterEdit(id: string): string | null {
+    const why = this.whyNotEditable(id);
+    if (why) return why;
+    if (this.edit?.id === id) return null;
+    if (this.edit) this.exitEdit();
+    this.mutate((d) => {
+      const o = d.objects.find((x) => x.id === id)!;
+      if (!o.mesh) o.mesh = polyMeshFor(o.shape!, o.params);
+      bakeScale(o.mesh, o.size); // while editing, points are in real metres
+      o.size = [1, 1, 1];
+    });
+    this.selection = [id];
+    this.edit = { id, mode: 'face', sel: [], symmetry: false, xray: false };
+    this.ui.tool = 'move';
+    this.emit('selection');
+    this.emit('tool');
+    this.emit('edit');
+    return null;
+  }
+
+  exitEdit(): void {
+    const e = this.edit;
+    if (!e) return;
+    this.edit = null;
+    if (this.get(e.id)?.mesh) {
+      this.mutate((d) => {
+        const o = d.objects.find((x) => x.id === e.id);
+        if (o?.mesh) o.size = normalizeMesh(o.mesh); // Properties show the real size again
+      });
+    }
+    this.emit('edit');
+    this.emit('tool');
+  }
+
+  setEditMode(mode: EditMode): void {
+    const e = this.edit;
+    const m = e && this.get(e.id)?.mesh;
+    if (!e || !m) return;
+    e.sel = convertSelection(m, e.mode, mode, e.sel);
+    e.mode = mode;
+    this.emit('edit');
+  }
+
+  setEditOption(patch: Partial<Pick<EditState, 'symmetry' | 'xray'>>): void {
+    if (!this.edit) return;
+    Object.assign(this.edit, patch);
+    this.emit('edit');
+  }
+
+  editSelect(sel: Sel): void {
+    if (!this.edit) return;
+    this.edit.sel = sel;
+    this.emit('edit');
+  }
+
+  editSelectAll(): void {
+    const e = this.edit;
+    const m = e && this.get(e.id)?.mesh;
+    if (!e || !m) return;
+    e.sel = e.mode === 'vertex' ? Array.from({ length: vertCount(m) }, (_, i) => i) : e.mode === 'face' ? m.f.map((_, i) => i) : [...edgeMap(m).keys()];
+    this.emit('edit');
+  }
+
+  /** Live move of points (drag). Call commit() when the drag ends. */
+  setMeshVerts(updates: Map<number, V3>, commit = false): void {
+    const e = this.edit;
+    if (!e) return;
+    this.mutate((d) => {
+      const m = d.objects.find((x) => x.id === e.id)?.mesh;
+      if (!m) return;
+      for (const [i, p] of updates) {
+        m.v[i * 3] = p[0];
+        m.v[i * 3 + 1] = p[1];
+        m.v[i * 3 + 2] = p[2];
+      }
+    }, commit);
+  }
+
+  private editOp(fn: (m: PolyMesh, e: EditState) => Sel | void): void {
+    const e = this.edit;
+    if (!e) return;
+    let result: Sel | undefined;
+    this.mutate((d) => {
+      const m = d.objects.find((x) => x.id === e.id)?.mesh;
+      if (m) result = fn(m, e) || undefined;
+    });
+    if (result) e.sel = result;
+    this.emit('edit');
+  }
+
+  /** Extrude. Returns a message when it can't be done. */
+  pullOut(): string | null {
+    const e = this.edit;
+    if (!e) return null;
+    if (e.mode === 'vertex') return 'Pull out works on faces or edges. Switch to Faces or Edges first.';
+    if (!e.sel.length) return e.mode === 'face' ? 'Click a face first.' : 'Click an edge first.';
+    this.editOp((m, ed) => {
+      if (ed.mode === 'face') {
+        extrudeFaces(m, ed.sel as number[]);
+        return ed.sel;
+      }
+      return extrudeEdges(m, ed.sel as string[]);
+    });
+    this.ui.tool = 'move';
+    this.emit('tool');
+    return null;
+  }
+
+  shrinkFace(): string | null {
+    const e = this.edit;
+    if (!e) return null;
+    if (e.mode !== 'face') return 'Shrink works on faces. Switch to Faces first.';
+    if (!e.sel.length) return 'Click a face first.';
+    this.editOp((m, ed) => {
+      insetFaces(m, ed.sel as number[], 0.3);
+      return ed.sel;
+    });
+    return null;
+  }
+
+  addCut(): string | null {
+    const e = this.edit;
+    if (!e) return null;
+    if (e.mode !== 'edge') return 'Add cut needs an edge. Switch to Edges and click one.';
+    if (!e.sel.length) return 'Click an edge first.';
+    let cuts: string[] = [];
+    this.editOp((m, ed) => {
+      cuts = loopCut(m, ed.sel[0] as string);
+      return cuts;
+    });
+    return cuts.length ? null : 'This edge can not be cut. Try an edge between two four-sided faces.';
+  }
+
+  mergePoints(): string | null {
+    const e = this.edit;
+    const m = e && this.get(e.id)?.mesh;
+    if (!e || !m) return null;
+    const verts = verticesOfSelection(m, e.mode, e.sel);
+    if (verts.size < 2) return 'Select at least two points to merge.';
+    this.editOp((mm, ed) => {
+      const at = mergeVerts(mm, verticesOfSelection(mm, ed.mode, ed.sel));
+      ed.mode = 'vertex';
+      return at >= 0 ? [at] : [];
+    });
+    return null;
+  }
+
+  deleteSelection(): string | null {
+    const e = this.edit;
+    const m = e && this.get(e.id)?.mesh;
+    if (!e || !m) return null;
+    if (!e.sel.length) return 'Nothing selected.';
+    const test = cloneMesh(m);
+    if (e.mode === 'face') deleteFaces(test, e.sel as number[]);
+    else if (e.mode === 'edge') deleteEdges(test, e.sel as string[]);
+    else deleteVerts(test, new Set(e.sel as number[]));
+    if (!test.f.length) return 'A shape needs at least one face. Delete the whole object instead.';
+    this.editOp((mm, ed) => {
+      if (ed.mode === 'face') deleteFaces(mm, ed.sel as number[]);
+      else if (ed.mode === 'edge') deleteEdges(mm, ed.sel as string[]);
+      else deleteVerts(mm, new Set(ed.sel as number[]));
+      return [];
+    });
+    return null;
+  }
+
+  /** Subdivide the whole shape once so it rounds off. */
+  roundOff(): string | null {
+    const e = this.edit;
+    const m = e && this.get(e.id)?.mesh;
+    if (!e || !m) return null;
+    const test = cloneMesh(m);
+    subdivide(test);
+    const tris = meshTriangles(test);
+    if (tris > MAX_EDIT_TRIANGLES) return `That would make ${tris.toLocaleString()} triangles, which is too many for a game prop.`;
+    this.editOp((mm) => {
+      subdivide(mm);
+      return [];
+    });
+    return null;
+  }
+
+  /** Drop the custom points and go back to the original parametric shape (keeps the current size). */
+  resetShape(id: string): void {
+    if (this.edit?.id === id) this.exitEdit();
+    this.mutate((d) => {
+      const o = d.objects.find((x) => x.id === id);
+      if (o) delete o.mesh;
+    });
+  }
+
   worldMatrixOf(id: string): THREE.Matrix4 {
     return worldMatrix(this.doc, id);
   }
@@ -446,8 +684,11 @@ export class Store {
       const o = map.get(id);
       if (!o || o.kind !== 'shape' || !effectivelyVisible(map, o)) continue;
       const m = worldMatrix(this.doc, id);
+      const mb = o.mesh && vertCount(o.mesh) ? boundsOf(o.mesh) : null;
       for (let i = 0; i < 8; i++) {
-        v.set(i & 1 ? 0.5 : -0.5, i & 2 ? 0.5 : -0.5, i & 4 ? 0.5 : -0.5).applyMatrix4(m);
+        if (mb) v.set(i & 1 ? mb.max[0] : mb.min[0], i & 2 ? mb.max[1] : mb.min[1], i & 4 ? mb.max[2] : mb.min[2]);
+        else v.set(i & 1 ? 0.5 : -0.5, i & 2 ? 0.5 : -0.5, i & 4 ? 0.5 : -0.5);
+        v.applyMatrix4(m);
         box.expandByPoint(v);
       }
     }

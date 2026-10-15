@@ -2,9 +2,14 @@ import type { Store } from '../core/store';
 import { WOOD_HEXES } from '../core/palette';
 import { logEvent } from '../core/analytics';
 import { clear, h, icon } from './dom';
+import { faceNormal, type PolyMesh } from '../core/mesh';
 import { bus, openExportDialog } from './dialogs';
 
 interface Step {
+  /** Label for the helper button when it is not "Do it for me". */
+  autoLabel?: string;
+  /** Name of a bus event that completes this step. */
+  onEvent?: string;
   title: string;
   text: string;
   highlight?: string;
@@ -13,11 +18,10 @@ interface Step {
   auto: (s: Store) => void;
 }
 
-const KEY = 'polystudio.onboarding.v1';
-
 const shapes = (s: Store) => s.doc.objects.filter((o) => o.kind === 'shape');
 
-const STEPS: Step[] = [
+function STEPS_CHEST(): Step[] {
+  return [
   {
     title: 'Draw the chest body',
     text: 'Choose Shape in the toolbar, pick Box, then click and drag on the grid. One drag makes a box.',
@@ -89,11 +93,32 @@ const STEPS: Step[] = [
     highlight: '#btn-export',
     done: () => false, // completed by the 'export' event
     auto: (s) => openExportDialog(s),
+    onEvent: 'export',
   },
-];
+  ];
+}
 
-export function mountOnboarding(root: HTMLElement, store: Store): { start: () => void; stop: () => void } {
-  const card = h('div', { class: 'coach overlay hidden', role: 'region', 'aria-label': 'Guided first project' });
+export interface TourConfig {
+  key: string;
+  label: string;
+  steps: Step[];
+  finishTitle: string;
+  finishText: string;
+  finishButton: string;
+  events?: string[];
+}
+
+export interface Tour {
+  start: () => void;
+  stop: () => void;
+  active: () => boolean;
+}
+
+/** Step-by-step coach card. Each step finishes on its own when the user does the thing, or on "Do it for me". */
+export function createTour(root: HTMLElement, store: Store, cfg: TourConfig, others: () => Tour[] = () => []): Tour {
+  const STEPS = cfg.steps;
+  const KEY = cfg.key;
+  const card = h('div', { class: 'coach overlay hidden', role: 'region', 'aria-label': cfg.label, id: `coach-${KEY.split('.')[1]}` });
   root.append(card);
   let step = -1; // -1 = inactive, STEPS.length = finished screen
   let highlighted: Element | null = null;
@@ -115,7 +140,7 @@ export function mountOnboarding(root: HTMLElement, store: Store): { start: () =>
 
   const advance = () => {
     step += 1;
-    logEvent('onboarding_step', { step });
+    logEvent('onboarding_step', { tour: KEY, step });
     save();
     render();
     evaluate();
@@ -137,11 +162,11 @@ export function mountOnboarding(root: HTMLElement, store: Store): { start: () =>
     card.classList.remove('hidden');
     if (step >= STEPS.length) {
       setHighlight();
-      logEvent('onboarding_complete', { ms: Date.now() - startedAt });
+      logEvent('onboarding_complete', { tour: KEY, ms: Date.now() - startedAt });
       card.append(
-        h('div', { class: 'coach-head' }, h('strong', {}, 'You made your first prop!'), h('button', { class: 'tbtn xs', 'aria-label': 'Close', onclick: stop }, icon('close', 14))),
-        h('p', {}, 'Open the file in your engine: the chest stands on the ground with its pivot at the bottom center and the right scale. Keep going: duplicate parts, try other shapes, and watch the polygon counter.'),
-        h('div', { class: 'coach-actions' }, h('button', { class: 'btn primary', onclick: stop }, 'Keep building')),
+        h('div', { class: 'coach-head' }, h('strong', {}, cfg.finishTitle), h('button', { class: 'tbtn xs', 'aria-label': 'Close', onclick: stop }, icon('close', 14))),
+        h('p', {}, cfg.finishText),
+        h('div', { class: 'coach-actions' }, h('button', { class: 'btn primary', onclick: stop }, cfg.finishButton)),
       );
       return;
     }
@@ -156,20 +181,21 @@ export function mountOnboarding(root: HTMLElement, store: Store): { start: () =>
       h('strong', {}, s.title),
       h('p', {}, s.text),
       h('div', { class: 'coach-actions' },
-        h('button', { class: 'btn sm', id: 'coach-auto', onclick: () => {
+        h('button', { class: 'btn sm', id: `${card.id}-auto`, 'data-coach-auto': '', onclick: () => {
           s.auto(store);
           if (s.manual) advance();
           else evaluate();
-        } }, s.manual ? 'Got it' : step === STEPS.length - 1 ? 'Open export' : 'Do it for me'),
+        } }, s.manual ? 'Got it' : s.autoLabel ?? (step === STEPS.length - 1 ? 'Open export' : 'Do it for me')),
         step < STEPS.length - 1 ? h('button', { class: 'link', onclick: advance }, 'Skip step') : null,
       ),
     );
   }
 
   function start(): void {
+    others().forEach((t) => t.stop());
     step = 0;
     startedAt = Date.now();
-    logEvent('onboarding_start');
+    logEvent('onboarding_start', { tour: KEY });
     save();
     render();
     evaluate();
@@ -181,15 +207,9 @@ export function mountOnboarding(root: HTMLElement, store: Store): { start: () =>
   }
 
   store.subscribe((e) => {
-    if (e === 'doc' || e === 'selection') evaluate();
+    if (e === 'doc' || e === 'selection' || e === 'edit') evaluate();
   });
-  bus.addEventListener('export', () => {
-    if (step === STEPS.length - 1) advance();
-  });
-  bus.addEventListener('project-created', (e) => {
-    if ((e as CustomEvent).detail?.guided) start();
-    else stop();
-  });
+  for (const name of cfg.events ?? []) bus.addEventListener(name, () => step >= 0 && STEPS[step]?.onEvent === name && advance());
 
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? 'null') as { step: number; startedAt: number } | null;
@@ -201,5 +221,105 @@ export function mountOnboarding(root: HTMLElement, store: Store): { start: () =>
   } catch {
     /* ignore */
   }
-  return { start, stop };
+  return { start, stop, active: () => step >= 0 };
+}
+
+const CHEST: TourConfig = {
+  key: 'polystudio.onboarding.v1',
+  label: 'Guided first project',
+  steps: STEPS_CHEST(),
+  finishTitle: 'You made your first prop!',
+  finishText: 'Open the file in your engine: the chest stands on the ground with its pivot at the bottom center and the right scale. Keep going: duplicate parts, try other shapes, and watch the polygon counter.',
+  finishButton: 'Keep building',
+  events: ['export'],
+};
+
+export function mountOnboarding(root: HTMLElement, store: Store, others: () => Tour[] = () => []): Tour {
+  const tour = createTour(root, store, CHEST, others);
+  bus.addEventListener('project-created', (e) => {
+    if ((e as CustomEvent).detail?.guided) tour.start();
+    else tour.stop();
+  });
+  return tour;
+}
+
+// ---------- Edit Shape tour ----------
+
+const topFace = (m: PolyMesh) => m.f.findIndex((_, i) => faceNormal(m, i)[1] > 0.9);
+
+/** Makes sure a box is being edited, so "Do it for me" works from any state. */
+function ensureEditing(s: Store): void {
+  if (s.edit) return;
+  const id = s.selection.length === 1 && s.get(s.selection[0])?.kind === 'shape' ? s.selection[0] : s.doc.objects.find((o) => o.kind === 'shape')?.id ?? s.addShape('box', { name: 'Head', position: [0, 0.5, 0] }).id;
+  s.select([id]);
+  s.enterEdit(id);
+}
+
+const EDIT_STEPS: Step[] = [
+  {
+    title: 'Open Edit shape',
+    text: 'Click your box (or add one), then press Edit shape in the toolbar. You can also press Tab or double-click the box.',
+    highlight: '[data-tool="edit"]',
+    done: (s) => !!s.edit,
+    auto: (s) => ensureEditing(s),
+  },
+  {
+    title: 'Select the top face',
+    text: 'Make sure Faces is chosen in the bar at the bottom, then click the top of the box. It turns orange.',
+    highlight: '[data-mode="face"]',
+    done: (s) => !!s.edit && s.edit.mode === 'face' && s.edit.sel.length > 0,
+    auto: (s) => {
+      ensureEditing(s);
+      s.setEditMode('face');
+      const m = s.get(s.edit!.id)!.mesh!;
+      s.editSelect([topFace(m)]);
+    },
+  },
+  {
+    title: 'Pull it out',
+    text: 'Press Pull out, then drag the green arrow up a little. A new part grows from the face, like a neck or a hat.',
+    highlight: '#edit-pullout',
+    done: (s) => !!s.edit && (s.get(s.edit.id)?.mesh?.f.length ?? 0) > 6,
+    auto: (s) => {
+      ensureEditing(s);
+      if (s.edit!.mode !== 'face' || !s.edit!.sel.length) {
+        s.setEditMode('face');
+        s.editSelect([topFace(s.get(s.edit!.id)!.mesh!)]);
+      }
+      s.pullOut();
+      const m = s.get(s.edit!.id)!.mesh!;
+      const ups = new Map<number, [number, number, number]>();
+      for (const fi of s.edit!.sel as number[]) for (const vi of m.f[fi]) ups.set(vi, [m.v[vi * 3], m.v[vi * 3 + 1] + 0.4, m.v[vi * 3 + 2]]);
+      s.setMeshVerts(ups, true);
+    },
+  },
+  {
+    title: 'Round it off',
+    text: 'Press Round off to smooth the whole shape. Corners become soft, and the triangle counter at the top-left goes up.',
+    highlight: '#edit-roundoff',
+    done: (s) => !!s.edit && (s.get(s.edit.id)?.mesh?.f.length ?? 0) >= 40,
+    auto: (s) => {
+      ensureEditing(s);
+      s.roundOff();
+    },
+  },
+  {
+    title: 'Press Done',
+    text: 'When you are happy, press Done at the top. You can Undo any step, or choose Reset to the original shape in Properties.',
+    highlight: '#edit-done',
+    done: (s) => !s.edit,
+    auto: (s) => s.exitEdit(),
+    autoLabel: 'Finish for me',
+  },
+];
+
+export function mountEditTour(root: HTMLElement, store: Store, others: () => Tour[] = () => []): Tour {
+  return createTour(root, store, {
+    key: 'polystudio.edittour.v1',
+    label: 'Edit shape walkthrough',
+    steps: EDIT_STEPS,
+    finishTitle: 'Nice, you reshaped a box',
+    finishText: 'Try Mirror and Add cut next: cut a ring around the box, then move points to build a nose, a chin or a pair of ears. Merge points turns the top of a box into a pyramid.',
+    finishButton: 'Keep editing',
+  }, others);
 }

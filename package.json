@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "node e2e/run.mjs && node e2e/interact.mjs && node e2e/export.mjs"
+    "e2e": "node e2e/run.mjs && node e2e/interact.mjs && node e2e/export.mjs && node e2e/edit.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

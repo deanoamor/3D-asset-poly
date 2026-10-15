@@ -40,11 +40,27 @@ Stack: Vite, TypeScript, three.js. No UI framework. The glTF output is checked w
 | FR-10 Unlimited undo/redo + auto-save | Done | History is capped at 500 steps. Project and history survive closing the tab. |
 | FR-11 Guided first project | Done | 7 steps for a wooden chest. Each step detects completion, and "Do it for me" performs it. |
 | FR-12 Pre-export checks | Partial | Empty scene, near-flat parts, skewed groups, over budget, default names, hidden parts. Auto-fix for budget and tiny parts. |
-| FR-13 to FR-18 | Not started | Mirror/boolean/bevel, template library, style presets, edit mode, version history, FBX/OBJ. |
+| FR-16 Edit Shape mode | Done | See "Edit Shape" below. Entering and leaving never damages the model, and every step can be undone. |
+| FR-13, FR-14, FR-15, FR-17, FR-18 | Not started | Boolean/bevel (mirror exists only inside Edit Shape), template library, style presets, version history, FBX/OBJ. |
 
 Also included: Preview mode, new project / open / save project file (`.polyproj.json`), keyboard shortcuts
 (press `?`), and a local-only event log (`localStorage`, key `polystudio.events.v1`) that records
 project creation, onboarding steps and exports so time-to-first-export can be measured later.
+
+## Edit Shape (turn a box into something else)
+
+Select a shape and press **Edit shape** (toolbar, `Tab`, or double-click it). The toolbar switches to a bar made for beginners:
+
+- **Points / Edges / Faces**: choose what to select. Click to select, Shift-click to add, Shift-drag to select an area. Orbiting still works by dragging empty space.
+- **Move / Rotate / Size**: handles sit on the selection and work on points, edges or faces.
+- **Pull out** (extrude): grows a new part from a face or an edge. **Shrink face** (inset) adds a smaller face inside. **Add cut** (loop cut) adds a ring of points around the shape. **Merge points** squeezes points into one (merge the four top points of a box for a pyramid). **Round off** smooths the whole shape (Catmull-Clark subdivision, about 4x the triangles). **Delete** removes the selection.
+- **Mirror** moves the matching point on the other side too, which makes symmetrical heads easy. **See-through** shows points on the far side.
+- Greyed-out actions say why when clicked ("Switch to Faces", "Select a face first"). A hint line always says what to do next, and the polygon counter keeps running.
+- **Tour: reshape a box** in the top-left menu (or "Show me how" in the edit banner) walks through select, pull out, round off, done.
+
+While editing, points are in real metres; on Done the shape's size is recalculated, so Properties show the real width, height and depth.
+"Reset to the original shape" returns to the parametric shape. Edited shapes export like any other (the export self-test re-opens them).
+Limits: concave faces are drawn with a simple fan, Round off is capped at 60,000 triangles, and edge extrude on a closed shape makes a thin flap.
 
 ## Export to a game engine
 

@@ -2,7 +2,7 @@ import type { Store, Tool } from '../core/store';
 import { PALETTE } from '../core/palette';
 import { SHAPE_LABELS, type ShapeType } from '../core/types';
 import type { Viewport, ViewName } from '../engine/viewport';
-import { clear, h, icon } from './dom';
+import { clear, h, icon, toast } from './dom';
 
 const SHAPES: ShapeType[] = ['box', 'cylinder', 'sphere', 'cone', 'pyramid', 'plane'];
 
@@ -55,6 +55,20 @@ export function mountToolbar(root: HTMLElement, store: Store, vp: Viewport): voi
     buttons.set(t.id, btn);
     bar.append(btn);
   }
+
+  const editBtn = h('button', {
+    class: 'tool',
+    'data-tool': 'edit',
+    title: 'Edit shape (Tab): change the points, edges and faces of the selected shape',
+    'aria-label': 'Edit shape (Tab)',
+    onclick: () => {
+      setOpen(null);
+      const why = store.whyNotEditable(store.selection.length === 1 ? store.selection[0] : undefined);
+      if (why) toast(why);
+      else store.enterEdit(store.selection[0]);
+    },
+  }, icon('edit', 18), h('span', { class: 'tl' }, 'Edit shape'), h('kbd', {}, 'Tab'));
+  bar.append(h('span', { class: 'vsep' }), editBtn);
 
   flyout.append(
     ...SHAPES.map((s) =>
@@ -134,6 +148,8 @@ export function mountToolbar(root: HTMLElement, store: Store, vp: Viewport): voi
     renderPalette();
     renderHint();
     bar.classList.toggle('hidden', store.ui.preview);
+    dock.classList.toggle('hidden', !!store.edit); // Edit Shape has its own bar
+    editBtn.classList.toggle('dim', !!store.whyNotEditable(store.selection.length === 1 ? store.selection[0] : undefined));
   };
 
   // view buttons & snap toggles (top-right cluster)
@@ -161,10 +177,10 @@ export function mountToolbar(root: HTMLElement, store: Store, vp: Viewport): voi
     snapBar.classList.toggle('hidden', store.ui.preview);
   };
 
-  const dock = h('div', { class: 'dock overlay' }, hint, h('div', { class: 'toolwrap' }, flyout, palette, bar));
+  const dock: HTMLElement = h('div', { class: 'dock overlay' }, hint, h('div', { class: 'toolwrap' }, flyout, palette, bar));
   root.append(dock, viewBar, snapBar);
   store.subscribe((e) => {
-    if (e === 'tool' || e === 'selection') {
+    if (e === 'tool' || e === 'selection' || e === 'edit' || e === 'doc') {
       refresh();
       refreshSnap();
     }
