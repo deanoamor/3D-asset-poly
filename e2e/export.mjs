@@ -33,6 +33,7 @@ for (const [engine, format] of matrix) {
   console.log(`# ${engine} / ${format}`);
   await page.click('#btn-export');
   await page.waitForSelector('#btn-download');
+  await page.click(`[data-tab="${['blender', 'c4d', 'maya'].includes(engine) ? 'software' : 'engine'}"]`);
   await page.click(`.card[data-preset="${engine}"]`);
   await page.selectOption('#export-format', format);
   await page.waitForFunction(() => document.querySelector('#verify')?.dataset.ok !== undefined, null, { timeout: 8000 });

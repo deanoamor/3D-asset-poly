@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { Store } from '../core/store';
 import { emptyDoc, polyStats } from '../core/store';
 import { runChecks, type Check } from '../core/checks';
-import { PRESETS, defaultFormat, importGuide, packsObj, type ExportFormat } from '../core/presets';
+import { GROUPS, PRESETS, defaultFormat, importGuide, packsObj, type ExportFormat } from '../core/presets';
 import { removeTinyParts } from '../core/suggest';
 import type { EnginePreset } from '../core/types';
 import { download, exportFiles, slug } from '../engine/exporter';
@@ -107,8 +107,20 @@ export function openExportDialog(store: Store): void {
     add(
       root,
       h('div', { class: 'dlg-head' }, h('h2', {}, 'Export to a game engine or 3D software'), h('button', { class: 'tbtn', 'aria-label': 'Close', onclick: () => close() }, icon('close', 16))),
-      h('div', { class: 'field' }, h('span', {}, 'Target'),
-        h('div', { class: 'cards seven' }, ...Object.values(PRESETS).map((p) =>
+      h('div', { class: 'field' }, h('span', {}, 'Export to'),
+        h('div', { class: 'segrow', role: 'tablist' }, ...GROUPS.map((g) =>
+          h('button', {
+            class: `segbtn${preset.group === g.id ? ' on' : ''}`,
+            role: 'tab',
+            'aria-selected': String(preset.group === g.id),
+            'data-tab': g.id,
+            onclick: () => {
+              if (preset.group !== g.id) store.setPreset(Object.values(PRESETS).find((p) => p.group === g.id)!.id as EnginePreset);
+              render();
+            },
+          }, g.label),
+        )),
+        h('div', { class: `cards${preset.group === 'engine' ? ' four' : ''}` }, ...Object.values(PRESETS).filter((p) => p.group === preset.group).map((p) =>
           h('button', {
             class: `card${doc.enginePreset === p.id ? ' on' : ''}`,
             'data-preset': p.id,

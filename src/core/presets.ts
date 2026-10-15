@@ -8,8 +8,16 @@ export interface FormatInfo {
   hint: string;
 }
 
+export type TargetGroup = 'engine' | 'software';
+
+export const GROUPS: { id: TargetGroup; label: string }[] = [
+  { id: 'engine', label: 'Game engine' },
+  { id: 'software', label: '3D software' },
+];
+
 export interface PresetInfo {
   id: EnginePreset;
+  group: TargetGroup;
   label: string;
   /** Multiply the model by this when exporting. glTF and OBJ here are both in metres. */
   scale: number;
@@ -32,6 +40,7 @@ const PACKAGE: FormatInfo = { id: 'package', label: 'Package (.zip with import g
 export const PRESETS: Record<EnginePreset, PresetInfo> = {
   unity: {
     id: 'unity',
+    group: 'engine',
     label: 'Unity',
     scale: 1,
     formats: [GLB, OBJ, PACKAGE],
@@ -39,6 +48,7 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
   },
   godot: {
     id: 'godot',
+    group: 'engine',
     label: 'Godot',
     scale: 1,
     formats: [GLB, PACKAGE],
@@ -51,6 +61,7 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
   },
   unreal: {
     id: 'unreal',
+    group: 'engine',
     label: 'Unreal',
     scale: 1,
     formats: [GLB, PACKAGE],
@@ -58,6 +69,7 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
   },
   blender: {
     id: 'blender',
+    group: 'software',
     label: 'Blender',
     scale: 1,
     formats: [GLB, OBJ, PACKAGE],
@@ -65,6 +77,7 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
   },
   c4d: {
     id: 'c4d',
+    group: 'software',
     label: 'Cinema 4D',
     scale: 1,
     formats: [OBJ, GLB, PACKAGE],
@@ -72,6 +85,7 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
   },
   maya: {
     id: 'maya',
+    group: 'software',
     label: 'Maya / 3ds Max',
     scale: 1,
     formats: [OBJ, GLB, PACKAGE],
@@ -79,6 +93,7 @@ export const PRESETS: Record<EnginePreset, PresetInfo> = {
   },
   web: {
     id: 'web',
+    group: 'engine',
     label: 'Web',
     scale: 1,
     formats: [GLB, GLTF, PACKAGE],
