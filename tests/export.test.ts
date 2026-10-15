@@ -35,6 +35,14 @@ describe('export', () => {
     });
     expect(attrs).toContain('normal');
     expect(attrs).toContain('color');
+    // the material itself carries the color, so apps that ignore vertex colors do not show grey
+    let mat: { color: { r: number; g: number; b: number } } | undefined;
+    prepareExport(st.doc).root.traverse((o) => {
+      const m = o as { material?: typeof mat };
+      if (m.material && !mat) mat = m.material;
+    });
+    expect(mat!.color.r + mat!.color.g + mat!.color.b).toBeLessThan(2.9);
+    expect(Math.max(mat!.color.r, mat!.color.g, mat!.color.b)).toBeGreaterThan(0.15);
   });
 
   it('adds a Godot collision box only when asked', () => {

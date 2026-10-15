@@ -26,10 +26,42 @@ export interface ExportResult {
   contents: string[];
 }
 
+/**
+ * Painted shapes keep their colors in vertex colors on a white material. Apps that ignore vertex colors
+ * (Blender by default, OBJ importers) would show them white/grey. So the material gets the shape's average
+ * color and the vertex colors become a 0..1 tint on top of it: right everywhere, richer where COLOR_0 is used.
+ */
+function bakeBaseColors(content: THREE.Object3D): void {
+  const mats = new Map<string, THREE.MeshStandardMaterial>();
+  content.traverse((o) => {
+    const m = o as THREE.Mesh;
+    const mat = m.material as THREE.MeshStandardMaterial | undefined;
+    const col = m.isMesh ? m.geometry.getAttribute('color') : undefined;
+    if (!col || !mat?.vertexColors) return;
+    const g = m.geometry.clone();
+    const c = g.getAttribute('color');
+    const mean = [0, 0, 0];
+    for (let i = 0; i < c.count; i++) for (let k = 0; k < 3; k++) mean[k] += c.getComponent(i, k) / c.count;
+    const base = mean.map((v) => Math.min(1, Math.max(0.02, v * 1.12)));
+    for (let i = 0; i < c.count; i++) for (let k = 0; k < 3; k++) c.setComponent(i, k, Math.min(1, c.getComponent(i, k) / base[k]));
+    const key = base.map((v) => v.toFixed(4)).join(',') + (mat.side === THREE.DoubleSide ? 'd' : '');
+    let nm = mats.get(key);
+    if (!nm) {
+      nm = mat.clone();
+      nm.color.setRGB(base[0], base[1], base[2]);
+      nm.name = `Color #${new THREE.Color().setRGB(base[0], base[1], base[2]).getHexString()}`;
+      mats.set(key, nm);
+    }
+    m.geometry = g;
+    m.material = nm;
+  });
+}
+
 /** Wrap everything in a root whose origin is the bottom center of the model, scaled for the preset. */
 export function prepareExport(doc: Doc, collision = false): { root: THREE.Group; size: THREE.Vector3 } {
   const preset = PRESETS[doc.enginePreset];
   const content = buildExportScene(doc, doc.name);
+  bakeBaseColors(content);
   content.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(content);
   const center = box.getCenter(new THREE.Vector3());
