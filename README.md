@@ -143,3 +143,8 @@ GLB/glTF export carries normals and `COLOR_0`; OBJ/MTL only carries the base col
 
 ## Export targets
 Unity, Godot, Unreal, Web, plus 3D software: **Blender**, **Cinema 4D**, **Maya / 3ds Max** (OBJ+MTL opens everywhere, GLB in newer versions; the package adds a per-app import guide).
+
+## Public link (GitHub Pages)
+Every push to `main` builds and publishes the app through `.github/workflows/pages.yml`.
+One-time setup: GitHub repo > Settings > Pages > Source: **GitHub Actions**. The site is then at
+`https://<your-username>.github.io/3D-asset-poly/`.
