@@ -43,8 +43,8 @@ const parts: AssetPart[] = [
   // 3 windows and pillars
   part(3, 'Windshield', 'box', [0, 1.116, 0.622], [1.34, 0.6, 0.03], GLASS, { rot: [-34.6, 0, 0] }),
   part(3, 'Rear Window', 'box', [0, 1.116, -1.022], [1.34, 0.6, 0.03], GLASS, { rot: [34.6, 0, 0] }),
-  ...LR('Front Window', (s, n) => box(3, n, [s * 0.74, 1.1, 0.25], [0.03, 0.4, 0.78], GLASS, { rot: [0, 0, s * 14.7] })),
-  ...LR('Rear Side Window', (s, n) => box(3, n, [s * 0.74, 1.1, -0.66], [0.03, 0.4, 0.62], GLASS_D, { rot: [0, 0, s * 14.7] })),
+  ...LR('Front Window', (s, n) => box(3, n, [s * 0.735, 1.1, 0.17], [0.03, 0.38, 0.66], GLASS, { rot: [0, 0, s * 14.7] })),
+  ...LR('Rear Side Window', (s, n) => box(3, n, [s * 0.735, 1.1, -0.58], [0.03, 0.38, 0.6], GLASS_D, { rot: [0, 0, s * 14.7] })),
   ...LR('B Pillar', (s, n) => box(3, n, [s * 0.742, 1.1, -0.2], [0.045, 0.46, 0.06], TRIM, { rot: [0, 0, s * 14.7] })),
   ...LR('Door Line', (s, n) => box(3, n, [s * 0.935, 0.66, 0.5], [0.014, 0.4, 0.02], BODY_D)),
   ...LR('Door Line Rear', (s, n) => box(3, n, [s * 0.935, 0.66, -0.85], [0.014, 0.4, 0.02], BODY_D)),
