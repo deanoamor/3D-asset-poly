@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import type { Store } from '../core/store';
 import { emptyDoc, polyStats } from '../core/store';
 import { runChecks, type Check } from '../core/checks';
-import { PRESETS } from '../core/presets';
+import { PRESETS, defaultFormat, importGuide, type ExportFormat } from '../core/presets';
 import { removeTinyParts, reduceDetail } from '../core/suggest';
 import { TARGET_BUDGETS, TARGET_LABELS, type EnginePreset, type TargetId } from '../core/types';
-import { download, exportGltf, slug, type ExportFormat } from '../engine/exporter';
+import { download, exportFiles, slug } from '../engine/exporter';
+import { verifyExport } from '../engine/verify';
 import { hasEvent, logEvent, readEvents } from '../core/analytics';
 import { validDoc, clearSaved } from '../core/persist';
 import { add, clear, fmt, h, icon, modal, toast } from './dom';
@@ -94,23 +95,39 @@ export function openProjectFile(store: Store): void {
 
 // ---------- export ----------
 
+let exportFormat: ExportFormat = 'glb';
+let exportCollision = false;
+
 export function openExportDialog(store: Store): void {
-  let format: ExportFormat = 'glb';
   let close: () => void = () => {};
+  let token = 0;
   const root = h('div', { class: 'dlg export' });
+
   const render = () => {
     const doc = store.doc;
+    const preset = PRESETS[doc.enginePreset];
+    if (!preset.formats.some((f) => f.id === exportFormat)) exportFormat = defaultFormat(doc.enginePreset);
+    const fmtInfo = preset.formats.find((f) => f.id === exportFormat)!;
     const checks = runChecks(doc);
     const blocked = checks.some((c) => c.level === 'error');
     const stats = polyStats(doc);
     const box = store.worldBounds();
     const size = box.isEmpty() ? null : box.getSize(new THREE.Vector3());
+    const verify = h('div', { class: 'verify pending', id: 'verify', role: 'status' }, 'Checking the file…');
+    const guide = h('pre', { class: 'guide', id: 'import-guide' }, importGuide(doc.enginePreset, {
+      modelName: slug(doc.name),
+      hasObj: doc.enginePreset === 'unity',
+      collision: exportCollision && !!preset.collision,
+      sizeText: size ? `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m` : 'n/a',
+      tris: stats.total,
+    }));
+
     clear(root);
     add(
       root,
-      h('div', { class: 'dlg-head' }, h('h2', {}, 'Export'), h('button', { class: 'tbtn', 'aria-label': 'Close', onclick: () => close() }, icon('close', 16))),
+      h('div', { class: 'dlg-head' }, h('h2', {}, 'Export to a game engine'), h('button', { class: 'tbtn', 'aria-label': 'Close', onclick: () => close() }, icon('close', 16))),
       h('div', { class: 'field' }, h('span', {}, 'Game engine'),
-        h('div', { class: 'cards four' }, ...(Object.values(PRESETS)).map((p) =>
+        h('div', { class: 'cards four' }, ...Object.values(PRESETS).map((p) =>
           h('button', {
             class: `card${doc.enginePreset === p.id ? ' on' : ''}`,
             'data-preset': p.id,
@@ -120,11 +137,40 @@ export function openExportDialog(store: Store): void {
             },
           }, h('strong', {}, p.label)),
         )),
-        h('p', { class: 'fnote' }, PRESETS[doc.enginePreset].note),
+        h('p', { class: 'fnote' }, preset.note),
+      ),
+      h('div', { class: 'field' }, h('span', {}, 'What to export'),
+        (() => {
+          const sel = h('select', {
+            id: 'export-format',
+            'aria-label': 'File format',
+            onchange: () => {
+              exportFormat = sel.value as ExportFormat;
+              render();
+            },
+          }, ...preset.formats.map((f) => h('option', { value: f.id }, f.label))) as HTMLSelectElement;
+          sel.value = exportFormat;
+          return sel;
+        })(),
+        h('p', { class: 'fnote' }, fmtInfo.hint),
+        preset.collision
+          ? h('label', { class: 'check' },
+              (() => {
+                const cb = h('input', { type: 'checkbox', id: 'export-collision', checked: exportCollision, onchange: () => {
+                  exportCollision = cb.checked;
+                  render();
+                } }) as HTMLInputElement;
+                return cb;
+              })(),
+              h('span', {}, h('strong', {}, preset.collision.label), h('br'), h('small', {}, preset.collision.hint)),
+            )
+          : null,
       ),
       h('div', { class: 'field' }, h('span', {}, 'Checks'),
         h('ul', { class: 'checks' }, ...(checks.length ? checks : [{ level: 'ok', message: 'Everything looks good. This model is ready for your engine.' } as OkRow]).map((c) => checkRow(c, store, render, close))),
+        verify,
       ),
+      h('details', { class: 'steps' }, h('summary', {}, `How to import into ${preset.label}`), guide),
       h('div', { class: 'summary' },
         h('span', {}, `${fmt(stats.total)} triangles`),
         size ? h('span', {}, `${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m`) : null,
@@ -132,28 +178,18 @@ export function openExportDialog(store: Store): void {
         h('span', {}, 'Scale: 1 unit = 1 m'),
       ),
       h('div', { class: 'dlg-actions' },
-        h('label', { class: 'fmt' }, 'Format',
-          (() => {
-            const sel = h('select', { id: 'export-format', 'aria-label': 'File format', onchange: () => (format = sel.value as ExportFormat) },
-              h('option', { value: 'glb' }, '.glb (single file)'),
-              h('option', { value: 'gltf' }, '.gltf (JSON, embedded data)'),
-            ) as HTMLSelectElement;
-            sel.value = format;
-            return sel;
-          })(),
-        ),
         h('button', {
           class: 'btn primary',
           id: 'btn-download',
           disabled: blocked,
           onclick: async () => {
             try {
-              const res = await exportGltf(store.doc, format);
+              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision });
               const saved = await download(res.blob, res.filename);
               if (!saved) return; // viewer declined the save
               const first = !hasEvent('first_export');
               const created = readEvents().filter((e) => e.name === 'project_created').pop();
-              logEvent(first ? 'first_export' : 'export', { engine: doc.enginePreset, format, tris: stats.total, ms: created ? Date.now() - created.t : undefined });
+              logEvent(first ? 'first_export' : 'export', { engine: doc.enginePreset, format: exportFormat, tris: stats.total, ms: created ? Date.now() - created.t : undefined });
               emit('export');
               close();
               toast(`Saved ${saved}. Origin is at the bottom center; 1 unit = 1 m.`, 5000);
@@ -164,8 +200,31 @@ export function openExportDialog(store: Store): void {
         }, icon('export', 15), 'Download'),
       ),
     );
+
+    // self-test: build the file and open it again, so problems show before the download
+    const mine = ++token;
+    if (blocked) {
+      verify.textContent = 'Add something visible to check the file.';
+      return;
+    }
+    void (async () => {
+      try {
+        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision });
+        const v = await verifyExport(res, exportCollision ? preset.collision?.nodeSuffix : undefined);
+        if (mine !== token) return;
+        verify.className = `verify ${v.ok ? 'good' : 'bad'}`;
+        verify.dataset.ok = String(v.ok);
+        verify.textContent = v.ok
+          ? `File re-opened successfully: ${fmt(Math.round(v.triangles))} triangles, ${v.size.map((n) => n.toFixed(2)).join(' × ')} m, standing on y = 0.`
+          : v.messages.join(' ');
+      } catch (e) {
+        if (mine !== token) return;
+        verify.className = 'verify bad';
+        verify.textContent = `Could not build the file: ${(e as Error).message}`;
+      }
+    })();
   };
-  close = modal(root);
+  close = modal(root, { onClose: () => token++ });
   render();
 }
 

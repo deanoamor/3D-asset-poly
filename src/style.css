@@ -224,3 +224,12 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
   .panel.left, .panel.right { display: none; }
   .tb-mid .lbl { display: none; }
 }
+
+.verify { padding: 8px 10px; border-radius: 8px; background: #f1f1ef; color: var(--muted); line-height: 1.4; margin-top: 8px; }
+.verify.good { background: #e9f7ee; color: #146c35; }
+.verify.bad { background: #fdeceb; color: #9b1c1c; }
+.steps { margin: 4px 0 10px; }
+.steps summary { cursor: pointer; font-weight: 600; font-size: 12px; padding: 4px 0; }
+.guide { background: #f6f6f4; border-radius: 8px; padding: 10px 12px; font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; max-height: 200px; overflow: auto; margin: 6px 0 0; }
+.check small { color: var(--muted); }
+.field select { padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: #fff; }

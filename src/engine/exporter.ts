@@ -1,30 +1,33 @@
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
-import { PRESETS } from '../core/presets';
+import { PRESETS, importGuide, type ExportFormat } from '../core/presets';
+import { writeObj } from './objExport';
+import { slug } from './slug';
 import { buildExportScene } from './sceneBuild';
-import { zipSingle } from '../core/zip';
+import { zipFiles, zipSingle } from '../core/zip';
 
-export type ExportFormat = 'glb' | 'gltf';
+export type { ExportFormat };
+export { slug };
+
+export interface ExportOptions {
+  format: ExportFormat;
+  collision: boolean;
+}
 
 export interface ExportResult {
   blob: Blob;
   filename: string;
   size: THREE.Vector3;
-}
-
-export function slug(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[^a-z0-9]+/g, '_')
-      .replace(/^_+|_+$/g, '') || 'prop'
-  );
+  triangles: number;
+  /** The model file inside the result, for the self-test. */
+  model: { kind: 'glb' | 'gltf' | 'obj'; data: ArrayBuffer | string };
+  /** Names of every file in the download (zip contents or the single file). */
+  contents: string[];
 }
 
 /** Wrap everything in a root whose origin is the bottom center of the model, scaled for the preset. */
-export function prepareExport(doc: Doc): { root: THREE.Group; size: THREE.Vector3 } {
+export function prepareExport(doc: Doc, collision = false): { root: THREE.Group; size: THREE.Vector3 } {
   const preset = PRESETS[doc.enginePreset];
   const content = buildExportScene(doc, doc.name);
   content.updateMatrixWorld(true);
@@ -33,24 +36,73 @@ export function prepareExport(doc: Doc): { root: THREE.Group; size: THREE.Vector
   const size = box.getSize(new THREE.Vector3());
   const root = new THREE.Group();
   root.name = doc.name;
-  // pivot: bottom-center
+  // pivot: bottom center
   content.position.set(-center.x, -box.min.y, -center.z);
   content.name = 'Model';
   root.add(content);
+  if (collision && preset.collision) {
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), new THREE.MeshStandardMaterial({ color: 0x888888 }));
+    hull.name = `${slug(doc.name)}${preset.collision.nodeSuffix}`;
+    hull.position.set(0, size.y / 2, 0);
+    root.add(hull);
+  }
   root.scale.setScalar(preset.scale);
   root.updateMatrixWorld(true);
   return { root, size: size.multiplyScalar(preset.scale) };
 }
 
-export async function exportGltf(doc: Doc, format: ExportFormat): Promise<ExportResult> {
-  const { root, size } = prepareExport(doc);
+function triangleTotal(root: THREE.Object3D, skip: (n: THREE.Object3D) => boolean): number {
+  let t = 0;
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || skip(o)) return;
+    const g = m.geometry;
+    t += g.index ? g.index.count / 3 : g.getAttribute('position').count / 3;
+  });
+  return t;
+}
+
+export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<ExportResult> {
+  const name = slug(doc.name);
+  const preset = PRESETS[doc.enginePreset];
+  const collision = opts.collision && !!preset.collision;
+  const { root, size } = prepareExport(doc, collision);
+  const triangles = triangleTotal(root, (o) => collision && !!preset.collision && o.name.endsWith(preset.collision.nodeSuffix));
+  const sizeText = `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m`;
   const exporter = new GLTFExporter();
-  const out = await exporter.parseAsync(root, { binary: format === 'glb', onlyVisible: true, trs: false });
-  const blob =
-    out instanceof ArrayBuffer
-      ? new Blob([out], { type: 'model/gltf-binary' })
-      : new Blob([JSON.stringify(out)], { type: 'model/gltf+json' });
-  return { blob, filename: `${slug(doc.name)}.${format}`, size };
+
+  const glb = async () => (await exporter.parseAsync(root, { binary: true, onlyVisible: true, trs: false })) as ArrayBuffer;
+
+  if (opts.format === 'glb') {
+    const data = await glb();
+    return { blob: new Blob([data], { type: 'model/gltf-binary' }), filename: `${name}.glb`, size, triangles, model: { kind: 'glb', data }, contents: [`${name}.glb`] };
+  }
+  if (opts.format === 'gltf') {
+    const json = JSON.stringify(await exporter.parseAsync(root, { binary: false, onlyVisible: true, trs: false }));
+    return { blob: new Blob([json], { type: 'model/gltf+json' }), filename: `${name}.gltf`, size, triangles, model: { kind: 'gltf', data: json }, contents: [`${name}.gltf`] };
+  }
+  if (opts.format === 'obj') {
+    const { obj, mtl } = writeObj(root, doc.name);
+    const entries = [{ name: `${name}.obj`, data: obj }, { name: `${name}.mtl`, data: mtl }];
+    return { blob: new Blob([zipFiles(entries)], { type: 'application/zip' }), filename: `${name}_obj.zip`, size, triangles, model: { kind: 'obj', data: obj }, contents: entries.map((e) => e.name) };
+  }
+  // package: model + import guide (Unity also gets OBJ so it works without a plugin)
+  const data = await glb();
+  const entries: { name: string; data: Uint8Array | string }[] = [{ name: `${name}.glb`, data: new Uint8Array(data) }];
+  const hasObj = doc.enginePreset === 'unity';
+  if (hasObj) {
+    const { obj, mtl } = writeObj(root, doc.name);
+    entries.push({ name: `obj/${name}.obj`, data: obj }, { name: `obj/${name}.mtl`, data: mtl });
+  }
+  entries.push({ name: `IMPORT_${preset.label.toUpperCase()}.txt`, data: importGuide(doc.enginePreset, { modelName: name, hasObj, collision, sizeText, tris: triangles }) });
+  return {
+    blob: new Blob([zipFiles(entries)], { type: 'application/zip' }),
+    filename: `${name}_${doc.enginePreset}.zip`,
+    size,
+    triangles,
+    model: { kind: 'glb', data },
+    contents: entries.map((e) => e.name),
+  };
 }
 
 type DownloadsApi = { save(req: { filename: string; data: Blob | string }): Promise<{ status: string }> };

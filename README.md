@@ -36,7 +36,7 @@ Stack: Vite, TypeScript, three.js. No UI framework. The glTF output is checked w
 | FR-06 Snapping + duplicate | Done | Grid snap (0.25 m), snap to other objects' faces, Ctrl+D. Both toggles are in the canvas corner. |
 | FR-07 Color per object | Done | Color picker plus a 24-swatch palette; Color tool paints on click. |
 | FR-08 Real-time polygon counter | Done | Mobile 5,000 / PC 50,000 / Custom. Green under 70%, yellow 70-100%, red over. Names the heaviest part and offers a one-click "Reduce". |
-| FR-09 One-click glTF export | Done | `.glb` or `.gltf`. Pivot is the bottom center, 1 unit = 1 m. Presets for Unity, Godot, Unreal, Web. |
+| FR-09 One-click export to a game engine | Done | Pick Unity, Godot, Unreal or Web, then a format (below). Pivot is the bottom center, 1 unit = 1 m. Before download the app re-opens the generated file and checks triangle count, size and pivot. |
 | FR-10 Unlimited undo/redo + auto-save | Done | History is capped at 500 steps. Project and history survive closing the tab. |
 | FR-11 Guided first project | Done | 7 steps for a wooden chest. Each step detects completion, and "Do it for me" performs it. |
 | FR-12 Pre-export checks | Partial | Empty scene, near-flat parts, skewed groups, over budget, default names, hidden parts. Auto-fix for budget and tiny parts. |
@@ -45,6 +45,21 @@ Stack: Vite, TypeScript, three.js. No UI framework. The glTF output is checked w
 Also included: Preview mode, new project / open / save project file (`.polyproj.json`), keyboard shortcuts
 (press `?`), and a local-only event log (`localStorage`, key `polystudio.events.v1`) that records
 project creation, onboarding steps and exports so time-to-first-export can be measured later.
+
+## Export to a game engine
+
+| Engine | Formats offered | Extra |
+|---|---|---|
+| Unity | `.glb`, OBJ + MTL (`.zip`), package | `.glb` needs the glTFast package; OBJ + MTL imports with no plugin. The package has both. |
+| Godot | `.glb`, package | Optional collision box: a hidden mesh named `<name>-convcolonly`, which Godot's importer turns into a collision shape. |
+| Unreal | `.glb`, package | Import with the glTF Importer / Interchange plugin; add collision in the Static Mesh Editor. |
+| Web | `.glb`, `.gltf`, package | three.js, Babylon.js, model-viewer, PlayCanvas. |
+
+A package is a `.zip` with the model plus `IMPORT_<ENGINE>.txt` (step-by-step import instructions). The same steps show in the
+dialog under "How to import". Engine conventions used here come from the official docs for
+[Godot import suffixes](https://docs.godotengine.org/en/stable/tutorials/assets_pipeline/importing_3d_scenes/node_type_customization.html)
+and [Unity glTFast](https://docs.unity3d.com/Packages/com.unity.cloud.gltfast@5.2/manual/ImportEditor.html).
+Not covered by official docs, so left out: collision naming inside glTF for Unreal and Unity.
 
 ## Decisions taken for the PRD's open questions
 
@@ -57,8 +72,10 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Known limits
 
-- **Not yet tested inside Unity, Godot or Unreal.** The files validate as glTF 2.0 with zero errors, but the PRD's
-  "90% import without fixes" target needs real engine runs. The presets currently differ only in the guidance text.
+- **Not yet tested inside Unity, Godot or Unreal.** The `.glb` files pass the Khronos glTF validator and the app re-opens
+  every export itself, but the PRD's "90% import without fixes" target needs real engine runs. The OBJ + MTL route in Unity
+  and the Godot collision box are based on the engines' documentation and have not been run in the engines.
+- FBX is not offered (PRD FR-18, P2).
 - Moving several selected objects together is not supported yet. Group them first, then move the group.
 - A group that is stretched unevenly and holds rotated parts can shear. The export check warns about it.
 - Desktop first: under about 820 px wide the Layers and Properties panels are hidden.
