@@ -33,7 +33,25 @@ export function watchSaveLink(store: Store): void {
   });
 }
 
-const when = (t: number) => new Date(t).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+/** True when the project in the editor has shapes that are not stored in the library (so opening another would lose them). */
+export function unsavedWork(store: Store, saves: SaveEntry[]): boolean {
+  if (!store.doc.objects.length) return false;
+  const link = saves.find((s) => s.id === getLink());
+  return !link || JSON.stringify(link.doc) !== JSON.stringify(store.doc);
+}
+
+/** Make a save the open project. */
+export function adoptSave(store: Store, s: SaveEntry): void {
+  loading = true;
+  store.load(JSON.parse(JSON.stringify(s.doc)));
+  loading = false;
+  setLink(s.id);
+  toast(`Opened “${s.name}”.`);
+}
+
+export const whenText = (t: number) => new Date(t).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+const when = whenText;
 const stamp = () => new Date().toISOString().slice(0, 10);
 
 /** A small picture of the current view, for the list. */
@@ -63,11 +81,7 @@ export function openSavesDialog(store: Store, vp: Viewport): void {
   let ask: { id: string; kind: 'open' | 'delete' } | null = null;
   let busy = false;
 
-  const isDirty = (): boolean => {
-    if (!store.doc.objects.length) return false;
-    const link = saves.find((s) => s.id === getLink());
-    return !link || JSON.stringify(link.doc) !== JSON.stringify(store.doc);
-  };
+  const isDirty = (): boolean => unsavedWork(store, saves);
 
   const refresh = async () => {
     saves = await listSaves();
@@ -98,11 +112,7 @@ export function openSavesDialog(store: Store, vp: Viewport): void {
   };
 
   const openSave = (s: SaveEntry) => {
-    loading = true;
-    store.load(JSON.parse(JSON.stringify(s.doc)));
-    loading = false;
-    setLink(s.id);
-    toast(`Opened “${s.name}”.`);
+    adoptSave(store, s);
     close();
   };
 

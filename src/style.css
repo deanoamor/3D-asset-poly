@@ -309,3 +309,24 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .btn.danger { background: #d64545; border-color: #d64545; color: #fff; }
 .sempty { padding: 18px 4px; text-align: center; }
 .saves-foot { justify-content: space-between; }
+
+/* welcome screen */
+.dlg.welcome { min-width: min(820px, 94vw); }
+.whead { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+.whead h2 { margin: 0 0 2px; }
+.whead .lead { margin: 0; }
+.whead .tbtn { margin-left: auto; align-self: flex-start; }
+.logo.big { transform: scale(1.6); margin: 8px 12px 8px 8px; }
+.wcols { display: grid; grid-template-columns: 1fr 1.25fr; gap: 20px; }
+@media (max-width: 720px) { .wcols { grid-template-columns: 1fr; } }
+.wleft, .wright { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.wleft h3, .wright h3 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.wbuttons { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.wbuttons .btn { justify-content: center; }
+.wcontinue { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-soft); }
+.wcontinue > div { display: flex; flex-direction: column; min-width: 0; }
+.wright .slist { max-height: 34vh; }
+.wempty { padding: 14px; border: 1px dashed var(--line-strong); border-radius: 12px; background: #fafaf8; }
+.wempty p { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.wfoot { display: flex; flex-direction: column; gap: 6px; margin-top: auto; }
+.wfoot .btn { align-self: flex-start; }

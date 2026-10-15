@@ -9,10 +9,11 @@ import { mountToolbar } from './ui/toolbar';
 import { mountPolyCounter } from './ui/polycounter';
 import { mountTopbar } from './ui/topbar';
 import { openSavesDialog, watchSaveLink } from './ui/saves';
+import { openWelcome, shouldWelcome } from './ui/welcome';
 import { mountEditTour, mountOnboarding, type Tour } from './ui/onboarding';
 import { mountEditBar } from './ui/editbar';
 import { mountLearn, openAssetLibrary } from './ui/assets';
-import { bus, openExportDialog, openProjectDialog, openShortcuts } from './ui/dialogs';
+import { bus, openExportDialog, openShortcuts } from './ui/dialogs';
 import { toast } from './ui/dom';
 
 async function boot(): Promise<void> {
@@ -170,7 +171,7 @@ async function boot(): Promise<void> {
   });
 
   bus.addEventListener('open-assets', () => openAssetLibrary(store, vp, learnPlayer));
-  if (!saved) openProjectDialog(store, { first: true });
+  if (shouldWelcome(store)) openWelcome(store, vp);
 }
 
 void boot();

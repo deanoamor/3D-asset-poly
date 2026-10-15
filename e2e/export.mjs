@@ -87,6 +87,7 @@ for (const [engine, format] of matrix) {
 
 console.log('# Godot collision box');
 await page.click('#btn-export');
+await page.click('[data-tab="engine"]');
 await page.click('.card[data-preset="godot"]');
 ok(await page.isVisible('#export-collision'), 'collision option appears for Godot');
 await page.selectOption('#export-format', 'glb');
@@ -104,6 +105,7 @@ const acc = j.accessors[j.meshes[col.mesh].primitives[0].attributes.POSITION];
 const ext = acc.max.map((m, i) => m - acc.min[i]);
 ok(Math.abs(ext[0] - 3.5) < 0.01 && Math.abs(ext[1] - 2.6) < 0.01 && Math.abs(ext[2] - 1.2) < 0.01, `collision box wraps the whole model (${ext.map((n) => n.toFixed(2)).join(' x ')} m)`);
 await page.click('#btn-export');
+await page.click('[data-tab="engine"]');
 await page.click('.card[data-preset="unity"]');
 ok(!(await page.isVisible('#export-collision')), 'collision option is hidden for Unity');
 await page.screenshot({ path: 'e2e/out/export/dialog.png' });

@@ -16,6 +16,16 @@ export const emit = (name: string, detail?: unknown) => bus.dispatchEvent(new Cu
 
 // ---------- new project ----------
 
+/** Replace the current project with a fresh empty one. */
+export function startProject(store: Store, name: string, guided: boolean, openAssets: boolean): void {
+  clearSaved();
+  store.load(emptyDoc(name.trim() || 'Untitled prop'));
+  store.setUi({ tool: 'select' });
+  logEvent('project_created', { guided });
+  emit('project-created', { guided });
+  if (openAssets) emit('open-assets');
+}
+
 export function openProjectDialog(store: Store, opts: { first: boolean }): void {
   let close: () => void = () => {};
   const name = h('input', { type: 'text', value: 'My prop', maxlength: '60', 'aria-label': 'Project name', id: 'proj-name' }) as HTMLInputElement;
@@ -25,13 +35,8 @@ export function openProjectDialog(store: Store, opts: { first: boolean }): void 
       ? h('p', { class: 'fnote' }, 'Your current project is replaced. ', h('button', { class: 'link', onclick: () => saveProjectFile(store) }, 'Download a backup first'))
       : null;
   const create = (guided: boolean, openAssets: boolean) => {
-    clearSaved();
-    store.load(emptyDoc(name.value.trim() || 'Untitled prop'));
-    store.setUi({ tool: 'select' });
-    logEvent('project_created', { guided });
+    startProject(store, name.value, guided, openAssets);
     close();
-    emit('project-created', { guided });
-    if (openAssets) emit('open-assets');
   };
   const body = h('div', { class: 'dlg' },
     h('h2', {}, opts.first ? 'Welcome. Let’s make a game prop.' : 'New project'),
