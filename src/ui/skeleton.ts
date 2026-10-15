@@ -128,8 +128,9 @@ export function mountSkeleton(root: HTMLElement, store: Store): void {
     clear(box);
     const head = h('div', { class: 'panel-head skel-head' },
       h('button', { class: 'caret', 'aria-label': open ? 'Collapse skeleton' : 'Expand skeleton', onclick: () => { open = !open; render(); } }, icon(open ? 'chevD' : 'chevR', 12)),
-      h('span', {}, 'Skeleton'),
-      h('span', { class: 'skel-count' }, rig.length ? `${rig.length} joints` : ''),
+      h('span', { class: 'skel-title' }, 'Skeleton'),
+      rig.length ? h('span', { class: 'skel-count', title: `${rig.length} joints`, 'aria-label': `${rig.length} joints` }, String(rig.length)) : null,
+      h('span', { class: 'skel-spacer' }),
       rig.length
         ? h('button', { class: `btn xs${store.ui.pose ? ' primary' : ''}`, id: 'btn-pose-mode', title: store.ui.pose ? 'Leave Pose mode' : 'Pose mode: turn joints to bend the character', 'aria-pressed': String(store.ui.pose), onclick: () => store.setUi({ pose: !store.ui.pose }) }, 'Pose')
         : null,

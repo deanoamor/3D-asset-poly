@@ -335,9 +335,13 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 
 /* skeleton section */
 .skel { border-top: 1px solid var(--line); max-height: 48%; overflow-y: auto; padding-bottom: 8px; flex: none; }
-.skel-head { display: flex; align-items: center; gap: 6px; padding-top: 8px; }
+.skel-head { display: flex; align-items: center; gap: 6px; padding: 8px 8px 6px 6px; white-space: nowrap; }
 .skel-head .caret { flex: none; }
-.skel-count { margin-left: auto; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 12px; }
+.skel-title { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.skel-count { flex: none; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 999px; background: #ececea; color: var(--muted); font-size: 11px; font-weight: 600; line-height: 18px; text-align: center; letter-spacing: 0; text-transform: none; }
+.skel-spacer { flex: 1; }
+.skel-head .btn.xs { flex: none; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+.skel-head .tbtn { flex: none; }
 .skel .fnote { margin: 0 12px 8px; }
 .jlist { list-style: none; margin: 0 6px 6px; padding: 0; max-height: 150px; overflow-y: auto; }
 .jrowitem { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
@@ -353,3 +357,6 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .jnum input { width: 100%; min-width: 0; }
 .jedit .jactions { padding: 0; }
 .btn.xs { padding: 2px 10px; font-size: 12px; min-height: 0; }
+.jedit .fnote { margin: 0; }
+.jlist { max-height: 190px; }
+.skel .jactions .btn { flex: 1 1 auto; justify-content: center; }
