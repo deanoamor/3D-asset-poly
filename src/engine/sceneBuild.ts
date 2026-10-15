@@ -42,6 +42,10 @@ export class MaterialCache {
     }
     return m;
   }
+  /** Ask three.js to rebuild every material (needed when shadows are switched on or off). */
+  refresh(): void {
+    for (const m of this.map.values()) m.needsUpdate = true;
+  }
   dispose(): void {
     for (const m of this.map.values()) m.dispose();
     this.map.clear();

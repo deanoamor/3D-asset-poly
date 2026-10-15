@@ -11,7 +11,7 @@ import { mountTopbar } from './ui/topbar';
 import { mountEditTour, mountOnboarding, type Tour } from './ui/onboarding';
 import { mountEditBar } from './ui/editbar';
 import { mountLearn, openAssetLibrary } from './ui/assets';
-import { openExportDialog, openProjectDialog, openShortcuts } from './ui/dialogs';
+import { bus, openExportDialog, openProjectDialog, openShortcuts } from './ui/dialogs';
 import { toast } from './ui/dom';
 
 async function boot(): Promise<void> {
@@ -167,6 +167,7 @@ async function boot(): Promise<void> {
     }
   });
 
+  bus.addEventListener('open-assets', () => openAssetLibrary(store, vp, learnPlayer));
   if (!saved) openProjectDialog(store, { first: true });
 }
 

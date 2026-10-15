@@ -49,18 +49,29 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Asset library (use directly, or learn from it)
 
-The **Assets** button (top bar) opens four ready-made props: **Police Officer** (Beginner), **Car** (Easy), **House** (Easy) and
-**Football Player** (Medium). Each card has a 3D preview, its size, parts, triangle count, and what you will learn.
+The **Assets** button (top bar) opens four detailed, ready-made assets, lit with a warm backdrop and a soft shadow:
 
-- **Add to project** puts the asset into the current project as a group, to the right of what is already there. Every part is
-  a normal shape with a clear name (Torso, Cap Brim, Front Wheel Left, Roof…), so you can recolor, resize, reshape or export it.
-- **Learn how it is made** adds the asset and rebuilds it step by step (5 to 6 steps each). Every step shows the new parts (and
-  highlights them on the canvas), the tools and ideas used (Duplicate, Rotate, Merge points, fewer sides = fewer triangles), and a
-  closing challenge. The lesson only hides parts on screen: the project data is never changed, so a reload cannot leave anything hidden.
-- The car cabin and the house roof are real *edited* shapes (Edit shape and Merge points), so they double as examples for that feature.
-- All four stay far below the mobile budget (164 to 476 triangles each).
+| Asset | Parts | Triangles | What it shows off |
+|---|---|---|---|
+| **Police Officer** | 78 | ~1,400 | tapered limbs, a head with a jaw, a face (eyes, brows, nose, mouth), layered uniform, cap and gear |
+| **Car** | 83 | ~1,700 | sloped hood and glass, wheel wells, tire + rim + hub wheels, lights, grille, trim, roof rack |
+| **House** | 143 | ~1,900 | half-timber walls, tiled roof with a dormer, door, windows, shutters, porch, chimney with smoke, garden, fence, tree |
+| **Football Player** | 86 | ~1,600 | a mid-kick pose (limbs aimed between joints, a tilted boot), kit with number and stripes, spiky hair, a patched ball |
 
-Assets are defined as data in `src/core/assets.ts`; adding a fifth is a matter of listing its parts and steps.
+Everything is made only with what the editor offers: cylinders with few sides and a Top size, flattened spheres, pyramids, thin
+boxes, and shapes reshaped with Edit shape (chests, heads, hoods, the car cabin, the gable roof). Each asset is far below the PC
+budget and fits the Mobile budget on its own (all four together are over it, which makes a good lesson in the polygon counter).
+
+- **Add to project** puts the asset into the current project as a group, to the right of what is already there. Every part has a
+  clear name (Torso, Eye White Left, Front Tire Right, Roof, Chimney Cap…), so you can recolor, resize, reshape or export it.
+- **Learn how it is made** rebuilds the asset in 6 to 8 steps. Each step shows the new parts (highlighted on the canvas), the tools
+  and ideas used, and a closing challenge. The lesson only hides parts on screen: the project data is never changed, so a reload
+  cannot leave anything hidden.
+- The first-run dialog has **Browse ready-made assets** so new users see what the editor can do straight away.
+- **Preview** now shows the model with a warm backdrop, soft light and a real floor shadow.
+
+Assets are data in `src/core/library/*.ts`, built from the helpers in `src/core/library/kit.ts` (`limb` aims a tapered cylinder between
+two points, `band` wraps a ring around it, `face` places eyes/brows/nose/mouth, `frustum`/`wedge`/`headMesh`/`gable` are edited shapes).
 
 ## Edit Shape (turn a box into something else)
 

@@ -5,7 +5,7 @@ import { buildExportScene } from '../engine/sceneBuild';
 
 const cache = new Map<string, string>();
 
-/** Small 3D pictures of the assets, drawn once with a temporary renderer. */
+/** Pictures of the assets, lit like the Preview mode: warm backdrop, soft light and a real shadow on the floor. */
 export function assetThumbnails(defs: AssetDef[] = ASSETS): Map<string, string> {
   const todo = defs.filter((d) => !cache.has(d.id));
   if (todo.length) {
@@ -13,32 +13,52 @@ export function assetThumbnails(defs: AssetDef[] = ASSETS): Map<string, string> 
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
       renderer.setPixelRatio(1);
-      renderer.setSize(480, 360, false);
+      renderer.setSize(560, 420, false);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       for (const def of todo) {
         const doc = emptyDoc(def.name);
         const { group, parts } = instantiateAsset(def);
         doc.objects.push(group, ...parts);
         const model = buildExportScene(doc, def.name);
+        model.traverse((o) => {
+          if ((o as THREE.Mesh).isMesh) {
+            o.castShadow = true;
+            o.receiveShadow = true;
+          }
+        });
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xe9ebe8);
-        scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa0a8, 1.6));
-        const sun = new THREE.DirectionalLight(0xffffff, 2.2);
-        sun.position.set(5, 9, 4);
-        scene.add(sun, model);
+        scene.background = new THREE.Color(0xe8ddcd);
+        scene.add(new THREE.HemisphereLight(0xffffff, 0xb9a58f, 1.6), model);
         model.updateMatrixWorld(true);
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
         const radius = box.getSize(new THREE.Vector3()).length() / 2;
-        const ground = new THREE.Mesh(new THREE.CircleGeometry(radius * 1.25, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xdfe3de }));
-        ground.position.y = -0.01;
-        scene.add(ground);
-        const cam = new THREE.PerspectiveCamera(32, 480 / 360, 0.1, 200);
-        const dist = (radius / Math.sin(THREE.MathUtils.degToRad(cam.fov) / 2)) * 0.98;
-        cam.position.copy(center).add(new THREE.Vector3(0.95, 0.62, 1.15).normalize().multiplyScalar(dist));
-        cam.lookAt(center);
+        const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+        sun.position.copy(center).add(new THREE.Vector3(0.5, 1.15, 0.6).normalize().multiplyScalar(radius * 3));
+        sun.target.position.copy(center);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(2048, 2048);
+        sun.shadow.bias = -0.0004;
+        sun.shadow.normalBias = 0.02;
+        sun.shadow.camera.left = sun.shadow.camera.bottom = -radius * 1.5;
+        sun.shadow.camera.right = sun.shadow.camera.top = radius * 1.5;
+        sun.shadow.camera.near = 0.1;
+        sun.shadow.camera.far = radius * 8;
+        scene.add(sun, sun.target);
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(radius * 8, radius * 8).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: 0.28 }));
+        floor.receiveShadow = true;
+        scene.add(floor);
+        const hint = def.thumb ?? { dir: [0.9, 0.4, 1] as [number, number, number], zoom: 0.85 };
+        const cam = new THREE.PerspectiveCamera(30, 560 / 420, 0.1, 400);
+        const dist = (radius / Math.sin(THREE.MathUtils.degToRad(cam.fov) / 2)) * hint.zoom;
+        // look slightly above the middle so the feet and the shadow stay in frame
+        const look = center.clone();
+        cam.position.copy(look).add(new THREE.Vector3(...hint.dir).normalize().multiplyScalar(dist));
+        cam.lookAt(look);
         renderer.render(scene, cam);
         cache.set(def.id, renderer.domElement.toDataURL('image/png'));
-        ground.geometry.dispose();
+        floor.geometry.dispose();
       }
     } catch {
       /* no WebGL: cards fall back to a plain tile */

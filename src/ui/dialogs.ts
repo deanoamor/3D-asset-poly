@@ -50,6 +50,23 @@ export function openProjectDialog(store: Store, opts: { first: boolean }): void 
     backup,
     h('div', { class: 'dlg-actions' },
       opts.first ? null : h('button', { class: 'btn', onclick: () => close() }, 'Cancel'),
+      opts.first
+        ? h('button', {
+            class: 'btn',
+            id: 'btn-create-assets',
+            title: 'Start a project and open the library of ready-made characters and props',
+            onclick: () => {
+              const doc = emptyDoc(name.value.trim() || 'Untitled prop', target);
+              doc.customBudget = Math.max(100, +custom.value || 10000);
+              clearSaved();
+              store.load(doc);
+              logEvent('project_created', { target, guided: false });
+              close();
+              emit('project-created', { guided: false });
+              emit('open-assets');
+            },
+          }, 'Browse ready-made assets')
+        : null,
       h('button', {
         class: 'btn primary',
         id: 'btn-create',

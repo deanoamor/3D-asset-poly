@@ -38,7 +38,7 @@ for (const id of ['police', 'car', 'house', 'footballer']) {
 let d = await D();
 const groups = d.filter((o) => o.kind === 'group');
 ok(groups.map((g) => g.name).join() === 'Police Officer,Car,House,Football Player', `four groups: ${groups.map((g) => g.name).join(', ')}`);
-ok(groups.every((g) => d.filter((o) => o.parent === g.id).length >= 12), 'each group has its parts');
+ok(groups.every((g) => d.filter((o) => o.parent === g.id).length >= 75), `each group has dozens of parts (${groups.map((g) => d.filter((o) => o.parent === g.id).length).join(', ')})`);
 const xs = groups.map((g) => g.position[0]);
 ok(xs.every((x, i) => i === 0 || x > xs[i - 1]), `placed left to right, not on top of each other (${xs.map((x) => x.toFixed(1)).join(', ')})`);
 ok(d.some((o) => o.name === 'Cabin' && o.mesh) && d.some((o) => o.name === 'Roof' && o.mesh), 'cabin and roof are real edited shapes (Edit shape works on them)');
@@ -47,7 +47,15 @@ await page.evaluate(() => { const { vp } = window.__app; vp.camera.position.set(
 await page.evaluate(() => { const s = window.__app.store; s.select([]); });
 await page.waitForTimeout(300);
 await shot('02-all-four');
-ok(/tris/.test(await page.textContent('#polypill')) && (await page.getAttribute('#polypill', 'data-status')) === 'green', `counter: ${await page.textContent('#polypill')}`);
+const st4 = await page.getAttribute('#polypill', 'data-status');
+ok(st4 === 'red' && (await page.isVisible('.polybanner')), `all four together exceed the Mobile budget, so the counter warns (${await page.textContent('#polypill')})`);
+await page.evaluate(() => window.__app.store.setTarget('pc'));
+ok((await page.getAttribute('#polypill', 'data-status')) === 'green', 'and it is green again on the PC budget');
+await page.evaluate(() => window.__app.store.setTarget('mobile'));
+for (const id of ['police', 'car', 'house', 'footballer']) {
+  const t = await page.evaluate((id) => { const s = window.__app.store; const g = s.doc.objects.find((o) => o.kind === 'group' && o.name === ({ police: 'Police Officer', car: 'Car', house: 'House', footballer: 'Football Player' })[id]); const ids = new Set([g.id, ...s.doc.objects.filter((o) => o.parent === g.id).map((o) => o.id)]); return s.doc.objects.filter((o) => ids.has(o.id) && o.kind === 'shape').length; }, id);
+  void t;
+}
 
 console.log('# edit an asset part');
 await page.evaluate(() => { const s = window.__app.store; const cab = s.doc.objects.find((o) => o.name === 'Cabin'); s.select([cab.id]); });
@@ -69,18 +77,19 @@ const hidden = () => page.evaluate(() => window.__app.store.learnHidden?.size ??
 const visibleDocFlags = () => page.evaluate((gid) => window.__app.store.doc.objects.filter((o) => o.parent === gid).every((o) => o.visible), learnGroup.id);
 ok((await hidden()) > 0 && (await hidden()) < learnParts.length, `step 1 shows only the first parts (${learnParts.length - (await hidden())} of ${learnParts.length})`);
 ok(await visibleDocFlags(), 'the project data is not changed by the lesson (nothing is marked hidden)');
-ok((await page.textContent('#coach-learn')).includes('Body and bumpers'), 'step 1 explains the body');
+ok((await page.textContent('#coach-learn')).includes('Chassis and body'), 'step 1 explains the chassis and body');
 ok(await page.isDisabled('#learn-back'), 'Back is disabled on the first step');
 await shot('03-learn-step1');
 const counts = [learnParts.length - (await hidden())];
-for (let i = 0; i < 5; i++) {
+for (let i = 0; i < 12 && (await page.textContent('#learn-next')) === 'Next'; i++) {
   await page.click('#learn-next');
   counts.push(learnParts.length - (await hidden()));
   if (i === 1) await shot('04-learn-step3');
 }
-ok(counts.every((c, i) => i === 0 || c > counts[i - 1]), `each step adds parts: ${counts.join(' → ')}`);
+ok(counts.every((c, i) => i === 0 || c > counts[i - 1]) && counts.length === 8, `each of the 8 steps adds parts: ${counts.join(' → ')}`);
 ok(counts[counts.length - 1] === learnParts.length, 'the last step shows the complete car');
 await page.click('#learn-next');
+ok((await page.textContent('#coach-learn')).includes('You have built'), 'Finish shows the summary');
 ok((await hidden()) === 0, 'Finish reveals everything');
 ok((await page.textContent('#coach-learn')).includes('Challenge'), 'the summary offers a challenge');
 await shot('05-learn-done');
@@ -117,7 +126,7 @@ const rep = await validator.validateBytes(bytes);
 ok(rep.issues.numErrors === 0, `glTF validator: ${rep.issues.numErrors} errors, ${rep.issues.numWarnings} warnings, ${rep.info.totalTriangleCount} triangles`);
 const dv = new DataView(bytes.buffer);
 const j = JSON.parse(new TextDecoder().decode(bytes.slice(20, 20 + dv.getUint32(12, true))));
-ok(['Police Officer', 'Torso', 'Cap Badge', 'Head'].every((n) => j.nodes.some((x) => x.name === n)), 'part names survive into the glTF');
+ok(['Police Officer', 'Torso', 'Cap Badge', 'Head', 'Eye White Left', 'Thigh Right'].every((n) => j.nodes.some((x) => x.name === n)), 'part names survive into the glTF');
 
 ok(errs.length === 0, 'no console errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
 await browser.close();

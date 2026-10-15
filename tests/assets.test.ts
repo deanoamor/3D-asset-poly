@@ -32,11 +32,12 @@ describe('asset library', () => {
         st.mutate((d) => d.objects.push(group, ...parts.map((o) => ({ ...o, parent: group.id }))));
         const b = st.worldBounds();
         expect(b.min.y).toBeGreaterThanOrEqual(-0.001);
-        expect(b.min.y).toBeLessThan(0.05);
+        expect(b.min.y).toBeLessThan(0.02);
         const s = assetStats(def);
         if (def.id === 'car') expect(s.depth).toBeGreaterThan(3.5);
         if (def.id === 'house') expect(s.width).toBeGreaterThan(7);
         if (def.id === 'police' || def.id === 'footballer') expect(s.height).toBeGreaterThan(1.6), expect(s.height).toBeLessThan(2.1);
+        if (def.id === 'police') expect(b.min.y).toBeLessThan(0.01);
       });
 
       it('fits the mobile triangle budget with room to spare', () => {
@@ -45,7 +46,7 @@ describe('asset library', () => {
         st.mutate((d) => d.objects.push(group, ...parts));
         const stats = polyStats(st.doc);
         expect(stats.total).toBe(assetStats(def).triangles);
-        expect(stats.total).toBeLessThan(1500);
+        expect(stats.total).toBeLessThan(3000);
         expect(stats.status).toBe('green');
       });
 
@@ -83,6 +84,29 @@ describe('asset library', () => {
     expect(roof.mesh!.f.reduce((a, f) => a + f.length - 2, 0)).toBe(8);
     const cabin = instantiateAsset(ASSETS[1]).parts.find((p) => p.name === 'Cabin')!;
     const topX = Math.max(...cabin.mesh!.v.filter((_, i) => i % 3 === 0 && cabin.mesh!.v[i + 1] > 0));
-    expect(topX).toBeCloseTo(0.4, 5);
+    expect(topX).toBeCloseTo(0.41, 5);
+  });
+
+  it('assets are richly detailed, not blocky: dozens of parts with faces, tapers and edited shapes', () => {
+    for (const def of ASSETS) {
+      const parts = instantiateAsset(def).parts;
+      expect(parts.length).toBeGreaterThanOrEqual(75);
+      expect(parts.filter((p) => p.mesh).length).toBeGreaterThanOrEqual(2); // reshaped with Edit shape
+    }
+    for (const id of ['police', 'footballer']) {
+      const names = instantiateAsset(ASSETS.find((a) => a.id === id)!).parts.map((p) => p.name);
+      for (const n of ['Head', 'Eye White Left', 'Pupil Right', 'Eyebrow Left', 'Nose', 'Mouth', 'Ear Left', 'Hand Right']) expect(names).toContain(n);
+    }
+    const car = instantiateAsset(ASSETS.find((a) => a.id === 'car')!).parts;
+    expect(car.filter((p) => /Tire/.test(p.name))).toHaveLength(4);
+    expect(car.filter((p) => p.params.taper < 1).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('limbs really connect their two joints', () => {
+    const arm = instantiateAsset(ASSETS.find((a) => a.id === 'footballer')!).parts.find((p) => p.name === 'Forearm Left')!;
+    const st = new Store(emptyDoc());
+    st.mutate((d) => d.objects.push(arm), false);
+    const b = st.worldBounds();
+    expect(b.max.y - b.min.y).toBeGreaterThan(0.1);
   });
 });

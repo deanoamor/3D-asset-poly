@@ -58,6 +58,9 @@ export class Viewport {
   private disposers: (() => void)[] = [];
   private otherBoxes: THREE.Box3[] = [];
   private gizmoDragging = false;
+  private sun!: THREE.DirectionalLight;
+  private hemi!: THREE.HemisphereLight;
+  private shadowGround!: THREE.Mesh;
 
   constructor(readonly container: HTMLElement, private store: Store) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -71,9 +74,22 @@ export class Viewport {
     const hemi = new THREE.HemisphereLight(0xffffff, 0x9aa0a8, 1.6);
     const sun = new THREE.DirectionalLight(0xffffff, 2.2);
     sun.position.set(5, 9, 4);
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 0.02;
+    sun.shadow.radius = 4;
     const fill = new THREE.DirectionalLight(0xdfe8ff, 0.6);
     fill.position.set(-6, 3, -5);
-    this.scene.add(hemi, sun, fill);
+    this.scene.add(hemi, sun, sun.target, fill);
+    this.sun = sun;
+    this.hemi = hemi;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // invisible floor that only shows the shadows (Preview)
+    this.shadowGround = new THREE.Mesh(new THREE.PlaneGeometry(200, 200).rotateX(-Math.PI / 2), new THREE.ShadowMaterial({ opacity: 0.28 }));
+    this.shadowGround.receiveShadow = true;
+    this.shadowGround.visible = false;
+    this.shadowGround.raycast = () => {};
+    this.scene.add(this.shadowGround);
 
     this.grid = this.makeGrid();
     this.scene.add(this.grid);
@@ -201,6 +217,8 @@ export class Viewport {
       if (!node) {
         node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, needsDoubleSide(o))) : new THREE.Group();
         node.userData.id = o.id;
+        node.castShadow = true;
+        node.receiveShadow = true;
         this.nodes.set(o.id, node);
         this.sig.set(o.id, sig);
       } else if (this.sig.get(o.id) !== sig && node instanceof THREE.Mesh) {
@@ -275,6 +293,7 @@ export class Viewport {
     const ui = this.store.ui;
     this.grid.visible = !ui.preview;
     this.controls.autoRotate = ui.preview;
+    this.applyPreviewLook(ui.preview);
     const mode = ui.tool === 'rotate' ? 'rotate' : ui.tool === 'scale' ? 'scale' : 'translate';
     this.tc.setMode(mode);
     this.tc.setSpace(mode === 'translate' ? 'world' : 'local');
@@ -288,6 +307,32 @@ export class Viewport {
     this.refreshOutlines();
     this.refreshGizmoTarget();
     this.requestRender();
+  }
+
+  /** Preview shows the model like a finished asset: warm backdrop, soft light and a real shadow on the floor. */
+  private applyPreviewLook(on: boolean): void {
+    if (this.renderer.shadowMap.enabled === on) return;
+    this.renderer.shadowMap.enabled = on;
+    this.sun.castShadow = on;
+    this.shadowGround.visible = on;
+    this.scene.background = new THREE.Color(on ? 0xe8ddcd : 0xebebe8);
+    this.hemi.groundColor.set(on ? 0xb9a58f : 0x9aa0a8);
+    if (on) {
+      const box = this.store.worldBounds();
+      if (!box.isEmpty()) {
+        const c = box.getCenter(new THREE.Vector3());
+        const r = Math.max(1, box.getSize(new THREE.Vector3()).length() / 2);
+        this.sun.target.position.copy(c);
+        this.sun.position.copy(c).add(new THREE.Vector3(0.5, 1.15, 0.6).normalize().multiplyScalar(r * 3));
+        const cam = this.sun.shadow.camera;
+        cam.left = cam.bottom = -r * 1.5;
+        cam.right = cam.top = r * 1.5;
+        cam.near = 0.1;
+        cam.far = r * 8;
+        cam.updateProjectionMatrix();
+      }
+    }
+    this.mats.refresh(); // materials must be rebuilt when shadows switch on or off
   }
 
   refreshGizmoTarget(): void {

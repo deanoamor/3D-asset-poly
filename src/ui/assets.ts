@@ -113,7 +113,7 @@ export function openAssetLibrary(store: Store, vp: Viewport, learn: { start: (d:
     const st = assetStats(def);
     const src = thumbs.get(def.id);
     return h('article', { class: 'acard', 'data-asset': def.id },
-      src ? h('img', { class: 'athumb', src, alt: `${def.name}, 3D preview`, width: 480, height: 360 }) : h('div', { class: 'athumb none' }, def.name),
+      src ? h('img', { class: 'athumb', src, alt: `${def.name}, 3D preview`, width: 560, height: 420 }) : h('div', { class: 'athumb none' }, def.name),
       h('div', { class: 'abody' },
         h('div', { class: 'atitle' }, h('strong', {}, def.name), h('span', { class: `level ${def.level.toLowerCase()}` }, def.level)),
         h('p', { class: 'atag' }, def.tagline),
