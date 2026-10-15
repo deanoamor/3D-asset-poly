@@ -136,3 +136,24 @@ describe('bounds', () => {
     expect(b).toBeInstanceOf(THREE.Box3);
   });
 });
+
+import { crc32, zipSingle } from '../src/core/zip';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+describe('zip', () => {
+  it('crc32 matches the reference value', () => {
+    expect(crc32(new TextEncoder().encode('123456789'))).toBe(0xcbf43926);
+  });
+  it('produces an archive that unzip can read back', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'zip-'));
+    const payload = new Uint8Array(5000).map((_, i) => (i * 7) % 251);
+    writeFileSync(join(dir, 'a.zip'), zipSingle('chest.glb', payload));
+    const out = execFileSync('python3', ['-I', '-c', "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print(z.namelist()[0]);print(z.testzip());open(sys.argv[2],'wb').write(z.read('chest.glb'))", join(dir, 'a.zip'), join(dir, 'out.bin')]).toString();
+    expect(out).toContain('chest.glb');
+    expect(out).toContain('None');
+    expect(new Uint8Array(readFileSync(join(dir, 'out.bin')))).toEqual(payload);
+  });
+});

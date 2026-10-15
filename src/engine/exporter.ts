@@ -3,6 +3,7 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
 import { PRESETS } from '../core/presets';
 import { buildExportScene } from './sceneBuild';
+import { zipSingle } from '../core/zip';
 
 export type ExportFormat = 'glb' | 'gltf';
 
@@ -52,7 +53,43 @@ export async function exportGltf(doc: Doc, format: ExportFormat): Promise<Export
   return { blob, filename: `${slug(doc.name)}.${format}`, size };
 }
 
-export function download(blob: Blob, filename: string): void {
+type DownloadsApi = { save(req: { filename: string; data: Blob | string }): Promise<{ status: string }> };
+
+/** Extensions the artifact host will save directly; others (.glb, .gltf) get wrapped in a .zip. */
+const HOST_OK = /\.(json|txt|md|csv|zip|png|jpg|jpeg|webp|gif|svg|html|pdf)$/i;
+
+async function hostDownloads(): Promise<DownloadsApi | null> {
+  const c = (window as unknown as { claude?: { use?: (n: string) => Promise<unknown> } }).claude;
+  if (!c?.use) return null;
+  try {
+    return ((await c.use('downloads')) as DownloadsApi | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save a file. Inside a claude.ai artifact the page may not start downloads itself, so it asks the host
+ * (the viewer confirms). Returns the saved file name, or null if the viewer declined.
+ */
+export async function download(blob: Blob, filename: string): Promise<string | null> {
+  const host = await hostDownloads();
+  if (host) {
+    let name = filename;
+    let data: Blob = blob;
+    if (!HOST_OK.test(filename)) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      data = new Blob([zipSingle(filename, bytes)], { type: 'application/zip' });
+      name = filename.replace(/\.[^.]+$/, '') + '.zip';
+    }
+    try {
+      await host.save({ filename: name, data });
+      return name;
+    } catch (e) {
+      if ((e as { code?: string }).code === 'declined') return null;
+      throw new Error((e as { message?: string }).message ?? 'The download was blocked.');
+    }
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -61,4 +98,5 @@ export function download(blob: Blob, filename: string): void {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return filename;
 }

@@ -72,7 +72,7 @@ export function openProjectDialog(store: Store, opts: { first: boolean }): void 
 
 export function saveProjectFile(store: Store): void {
   const blob = new Blob([JSON.stringify(store.doc, null, 1)], { type: 'application/json' });
-  download(blob, `${slug(store.doc.name)}.polyproj.json`);
+  void download(blob, `${slug(store.doc.name)}.polyproj.json`).catch((e: Error) => toast(e.message));
 }
 
 export function openProjectFile(store: Store): void {
@@ -149,13 +149,14 @@ export function openExportDialog(store: Store): void {
           onclick: async () => {
             try {
               const res = await exportGltf(store.doc, format);
-              download(res.blob, res.filename);
+              const saved = await download(res.blob, res.filename);
+              if (!saved) return; // viewer declined the save
               const first = !hasEvent('first_export');
               const created = readEvents().filter((e) => e.name === 'project_created').pop();
               logEvent(first ? 'first_export' : 'export', { engine: doc.enginePreset, format, tris: stats.total, ms: created ? Date.now() - created.t : undefined });
               emit('export');
               close();
-              toast(`Saved ${res.filename}. Origin is at the bottom center; 1 unit = 1 m.`, 5000);
+              toast(`Saved ${saved}. Origin is at the bottom center; 1 unit = 1 m.`, 5000);
             } catch (err) {
               toast(`Export failed: ${(err as Error).message}`);
             }
