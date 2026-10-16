@@ -1,5 +1,5 @@
 import type { Store } from '../core/store';
-import { PRESETS, type Preset } from '../core/anim';
+import { EASES, PRESETS, type Preset } from '../core/anim';
 import { clear, h, icon, toast } from './dom';
 
 /** Animation clips for a skeleton: ready-made Walk / Run / Idle / Wave, or your own from poses stored as keys on a timeline. */
@@ -52,6 +52,27 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
   const loopIn = h('input', { type: 'checkbox', id: 'anim-loop' }) as HTMLInputElement;
   loopIn.addEventListener('change', () => store.animId && store.setClip(store.animId, { loop: loopIn.checked }));
 
+  const easeSel = h('select', { id: 'anim-ease', title: 'How it eases between keys', 'aria-label': 'Easing' }, ...EASES.map((e) => h('option', { value: e.id }, e.label))) as HTMLSelectElement;
+  easeSel.addEventListener('change', () => store.animId && store.setClip(store.animId, { ease: easeSel.value as (typeof EASES)[number]['id'] }));
+  const rootIn = (axis: 0 | 1 | 2, label: string) => {
+    const i = h('input', { type: 'number', step: '0.05', id: `anim-root-${'xyz'[axis]}`, 'aria-label': `Move ${label}`, title: `Move the character ${label} at this key (metres)` }) as HTMLInputElement;
+    i.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') i.blur();
+    });
+    i.addEventListener('change', () => {
+      const c = store.clip(store.animId);
+      const n = nearKey();
+      if (!c || n < 0) return;
+      const r = [...(c.keys[n].root ?? [0, 0, 0])] as [number, number, number];
+      r[axis] = parseFloat(i.value) || 0;
+      store.setKeyRoot(c.id, n, r);
+    });
+    return i;
+  };
+  const rootX = rootIn(0, 'sideways');
+  const rootY = rootIn(1, 'up');
+  const rootZ = rootIn(2, 'forward');
   const nearKey = () => {
     const c = store.clip(store.animId);
     return c ? c.keys.findIndex((k) => Math.abs(k.t - store.animTime) < 1 / 30) : -1;
@@ -117,7 +138,7 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
     if (!open) return;
     head.append(select, newBtn, presetSel);
     const c = store.clip(store.animId);
-    if (c) head.append(h('label', { class: 'anim-name' }, nameIn), h('label', { class: 'anim-dur' }, durIn, h('span', {}, 's')), h('label', { class: 'check inline' }, loopIn, h('span', {}, 'Loop')), h('span', { class: 'tl-gap' }), delClip);
+    if (c) head.append(h('label', { class: 'anim-name' }, nameIn), h('label', { class: 'anim-dur' }, durIn, h('span', {}, 's')), h('label', { class: 'check inline' }, loopIn, h('span', {}, 'Loop')), easeSel, h('span', { class: 'tl-gap' }), delClip);
   };
 
   /** Everything that only changes when clips or keys do. */
@@ -127,7 +148,7 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
     box.classList.toggle('collapsed', !open);
     if (!rig?.length) return;
     const c = store.clip(store.animId);
-    const sig = JSON.stringify([open, (store.doc.anims ?? []).map((x) => [x.id, x.name]), store.animId, c && [c.duration, c.loop, c.keys.map((k) => k.t)]]);
+    const sig = JSON.stringify([open, (store.doc.anims ?? []).map((x) => [x.id, x.name]), store.animId, c && [c.duration, c.loop, c.ease, c.keys.map((k) => k.t)]]);
     if (sig === built) return;
     built = sig;
     select.replaceChildren(h('option', { value: '' }, (store.doc.anims?.length ? 'Choose an animation…' : 'No animations yet')), ...(store.doc.anims ?? []).map((x) => h('option', { value: x.id }, x.name)));
@@ -142,6 +163,7 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
     nameIn.value = c.name;
     durIn.value = String(c.duration);
     loopIn.checked = c.loop;
+    easeSel.value = c.ease ?? 'linear';
     slider.max = String(c.duration);
     const step = c.duration <= 2 ? 0.25 : c.duration <= 6 ? 0.5 : 1;
     const ticks: HTMLElement[] = [];
@@ -158,7 +180,8 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
       }),
     ));
     body.append(
-      h('div', { class: 'tl-side' }, h('div', { class: 'anim-row transport' }, play), readout, h('div', { class: 'anim-row wrap' }, addKey, loadBtn, delKey)),
+      h('div', { class: 'tl-side' }, h('div', { class: 'anim-row transport' }, play), readout, h('div', { class: 'anim-row wrap' }, addKey, loadBtn, delKey),
+        h('div', { class: 'anim-row root', title: 'Root motion at this key: moves the whole character (metres)' }, h('span', { class: 'anim-readout' }, 'Move'), rootX, rootY, rootZ)),
       h('div', { class: 'tl-main' },
         h('div', { class: 'tl-ruler' }, ...ticks),
         h('div', { class: 'anim-track' }, slider, keysBar),
@@ -177,6 +200,11 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
     const near = nearKey();
     keysBar.querySelectorAll('.akey').forEach((el, i) => el.classList.toggle('on', i === near));
     (delKey as HTMLButtonElement).disabled = near < 0 || c.keys.length < 2;
+    const rr = near >= 0 ? c.keys[near].root ?? [0, 0, 0] : [0, 0, 0];
+    [rootX, rootY, rootZ].forEach((el, i) => {
+      el.disabled = near < 0;
+      if (document.activeElement !== el) el.value = String(Math.round(rr[i] * 1000) / 1000);
+    });
   }
 
   store.subscribe((e) => {

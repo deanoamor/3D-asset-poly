@@ -169,10 +169,18 @@ Press **Pose** in the Skeleton section, click a joint and turn it with the rings
 - **Spin:** in Properties, **Spin** makes an object turn by itself around its pivot (Off / X / Y / Z, and turns per second). Preview shows it turning, and GLB/glTF export writes a looping animation called **Spin** that every engine and 3D app can play.
 - The car's four wheels are groups with the pivot on the axle and a spin around X, so they roll in Preview and in the exported file. Plain objects need no bones for this: a bone is only for bending things.
 
+## Material and file size
+- **Roughness, Metal, Glow** (Properties → Surface) go into the GLB as a real PBR material (`roughness`, `metallic`, `emissive`).
+- The export dialog shows the **file size** (and its gzip size), **draw calls** (meshes) and **materials**, with a warning when the file is large.
+- Not done yet: texture atlas / UV, editable skin weights, morph targets, Draco/KTX2 compression.
+
 ## Animation
 With a skeleton, **Animation** (under Skeleton) makes clips of poses that play over time.
 - **Ready-made:** pick *Walk*, *Run*, *Idle* or *Wave* and the character moves right away (found by joint names, so any figure with the person skeleton works).
 - **Your own:** press **New**, then for each moment: move the time slider, press **Edit pose here**, turn the joints (Pose mode), press **Key here**. Between two keys every joint turns smoothly. A diamond on the timeline is a key; click one to jump to it, **Delete key** removes it. A clip has a length in seconds and can **Loop**.
 - **Play** shows the clip in the editor, and in **Preview**. Playing never changes your saved pose.
+- **Game set:** ready-made Walk, Run, Idle, Wave, Strafe (loops) and Jump, Attack, Hit, Death, Crouch (play once). Names are fixed, so game code can call `play("Run")`.
+- **Easing:** each clip eases between keys: Linear, Smooth, Ease in, Ease out.
+- **Root motion:** each key has *Move* X / Y / Z (metres) that moves the whole character (a jump lifts the hips, a death lays them down). It is exported as a position track on the hips.
 - **Export:** GLB/glTF carries every clip as a glTF animation turning the bones (the character itself is exported at rest), together with **Spin**. Untick *Include the animations* in the export dialog to export a single static pose instead. Clips are saved with the project, Saves and `.3pi` bags, and a duplicated character gets its own copy of its clips.
 - Clips move joints only (rotation), so the body does not travel. Move a character in your game or 3D app while the Walk plays.

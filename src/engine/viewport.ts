@@ -6,11 +6,11 @@ import { effectivelyVisible, isLockedChain } from '../core/docmath';
 import type { SceneObject, ShapeType, Vec3 } from '../core/types';
 import { GeometryCache, MaterialCache, applyTransform, buildExportScene } from './sceneBuild';
 import { applyPose } from './rigExport';
-import { samplePose } from '../core/anim';
+import { samplePose, sampleRoot } from '../core/anim';
 import { EditController } from './editMode';
 import { meshSignature } from '../core/mesh';
 import { RigOverlay } from './rigOverlay';
-import { lookOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
+import { lookOf, matOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
 
 const R2D = 180 / Math.PI;
 const round = (n: number, d = 1e4) => Math.round(n * d) / d;
@@ -315,6 +315,12 @@ export class Viewport {
     return samplePose(clip, s.animTime, (s.doc.rig ?? []).map((j) => j.id));
   }
 
+  private shownRoot(): [number, number, number] | undefined {
+    const s = this.store;
+    const clip = s.animView ? s.clip(s.animId) : undefined;
+    return clip ? sampleRoot(clip, s.animTime) : undefined;
+  }
+
   /** While a clip plays: step its time and bend the character. Returns true while playing. */
   private animTick(): boolean {
     const s = this.store;
@@ -338,7 +344,7 @@ export class Viewport {
     }
     s.animTime = t;
     if (this.poseRoot) {
-      applyPose(this.poseBones, s.doc, this.shownPose());
+      applyPose(this.poseBones, s.doc, this.shownPose(), this.shownRoot());
       this.poseRoot.updateMatrixWorld(true);
       const posed = new Map<string, [number, number, number]>();
       const v = new THREE.Vector3();
@@ -392,7 +398,7 @@ export class Viewport {
       this.scene.add(root);
       this.poseRoot = root;
     }
-    applyPose(this.poseBones, doc, this.shownPose());
+    applyPose(this.poseBones, doc, this.shownPose(), this.shownRoot());
     this.poseRoot!.updateMatrixWorld(true);
     this.requestRender();
   }
@@ -484,7 +490,7 @@ export class Viewport {
       let node = this.nodes.get(o.id);
       const sig = this.nodeSignature(o);
       if (!node) {
-        node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o))) : new THREE.Group();
+        node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o), matOf(o))) : new THREE.Group();
         node.userData.id = o.id;
         node.castShadow = true;
         node.receiveShadow = true;
@@ -494,7 +500,7 @@ export class Viewport {
         const old = node.geometry;
         node.geometry = this.geos.get(o);
         if (old.userData.faceOfTri) old.dispose(); // edited meshes own their geometry
-        node.material = this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o));
+        node.material = this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o), matOf(o));
         this.sig.set(o.id, sig);
         this.refreshOutlines();
       }
@@ -521,7 +527,7 @@ export class Viewport {
   resetNodeLook(id: string): void {
     const o = this.store.get(id);
     const node = this.nodes.get(id);
-    if (o && node instanceof THREE.Mesh) node.material = this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o));
+    if (o && node instanceof THREE.Mesh) node.material = this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o), matOf(o));
     this.requestRender();
   }
 

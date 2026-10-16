@@ -290,11 +290,11 @@ describe('animation clips', () => {
       const id = st.addPresetClip(p.id)!;
       const c = st.clip(id)!;
       expect(c.name.startsWith(p.label)).toBe(true);
-      expect(c.loop).toBe(true);
-      expect(c.keys.length).toBe(8);
+      expect(c.loop).toBe(['jump', 'attack', 'hit', 'death', 'crouch'].includes(p.id) ? false : true);
+      expect(c.keys.length).toBeGreaterThanOrEqual(3);
       expect(c.keys.every((k) => Object.keys(k.pose).every((j) => st.joint(j)))).toBe(true);
     }
-    expect(st.doc.anims).toHaveLength(4);
+    expect(st.doc.anims).toHaveLength(ANIM_PRESETS.length);
     st.addPresetClip('walk');
     expect(st.doc.anims!.map((c) => c.name)).toContain('Walk 2'); // names stay unique
   });
@@ -391,7 +391,7 @@ describe('animation in the exported file', () => {
     const clips = animationClips(root, st.doc);
     expect(clips.map((c) => c.name)).toEqual(['Walk', 'Idle']);
     const walk = clips[0];
-    expect(walk.tracks).toHaveLength(22);
+    expect(walk.tracks.filter((t) => t.name.endsWith('.quaternion'))).toHaveLength(22);
     expect(walk.duration).toBeCloseTo(1, 5);
     const t = walk.tracks[0];
     expect(t.name.endsWith('.quaternion')).toBe(true);
@@ -402,7 +402,7 @@ describe('animation in the exported file', () => {
     const last = [v[v.length - 4], v[v.length - 3], v[v.length - 2], v[v.length - 1]];
     expect(first.every((x, i) => Math.abs(x - last[i]) < 1e-5) || first.every((x, i) => Math.abs(x + last[i]) < 1e-5)).toBe(true);
     // consecutive quaternions are on the same side, so a turn never takes the long way round
-    for (const tr of walk.tracks) for (let i = 4; i < tr.values.length; i += 4) {
+    for (const tr of walk.tracks.filter((x) => x.name.endsWith('.quaternion'))) for (let i = 4; i < tr.values.length; i += 4) {
       const dot = tr.values[i] * tr.values[i - 4] + tr.values[i + 1] * tr.values[i - 3] + tr.values[i + 2] * tr.values[i - 2] + tr.values[i + 3] * tr.values[i - 1];
       expect(dot).toBeGreaterThanOrEqual(0);
     }
@@ -425,5 +425,89 @@ describe('animation in the exported file', () => {
     const hips = root.getObjectByName('Hips')!;
     const q = hips.quaternion;
     expect(Math.abs(q.y)).toBeCloseTo(Math.SQRT1_2, 3); // the root bone stands turned 90 degrees, like the character
+  });
+});
+
+describe('more animations, easing, root motion, materials', () => {
+  const hero = () => {
+    const st = new Store(emptyDoc('Hero'));
+    const g = st.addShape('box', { name: 'Hero' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; });
+    const body = st.addShape('cylinder', { name: 'Body', position: [0, 1, 0], size: [0.4, 1.8, 0.4] });
+    st.update(body.id, { parent: g.id });
+    st.addJoints(jointsFromSpec(humanSpec(), g.id));
+    return st;
+  };
+
+  it('has Jump, Attack, Hit, Death, Crouch and Strafe with consistent names', () => {
+    const names = ANIM_PRESETS.map((p) => p.label);
+    for (const n of ['Walk', 'Run', 'Idle', 'Wave', 'Jump', 'Attack', 'Hit', 'Death', 'Crouch', 'Strafe']) expect(names).toContain(n);
+    const st = hero();
+    for (const p of ANIM_PRESETS) expect(st.addPresetClip(p.id)).toBeTruthy();
+    const clips = st.doc.anims!;
+    expect(clips.map((c) => c.name)).toEqual(ANIM_PRESETS.map((p) => p.label));
+    expect(clips.find((c) => c.name === 'Jump')!.loop).toBe(false);
+    expect(clips.find((c) => c.name === 'Walk')!.loop).toBe(true);
+  });
+
+  it('Jump lifts the hips (root motion) and Death lays the character down', async () => {
+    const { sampleRoot } = await import('../src/core/anim');
+    const st = hero();
+    st.addPresetClip('jump');
+    st.addPresetClip('death');
+    const jump = st.doc.anims!.find((c) => c.name === 'Jump')!;
+    const ys = jump.keys.map((k) => k.root?.[1] ?? 0);
+    expect(Math.max(...ys)).toBeGreaterThan(0.2);
+    expect(Math.min(...ys)).toBeLessThan(-0.05);
+    const death = st.doc.anims!.find((c) => c.name === 'Death')!;
+    expect(sampleRoot(death, death.duration)![1]).toBeLessThan(-0.5);
+  });
+
+  it('easing changes how a turn is spread over time; linear stays the default', () => {
+    const clip: AnimClip = { id: 'c', name: 'c', duration: 1, loop: false, keys: [{ t: 0, pose: {} }, { t: 1, pose: { j: [100, 0, 0] } }] };
+    const lin = samplePose(clip, 0.25, ['j']).j[0];
+    const inn = samplePose({ ...clip, ease: 'in' }, 0.25, ['j']).j[0];
+    const out = samplePose({ ...clip, ease: 'out' }, 0.25, ['j']).j[0];
+    expect(lin).toBeCloseTo(25, 0);
+    expect(inn).toBeLessThan(lin);
+    expect(out).toBeGreaterThan(lin);
+  });
+
+  it('root motion is edited per key and exported as a position track on the hips', async () => {
+    const { prepareExport } = await import('../src/engine/exporter');
+    const { animationClips } = await import('../src/engine/rigExport');
+    const st = hero();
+    st.addClip();
+    const id = st.doc.anims![0].id;
+    st.setKey(id, 0.5);
+    st.setKeyRoot(id, 1, [0, 0, 2]);
+    expect(st.doc.anims![0].keys[1].root).toEqual([0, 0, 2]);
+    st.setKey(id, 0.5); // storing a pose again keeps the move
+    expect(st.doc.anims![0].keys[1].root).toEqual([0, 0, 2]);
+    st.setClip(id, { ease: 'smooth' });
+    expect(st.doc.anims![0].ease).toBe('smooth');
+    const { root } = prepareExport(st.doc);
+    const clip = animationClips(root, st.doc)[0];
+    const pos = clip.tracks.filter((t) => t.name.endsWith('.position'));
+    expect(pos).toHaveLength(1);
+    const z = pos[0].values;
+    const zs = z.filter((_: number, i: number) => i % 3 === 2);
+    expect(Math.max(...zs) - zs[0]).toBeCloseTo(2, 3);
+  });
+
+  it('roughness, metal and glow reach the exported material', async () => {
+    const { prepareExport } = await import('../src/engine/exporter');
+    const st = new Store(emptyDoc('Lamp'));
+    const a = st.addShape('sphere', { name: 'Bulb' });
+    st.setMaterial([a.id], { rough: 0.2, metal: 0.9, glow: 0.7 });
+    expect(st.get(a.id)!.mat).toEqual({ rough: 0.2, metal: 0.9, glow: 0.7 });
+    const { root } = prepareExport(st.doc);
+    let m: any;
+    root.traverse((o: any) => { if (o.isMesh) m = o.material; });
+    expect(m.roughness).toBeCloseTo(0.2);
+    expect(m.metalness).toBeCloseTo(0.9);
+    expect(m.emissiveIntensity).toBeCloseTo(0.7);
+    st.setMaterial([a.id], { rough: 0.85, metal: 0, glow: 0 });
+    expect(st.get(a.id)!.mat).toBeUndefined();
   });
 });

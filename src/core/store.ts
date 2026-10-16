@@ -409,12 +409,13 @@ export class Store {
     else this.emit('anim');
   }
 
-  setClip(id: string, patch: Partial<Pick<AnimClip, 'name' | 'duration' | 'loop'>>): void {
+  setClip(id: string, patch: Partial<Pick<AnimClip, 'name' | 'duration' | 'loop' | 'ease'>>): void {
     this.mutate((d) => {
       const c = d.anims?.find((x) => x.id === id);
       if (!c) return;
       if (patch.name !== undefined) c.name = patch.name.trim() || c.name;
       if (patch.loop !== undefined) c.loop = patch.loop;
+      if (patch.ease !== undefined) c.ease = patch.ease;
       if (patch.duration !== undefined) {
         const dur = Math.max(0.1, Math.min(60, patch.duration));
         // keys keep their place on the timeline; any beyond the new end are brought in
@@ -433,9 +434,20 @@ export class Store {
       if (!c) return;
       const tt = Math.round(Math.max(0, Math.min(c.duration, t)) * 1000) / 1000;
       const i = c.keys.findIndex((k) => Math.abs(k.t - tt) < 1 / 60);
-      if (i >= 0) c.keys[i] = { t: c.keys[i].t, pose: snapshot };
+      if (i >= 0) c.keys[i] = { t: c.keys[i].t, pose: snapshot, ...(c.keys[i].root ? { root: c.keys[i].root } : {}) };
       else c.keys.push({ t: tt, pose: snapshot });
       c.keys.sort((a, b) => a.t - b.t);
+    });
+    this.emit('anim');
+  }
+
+  /** Root motion of one key: how far the hips are moved (metres; X sideways, Y up, Z forward). All zero removes it. */
+  setKeyRoot(clipId: string, index: number, root: Vec3): void {
+    this.mutate((d) => {
+      const k = d.anims?.find((x) => x.id === clipId)?.keys[index];
+      if (!k) return;
+      if (root.every((v) => Math.abs(v) < 1e-6)) delete k.root;
+      else k.root = root.map((v) => Math.round(v * 1000) / 1000) as Vec3;
     });
     this.emit('anim');
   }
@@ -889,6 +901,27 @@ export class Store {
   }
 
   /** Surface look for shapes (and every shape inside the given groups): smooth shading and painted color variation. */
+  /** Roughness, metalness and glow (emissive) for shapes (and every shape inside the given groups). */
+  setMaterial(ids: string[], patch: { rough?: number; metal?: number; glow?: number }, commit = true): void {
+    this.mutate((d) => {
+      const all = new Set<string>();
+      for (const id of ids) {
+        all.add(id);
+        descendantIds(d, id).forEach((c) => all.add(c));
+      }
+      const r = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
+      for (const o of d.objects) {
+        if (!all.has(o.id) || o.kind !== 'shape') continue;
+        const m = { ...(o.mat ?? {}) };
+        if (patch.rough !== undefined) m.rough = r(patch.rough);
+        if (patch.metal !== undefined) m.metal = r(patch.metal);
+        if (patch.glow !== undefined) m.glow = r(patch.glow);
+        if ((m.rough ?? 0.85) === 0.85 && !m.metal && !m.glow) delete o.mat;
+        else o.mat = m;
+      }
+    }, commit);
+  }
+
   setSurface(ids: string[], patch: { smooth?: boolean; paint?: number }, commit = true): void {
     this.mutate((d) => {
       const all = new Set<string>();

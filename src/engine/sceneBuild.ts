@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Doc, SceneObject } from '../core/types';
-import { buildObjectGeometry, lookOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
+import { buildObjectGeometry, lookOf, matOf, needsDoubleSide, usesVertexColors } from '../core/shapes';
 import { attachSkeletons } from './rigExport';
 import { effectivelyVisible } from '../core/docmath';
 
@@ -29,18 +29,25 @@ export class GeometryCache {
 export class MaterialCache {
   private map = new Map<string, THREE.MeshStandardMaterial>();
   /** Planes have a single face, so they are rendered (and exported) double-sided. */
-  get(hex: string, doubleSided = false, vertexColors = false): THREE.MeshStandardMaterial {
+  get(hex: string, doubleSided = false, vertexColors = false, pbr: { rough: number; metal: number; glow: number } = { rough: 0.85, metal: 0, glow: 0 }): THREE.MeshStandardMaterial {
     // with vertex colors the colors live in the geometry, so one white material serves every color
-    const key = vertexColors ? `vc${doubleSided ? ':2' : ''}` : hex + (doubleSided ? ':2' : '');
+    const pk = `|${pbr.rough}|${pbr.metal}|${pbr.glow}`;
+    const key = (vertexColors ? `vc${doubleSided ? ':2' : ''}` : hex + (doubleSided ? ':2' : '')) + pk;
     let m = this.map.get(key);
     if (!m) {
       m = new THREE.MeshStandardMaterial({
         color: new THREE.Color(vertexColors ? '#ffffff' : hex),
         vertexColors,
-        roughness: 0.85,
-        metalness: 0,
+        roughness: pbr.rough,
+        metalness: pbr.metal,
         side: doubleSided ? THREE.DoubleSide : THREE.FrontSide,
       });
+      if (pbr.glow > 0) {
+        m.emissive = new THREE.Color(vertexColors ? '#ffffff' : hex);
+        m.emissiveIntensity = pbr.glow;
+        m.userData.glow = pbr.glow; // painted shapes: the average colour is baked into the emissive on export
+        if (vertexColors) m.emissiveIntensity = 0;
+      }
       m.name = vertexColors ? `Painted${doubleSided ? ' (2-sided)' : ''}` : `Color ${hex}${doubleSided ? ' (2-sided)' : ''}`;
       this.map.set(key, m);
     }
@@ -74,7 +81,7 @@ export function buildExportScene(doc: Doc, name: string, opts: { bakePose?: bool
     if (!effectivelyVisible(map, o)) continue;
     let node: THREE.Object3D;
     if (o.kind === 'shape') {
-      const mesh = new THREE.Mesh(geos.get(o), mats.get(o.color, needsDoubleSide(o), usesVertexColors(o)));
+      const mesh = new THREE.Mesh(geos.get(o), mats.get(o.color, needsDoubleSide(o), usesVertexColors(o), matOf(o)));
       node = mesh;
     } else {
       node = new THREE.Group();

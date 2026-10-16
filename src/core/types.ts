@@ -35,6 +35,8 @@ export interface SceneObject {
    * `speed` is turns per second (negative = the other way). Shown in Preview and exported as a looping animation.
    */
   spin?: { axis: 0 | 1 | 2; speed: number };
+  /** Material: 0..1 roughness (default .85), 0..1 metalness (default 0), glow = how strongly the color lights itself (emissive, default 0). */
+  mat?: { rough?: number; metal?: number; glow?: number };
   visible: boolean;
   locked: boolean;
   parent: string | null;
@@ -58,6 +60,8 @@ export interface Joint {
 export interface AnimKey {
   t: number;
   pose: Record<string, Vec3>;
+  /** Root motion: how far the character's hips are moved from rest (metres, in the character's own axes: Y up, Z forward). */
+  root?: Vec3;
 }
 
 /** A clip of skeleton animation: poses at moments in time, with smooth turning in between. */
@@ -72,6 +76,8 @@ export interface AnimClip {
   owner?: string;
   /** Sorted by time. */
   keys: AnimKey[];
+  /** How it eases between keys (default linear). */
+  ease?: 'linear' | 'smooth' | 'in' | 'out';
 }
 
 export interface Doc {

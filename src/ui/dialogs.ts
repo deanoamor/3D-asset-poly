@@ -17,6 +17,17 @@ export const emit = (name: string, detail?: unknown) => bus.dispatchEvent(new Cu
 // ---------- new project ----------
 
 /** Replace the current project with a fresh empty one. */
+/** Size of a blob after gzip, to show roughly what a web server sends (null when the browser cannot compress). */
+async function gzipSize(blob: Blob): Promise<number | null> {
+  try {
+    if (typeof CompressionStream === 'undefined') return null;
+    const out = await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+    return out.byteLength;
+  } catch {
+    return null;
+  }
+}
+
 export function startProject(store: Store, name: string, guided: boolean, openAssets: boolean): void {
   clearSaved();
   store.load(emptyDoc(name.trim() || 'Untitled prop'));
@@ -101,6 +112,7 @@ export function openExportDialog(store: Store): void {
     const stats = polyStats(doc);
     const box = store.worldBounds();
     const size = box.isEmpty() ? null : box.getSize(new THREE.Vector3());
+    const fileStats = h('div', { class: 'fstats', id: 'file-stats', role: 'status' }, 'Measuring the file…');
     const verify = h('div', { class: 'verify pending', id: 'verify', role: 'status' }, 'Checking the file…');
     const guide = h('pre', { class: 'guide', id: 'import-guide' }, importGuide(doc.enginePreset, {
       modelName: slug(doc.name),
@@ -201,6 +213,7 @@ export function openExportDialog(store: Store): void {
         h('span', {}, 'Pivot: bottom center'),
         h('span', {}, 'Scale: 1 unit = 1 m'),
       ),
+      fileStats,
       h('div', { class: 'dlg-actions' },
         h('button', {
           class: 'btn primary',
@@ -234,6 +247,13 @@ export function openExportDialog(store: Store): void {
     void (async () => {
       try {
         const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose, animations: exportAnimations });
+        const gz = await gzipSize(res.blob);
+        if (mine === token) {
+          const kb = (n: number) => (n < 1024 * 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${(n / 1048576).toFixed(2)} MB`);
+          const warn = [res.blob.size > 5 * 1048576 && 'Large for a web game: consider fewer shapes.', res.drawCalls > 100 && 'Many draw calls: merge parts or use fewer materials.'].filter(Boolean).join(' ');
+          fileStats.className = `fstats${warn ? ' warn' : ''}`;
+          fileStats.textContent = `File ${kb(res.blob.size)}${gz ? ` (≈ ${kb(gz)} gzipped on a web server)` : ''} · ${res.drawCalls} draw ${res.drawCalls === 1 ? 'call' : 'calls'} · ${res.materials} ${res.materials === 1 ? 'material' : 'materials'}. ${warn}`;
+        }
         const v = await verifyExport(res, exportCollision ? preset.collision?.nodeSuffix : undefined);
         if (mine !== token) return;
         verify.className = `verify ${v.ok ? 'good' : 'bad'}`;

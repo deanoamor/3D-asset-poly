@@ -106,6 +106,11 @@ export interface Look {
 }
 
 export const lookOf = (o: SceneObject): Look => ({ smooth: !!o.smooth, paint: Math.max(0, Math.min(1, o.paint ?? 0)) });
+export const matOf = (o: SceneObject): { rough: number; metal: number; glow: number } => ({
+  rough: Math.max(0, Math.min(1, o.mat?.rough ?? 0.85)),
+  metal: Math.max(0, Math.min(1, o.mat?.metal ?? 0)),
+  glow: Math.max(0, Math.min(1, o.mat?.glow ?? 0)),
+});
 export const usesVertexColors = (o: SceneObject): boolean => lookOf(o).paint > 0.001;
 
 const key3 = (x: number, y: number, z: number) => `${Math.round(x * 1e4)}|${Math.round(y * 1e4)}|${Math.round(z * 1e4)}`;

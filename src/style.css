@@ -384,7 +384,7 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .tl-gap { flex: 1; }
 .tl-body { display: flex; gap: 14px; padding: 2px 12px 10px; min-width: 0; }
 .anim.collapsed .tl-body { display: none; }
-.tl-side { display: grid; gap: 6px; align-content: start; flex: none; width: 190px; }
+.tl-side { display: grid; gap: 6px; align-content: start; flex: none; width: 210px; }
 .tl-main { flex: 1; min-width: 0; }
 .anim-row { display: flex; gap: 6px; align-items: center; min-width: 0; }
 .anim-row.wrap { flex-wrap: wrap; }
@@ -401,4 +401,7 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .anim-keys { position: absolute; left: 7px; right: 7px; bottom: 0; height: 14px; }
 .akey { position: absolute; width: 10px; height: 10px; transform: translateX(-50%) rotate(45deg); background: #e0b43a; border: 1px solid #a8841c; padding: 0; cursor: pointer; top: 2px; }
 .akey.on { background: #ff8a1f; border-color: #c2570a; }
+.anim-row.root input { width: 52px; }
 .anim .fnote { margin: 4px 0 0; }
+.fstats { font-size: 12px; color: var(--muted); background: #f6f6f4; border-radius: 8px; padding: 8px 10px; margin: 8px 0 0; }
+.fstats.warn { color: #8a4b00; background: #fff4e0; }

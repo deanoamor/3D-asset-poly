@@ -33,6 +33,9 @@ export interface ExportResult {
   model: { kind: 'glb' | 'gltf' | 'obj'; data: ArrayBuffer | string };
   /** Names of every file in the download (zip contents or the single file). */
   contents: string[];
+  /** Meshes (≈ draw calls) and distinct materials in the exported model. */
+  drawCalls: number;
+  materials: number;
 }
 
 function bakeBaseColors(content: THREE.Object3D): void {
@@ -99,6 +102,16 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
   const exportDoc = docForExport(doc, opts.skeleton, withAnims ? false : opts.pose);
   const { root, size } = prepareExport(exportDoc, collision);
   const triangles = triangleTotal(root, (o) => collision && !!preset.collision && o.name.endsWith(preset.collision.nodeSuffix));
+  let drawCalls = 0;
+  const matSet = new Set<THREE.Material>();
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh && o.visible) {
+      drawCalls++;
+      (Array.isArray(m.material) ? m.material : [m.material]).forEach((x) => matSet.add(x));
+    }
+  });
+  const materials = matSet.size;
   const sizeText = `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m`;
   const exporter = new GLTFExporter();
 
@@ -120,16 +133,16 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
 
   if (opts.format === 'glb') {
     const data = await glb();
-    return { blob: new Blob([data], { type: 'model/gltf-binary' }), filename: `${name}.glb`, size, triangles, model: { kind: 'glb', data }, contents: [`${name}.glb`] };
+    return { blob: new Blob([data], { type: 'model/gltf-binary' }), filename: `${name}.glb`, size, triangles, drawCalls, materials, model: { kind: 'glb', data }, contents: [`${name}.glb`] };
   }
   if (opts.format === 'gltf') {
     const json = JSON.stringify(await parse(false));
-    return { blob: new Blob([json], { type: 'model/gltf+json' }), filename: `${name}.gltf`, size, triangles, model: { kind: 'gltf', data: json }, contents: [`${name}.gltf`] };
+    return { blob: new Blob([json], { type: 'model/gltf+json' }), filename: `${name}.gltf`, size, triangles, drawCalls, materials, model: { kind: 'gltf', data: json }, contents: [`${name}.gltf`] };
   }
   if (opts.format === 'obj') {
     const { obj, mtl } = writeObj(root, doc.name);
     const entries = [{ name: `${name}.obj`, data: obj }, { name: `${name}.mtl`, data: mtl }];
-    return { blob: new Blob([zipFiles(entries)], { type: 'application/zip' }), filename: `${name}_obj.zip`, size, triangles, model: { kind: 'obj', data: obj }, contents: entries.map((e) => e.name) };
+    return { blob: new Blob([zipFiles(entries)], { type: 'application/zip' }), filename: `${name}_obj.zip`, size, triangles, drawCalls, materials, model: { kind: 'obj', data: obj }, contents: entries.map((e) => e.name) };
   }
   // package: model + import guide (Unity also gets OBJ so it works without a plugin)
   const data = await glb();
@@ -145,6 +158,8 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
     filename: `${name}_${doc.enginePreset}.zip`,
     size,
     triangles,
+    drawCalls,
+    materials,
     model: { kind: 'glb', data },
     contents: entries.map((e) => e.name),
   };

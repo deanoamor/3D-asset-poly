@@ -151,7 +151,7 @@ const gltf = JSON.parse(new TextDecoder().decode(bytes.subarray(20, 20 + dv.getU
 const names = (gltf.animations ?? []).map((a) => a.name).sort();
 ok(names.join() === 'Raise arm,Walk', `the animations in the file: ${names.join(', ')}`);
 const walk = gltf.animations.find((a) => a.name === 'Walk');
-ok(walk.channels.length === 22 && walk.channels.every((c) => c.target.path === 'rotation'), 'Walk turns all 22 bones');
+ok(walk.channels.filter((c) => c.target.path === 'rotation').length === 22 && walk.channels.filter((c) => c.target.path === 'translation').length === 1, 'Walk turns all 22 bones and bobs the hips');
 const targetNames = new Set(walk.channels.map((c) => gltf.nodes[c.target.node].name));
 ok(['Hips', 'Knee Left', 'Knee Right', 'Elbow Left', 'Shoulder Right'].every((n) => targetNames.has(n)), 'the bones keep their names');
 ok(gltf.skins?.length === 1 && gltf.skins[0].joints.length === 22, 'one skin with the same 22 joints');

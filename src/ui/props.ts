@@ -156,11 +156,31 @@ export function mountProps(root: HTMLElement, store: Store): void {
         val.textContent = `${Math.round(avg * 100)}%`;
       },
     });
+    const mk = (key: 'rough' | 'metal' | 'glow', label: string, def: number, tip: string) => {
+      const r = h('input', { type: 'range', min: '0', max: '100', step: '5', id: `mat-${key}`, 'aria-label': label, title: tip }) as HTMLInputElement;
+      const o = h('output', { class: 'rval' });
+      r.addEventListener('input', () => store.setMaterial(ids, { [key]: +r.value / 100 }, false));
+      r.addEventListener('change', () => store.commit());
+      fields.push({
+        update: () => {
+          const shapes = shapesOf();
+          if (!shapes.length) return;
+          const avg = shapes.reduce((a, s) => a + (s.mat?.[key] ?? def), 0) / shapes.length;
+          if (document.activeElement !== r) r.value = String(Math.round(avg * 100));
+          o.textContent = `${Math.round(avg * 100)}%`;
+        },
+      });
+      return h('label', { class: 'prow' }, h('span', {}, label), r, o);
+    };
     return section(
       title,
       h('div', { class: 'segrow', role: 'group', 'aria-label': 'Shading' }, flat, smooth),
       h('label', { class: 'prow' }, h('span', {}, 'Color variation'), range, val),
       h('div', { class: 'tris' }, 'Smooth rounds the shading. Color variation paints soft differences across the surface, like a hand-painted look.'),
+      mk('rough', 'Roughness', 0.85, 'Low = shiny, high = matte'),
+      mk('metal', 'Metal', 0, 'How much it looks like metal'),
+      mk('glow', 'Glow', 0, 'The color lights itself (emissive): lamps, eyes, screens'),
+      h('div', { class: 'tris' }, 'Roughness, metal and glow go into the GLB as a real PBR material.'),
     );
   }
 

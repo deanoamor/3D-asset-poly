@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { Doc, Joint } from '../core/types';
 import { descendantIds } from '../core/docmath';
 import { skinWeights } from '../core/skin';
-import { quatOf, samplePose, clipKeys } from '../core/anim';
+import { quatOf, samplePose, sampleRoot, clipKeys } from '../core/anim';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { bakeVertexColors } from './bakeColor';
 
@@ -153,11 +153,18 @@ export function settleSkins(root: THREE.Group): void {
 }
 
 /** Turn the bones to the project's pose (degrees, relative to rest). Joints with no entry go back to rest. */
-export function applyPose(bones: Map<string, THREE.Bone>, doc: Doc, pose: Record<string, [number, number, number]> | undefined = doc.pose): void {
+export function applyPose(bones: Map<string, THREE.Bone>, doc: Doc, pose: Record<string, [number, number, number]> | undefined = doc.pose, root?: [number, number, number]): void {
   const q = new THREE.Quaternion();
+  const off = new THREE.Vector3();
   for (const [id, b] of bones) {
     const rest = (b.userData.rest as THREE.Quaternion | undefined) ?? new THREE.Quaternion();
     b.quaternion.copy(rest).multiply(quatOf(pose?.[id] ?? [0, 0, 0], q));
+    // root motion: the top bone of each skeleton moves by the offset (given in the character's own axes)
+    if (!(b.parent as THREE.Bone | null)?.isBone) {
+      const base = (b.userData.restPos ??= b.position.clone()) as THREE.Vector3;
+      b.position.copy(base);
+      if (root) b.position.add(off.fromArray(root).applyQuaternion(rest));
+    }
   }
 }
 
@@ -187,6 +194,16 @@ export function animationClips(root: THREE.Object3D, doc: Doc): THREE.AnimationC
         prev = q;
       }
       tracks.push(new THREE.QuaternionKeyframeTrack(`${bone.uuid}.quaternion`, times, values));
+      if (!(bone.parent as THREE.Bone | null)?.isBone && keys.some((k) => k.root)) {
+        const pv: number[] = [];
+        const o = new THREE.Vector3();
+        for (const t of times) {
+          const rt = sampleRoot(clip, t >= clip.duration && clip.loop ? 0 : t) ?? [0, 0, 0];
+          o.fromArray(rt).applyQuaternion(rest).add(bone.position);
+          pv.push(o.x, o.y, o.z);
+        }
+        tracks.push(new THREE.VectorKeyframeTrack(`${bone.uuid}.position`, times, pv));
+      }
     }
     let name = clip.name || 'Animation';
     for (let i = 2; names.has(name); i++) name = `${clip.name} ${i}`;
