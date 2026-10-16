@@ -368,8 +368,54 @@ export class EditController {
    * Drag an already selected face / edge / point directly: faces slide along the way they point (push or pull),
    * edges and points follow the pointer in the plane facing the camera.
    */
+  /**
+   * Right after Shrink face, dragging the face changes how much it shrank: toward its middle shrinks more, away shrinks less.
+   */
+  private shrinkDrag(ev: PointerEvent, hit: number): void {
+    const s = this.store.shrinkSession!;
+    const node = this.node()!;
+    node.updateWorldMatrix(true, false);
+    const rect = this.vp.renderer.domElement.getBoundingClientRect();
+    const toScreen = (x: number, y: number, z: number) => {
+      const v = new THREE.Vector3(x, y, z).applyMatrix4(node.matrixWorld).project(this.vp.camera);
+      return new THREE.Vector2(rect.left + ((v.x + 1) / 2) * rect.width, rect.top + ((1 - v.y) / 2) * rect.height);
+    };
+    // the face as it was before the shrink: its middle and how big it looks on screen
+    const pts = new Set<number>();
+    for (const fi of s.faces) for (const vi of s.base.f[fi]) pts.add(vi);
+    const sc = [...pts].map((vi) => toScreen(s.base.v[vi * 3], s.base.v[vi * 3 + 1], s.base.v[vi * 3 + 2]));
+    const centre = sc.reduce((a, p) => a.add(p), new THREE.Vector2()).multiplyScalar(1 / Math.max(1, sc.length));
+    const radius = Math.max(24, ...sc.map((p) => p.distanceTo(centre)));
+    const start = new THREE.Vector2(ev.clientX, ev.clientY);
+    const d0 = start.distanceTo(centre);
+    const a0 = s.amount;
+    const wasOrbit = this.vp.controls.enabled;
+    this.vp.controls.enabled = false;
+    let dragging = false;
+    const move = (m: PointerEvent) => {
+      if (!dragging) {
+        if (Math.hypot(m.clientX - ev.clientX, m.clientY - ev.clientY) < 3) return;
+        dragging = true;
+        this.vp.renderer.domElement.style.cursor = 'grabbing';
+      }
+      const d = new THREE.Vector2(m.clientX, m.clientY).distanceTo(centre);
+      this.store.setShrinkAmount(a0 + (d0 - d) / radius, false);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      this.vp.controls.enabled = wasOrbit;
+      this.vp.renderer.domElement.style.cursor = '';
+      if (dragging) this.store.commit();
+      else if (this.store.edit) this.store.editSelect([hit]); // a plain click on the selection selects just that
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
   private directDrag(ev: PointerEvent, hit: number | string): void {
     const e = this.store.edit!;
+    if (e.mode === 'face' && this.store.shrinkSession && typeof hit === 'number') return this.shrinkDrag(ev, hit);
     const mesh = this.mesh()!;
     const node = this.node()!;
     const sx = ev.clientX;

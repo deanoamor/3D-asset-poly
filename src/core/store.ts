@@ -99,6 +99,8 @@ export class Store {
   };
   /** The joint picked in the viewport or the Skeleton list (not saved). */
   selectedJoint: string | null = null;
+  /** After Shrink face: the shape as it was, so the inset can be dragged bigger or smaller until something else is done. */
+  shrinkSession: { base: PolyMesh; faces: number[]; amount: number } | null = null;
   edit: EditState | null = null;
   /** Parts the Learn view has not revealed yet. Only hides them on screen; the project itself is never changed. */
   learnHidden: Set<string> | null = null;
@@ -139,6 +141,7 @@ export class Store {
     this.undoStack = history?.undo.slice(-HISTORY_CAP) ?? [];
     this.redoStack = history?.redo.slice(-HISTORY_CAP) ?? [];
     this.edit = null;
+    this.shrinkSession = null;
     this.selection = [];
     this.selectedJoint = null;
     this.emit('reset');
@@ -232,6 +235,7 @@ export class Store {
 
   /** Point and face numbers may mean something else after undo/redo, so the edit selection starts over. */
   private afterTimeTravel(): void {
+    this.shrinkSession = null;
     if (!this.edit) return;
     const o = this.get(this.edit.id);
     if (!o || !o.mesh) {
@@ -713,6 +717,7 @@ export class Store {
   exitEdit(): void {
     const e = this.edit;
     if (!e) return;
+    this.shrinkSession = null;
     this.edit = null;
     this.ui.tool = 'select';
     if (this.get(e.id)?.mesh) {
@@ -726,6 +731,7 @@ export class Store {
   }
 
   setEditMode(mode: EditMode): void {
+    this.shrinkSession = null;
     const e = this.edit;
     const m = e && this.get(e.id)?.mesh;
     if (!e || !m) return;
@@ -742,11 +748,13 @@ export class Store {
 
   editSelect(sel: Sel): void {
     if (!this.edit) return;
+    this.shrinkSession = null;
     this.edit.sel = sel;
     this.emit('edit');
   }
 
   editSelectAll(): void {
+    this.shrinkSession = null;
     const e = this.edit;
     const m = e && this.get(e.id)?.mesh;
     if (!e || !m) return;
@@ -758,6 +766,7 @@ export class Store {
   setMeshVerts(updates: Map<number, V3>, commit = false): void {
     const e = this.edit;
     if (!e) return;
+    this.shrinkSession = null;
     this.mutate((d) => {
       const m = d.objects.find((x) => x.id === e.id)?.mesh;
       if (!m) return;
@@ -772,6 +781,7 @@ export class Store {
   private editOp(fn: (m: PolyMesh, e: EditState) => Sel | void): void {
     const e = this.edit;
     if (!e) return;
+    this.shrinkSession = null;
     let result: Sel | undefined;
     this.mutate((d) => {
       const m = d.objects.find((x) => x.id === e.id)?.mesh;
@@ -812,15 +822,44 @@ export class Store {
     return null;
   }
 
-  shrinkFace(): string | null {
+  /** Stop adjusting the last Shrink (any other action does this). */
+  endShrinkSession(): void {
+    if (!this.shrinkSession) return;
+    this.shrinkSession = null;
+    this.emit('edit');
+  }
+
+  /** Set the inset of the last Shrink face (0..1: how far the new face moves toward the middle). Call commit() when done. */
+  setShrinkAmount(amount: number, commit = false): void {
+    const s = this.shrinkSession;
+    const e = this.edit;
+    if (!s || !e) return;
+    const a = Math.max(0.02, Math.min(0.95, amount));
+    this.mutate((d) => {
+      const o = d.objects.find((x) => x.id === e.id);
+      if (!o?.mesh) return;
+      const m = cloneMesh(s.base);
+      insetFaces(m, s.faces, a);
+      o.mesh.v = m.v;
+      o.mesh.f = m.f;
+    }, commit);
+    s.amount = a;
+    this.emit('edit');
+  }
+
+  shrinkFace(amount = 0.3): string | null {
     const e = this.edit;
     if (!e) return null;
     if (e.mode !== 'face') return 'Shrink works on faces. Switch to Faces first.';
     if (!e.sel.length) return 'Click a face first.';
+    let base: PolyMesh | null = null;
     this.editOp((m, ed) => {
-      insetFaces(m, ed.sel as number[], 0.3);
+      base = cloneMesh(m);
+      insetFaces(m, ed.sel as number[], amount);
       return ed.sel;
     });
+    if (base) this.shrinkSession = { base, faces: [...(e.sel as number[])], amount };
+    this.emit('edit');
     return null;
   }
 

@@ -255,6 +255,48 @@ describe('store editing', () => {
     expect(st.edit!.sel).toEqual([]);
   });
 
+  it('the last Shrink face can be made bigger or smaller by hand until something else is done', () => {
+    const { st, id } = setup();
+    st.enterEdit(id);
+    st.commit();
+    const top = st.get(id)!.mesh!.f.findIndex((_, i) => faceNormal(st.get(id)!.mesh!, i)[1] > 0.9);
+    st.editSelect([top]);
+    st.shrinkFace();
+    expect(st.shrinkSession).not.toBeNull();
+    const width = () => {
+      const m = st.get(id)!.mesh!;
+      const xs = m.f[top].map((vi) => m.v[vi * 3]);
+      return Math.max(...xs) - Math.min(...xs);
+    };
+    const w30 = width();
+    st.setShrinkAmount(0.6);
+    expect(width()).toBeLessThan(w30 * 0.7); // shrunk more
+    expect(st.get(id)!.mesh!.f.length).toBe(10); // still one inset, not two
+    st.setShrinkAmount(0.1);
+    expect(width()).toBeGreaterThan(w30 * 1.2); // shrunk less
+    st.setShrinkAmount(5);
+    expect(st.shrinkSession!.amount).toBe(0.95); // kept in range
+    st.setShrinkAmount(0.4, true);
+    st.pullOut(); // doing anything else ends the adjusting
+    expect(st.shrinkSession).toBeNull();
+    st.setShrinkAmount(0.9); // and then it does nothing
+    expect(st.get(id)!.mesh!.f.length).toBe(14);
+  });
+
+  it('adjusting the shrink is undone in one step', () => {
+    const { st, id } = setup();
+    st.enterEdit(id);
+    st.commit();
+    const top = st.get(id)!.mesh!.f.findIndex((_, i) => faceNormal(st.get(id)!.mesh!, i)[1] > 0.9);
+    st.editSelect([top]);
+    st.shrinkFace();
+    st.setShrinkAmount(0.7, true);
+    st.undo();
+    expect(st.get(id)!.mesh!.f.length).toBe(10); // back to the first shrink
+    st.undo();
+    expect(st.get(id)!.mesh!.f.length).toBe(6);
+  });
+
   it('undoing past the start of editing leaves edit mode', () => {
     const { st, id } = setup();
     st.enterEdit(id);

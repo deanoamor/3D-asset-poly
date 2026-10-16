@@ -360,3 +360,8 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .jedit .fnote { margin: 0; }
 .jlist { max-height: 190px; }
 .skel .jactions .btn { flex: 1 1 auto; justify-content: center; }
+.shrinkrow { display: flex; align-items: center; gap: 10px; padding: 6px 12px; font-size: 13px; }
+.shrinkrow.hidden { display: none; }
+.shrinkrow input[type="range"] { flex: 0 1 220px; }
+.shrinkval { min-width: 38px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.shrinkhelp { color: var(--muted); font-size: 12px; }

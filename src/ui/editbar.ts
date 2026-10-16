@@ -22,7 +22,13 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
   const modes = h('div', { class: 'toolbar seg-group', role: 'group', 'aria-label': 'What to select' });
   const rowTools = h('div', { class: 'toolbar', role: 'toolbar', 'aria-label': 'Edit tools' });
   const rowActions = h('div', { class: 'toolbar', role: 'toolbar', 'aria-label': 'Shape actions' });
-  const dock = h('div', { class: 'dock editdock overlay hidden' }, hint, h('div', { class: 'editrows' }, h('div', { class: 'editrow' }, modes, rowTools), rowActions));
+  // after Shrink face: a slider for how far the new face moves inward (the face can also be dragged)
+  const shrinkInput = h('input', { type: 'range', min: '0.02', max: '0.95', step: '0.01', id: 'shrink-amount', 'aria-label': 'How much the face shrinks' }) as HTMLInputElement;
+  const shrinkValue = h('span', { class: 'shrinkval' }, '');
+  shrinkInput.addEventListener('input', () => store.setShrinkAmount(parseFloat(shrinkInput.value), false));
+  shrinkInput.addEventListener('change', () => store.commit());
+  const shrinkRow = h('div', { class: 'shrinkrow hidden', id: 'shrink-row' }, h('label', { for: 'shrink-amount' }, 'Shrink'), shrinkInput, shrinkValue, h('span', { class: 'shrinkhelp' }, 'or drag the orange face: toward its middle shrinks more'));
+  const dock = h('div', { class: 'dock editdock overlay hidden' }, hint, shrinkRow, h('div', { class: 'editrows' }, h('div', { class: 'editrow' }, modes, rowTools), rowActions));
   root.append(banner, dock);
 
   const modeDefs: { id: EditMode; label: string; ico: string; tip: string }[] = [
@@ -110,6 +116,12 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
       actionBtns[i].classList.toggle('dim', !!why);
       actionBtns[i].setAttribute('aria-disabled', String(!!why));
     });
+    const ss = store.shrinkSession;
+    shrinkRow.classList.toggle('hidden', !ss);
+    if (ss) {
+      if (document.activeElement !== shrinkInput || shrinkInput.value === '') shrinkInput.value = String(ss.amount);
+      shrinkValue.textContent = `${Math.round(ss.amount * 100)}%`;
+    }
     clear(hint);
     const what = noun[ed.mode][1];
     if (!n) {
@@ -117,7 +129,7 @@ export function mountEditBar(root: HTMLElement, store: Store, startTour: () => v
     } else if (store.ui.tool === 'select') {
       hint.append(`Drag the selected ${what} to move it · or use an action below`);
     } else {
-      hint.append(ed.mode === 'face' ? 'Drag the orange face to push or pull it · Pull out grows a new part from it · Shrink face + Pull out makes a narrower block' : `Drag the orange ${what} to move it, or use the arrows · Pull out grows a new part from it`);
+      hint.append(ed.mode === 'face' ? 'Drag the orange face to push or pull it · Pull out grows a new part from it · Shrink face (then drag or use the slider) + Pull out makes a narrower block' : `Drag the orange ${what} to move it, or use the arrows · Pull out grows a new part from it`);
     }
     hint.append(h('span', { class: 'hstat' }, `${fmt(vertCount(mesh))} points · ${fmt(edgeMap(mesh).size)} edges · ${fmt(mesh.f.length)} faces · ${fmt(meshTriangles(mesh))} triangles`));
   };
