@@ -37,6 +37,8 @@ export interface SceneObject {
   spin?: { axis: 0 | 1 | 2; speed: number };
   /** Material: 0..1 roughness (default .85), 0..1 metalness (default 0), glow = how strongly the color lights itself (emissive, default 0). */
   mat?: { rough?: number; metal?: number; glow?: number };
+  /** Skin: how this shape follows the skeleton. auto = small parts follow one joint, big ones bend; bend = always blend between joints; joint = follow one joint only. `soft` 0..1 = how wide the blend is. */
+  skin?: { mode?: 'auto' | 'bend' | 'joint'; joint?: string; soft?: number };
   visible: boolean;
   locked: boolean;
   parent: string | null;
@@ -54,6 +56,8 @@ export interface Joint {
   /** World position, metres. */
   pos: Vec3;
   owner?: string;
+  /** How far this joint's pull reaches (0.4..2, default 1). Bigger = it moves more of the points around it. */
+  reach?: number;
 }
 
 /** One moment of an animation: how far each joint is turned (degrees) at time `t`. A joint not listed is at rest. */

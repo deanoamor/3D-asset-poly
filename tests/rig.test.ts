@@ -511,3 +511,72 @@ describe('more animations, easing, root motion, materials', () => {
     expect(st.get(a.id)!.mat).toBeUndefined();
   });
 });
+
+describe('editable skin weights', () => {
+  const rig = () => {
+    const st = new Store(emptyDoc('Hero'));
+    const g = st.addShape('box', { name: 'Hero' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; });
+    st.addJoints(jointsFromSpec(humanSpec(), g.id));
+    return { st, g };
+  };
+  const weightsOf = async (st: Store, name: string) => {
+    const { prepareExport } = await import('../src/engine/exporter');
+    const { root } = prepareExport(st.doc);
+    let sm: any;
+    root.traverse((o: any) => { if (o.isSkinnedMesh) sm = o; });
+    const idx = sm.geometry.getAttribute('skinIndex');
+    const w = sm.geometry.getAttribute('skinWeight');
+    const out = new Map<string, number>();
+    for (let i = 0; i < idx.count; i++) for (let k = 0; k < 4; k++) {
+      const n = sm.skeleton.bones[idx.getComponent(i, k)].userData.jointId as string;
+      out.set(n, (out.get(n) ?? 0) + w.getComponent(i, k) / idx.count);
+    }
+    return { out, sm, name };
+  };
+
+  it('a big part can be forced to follow ONE joint', async () => {
+    const { st, g } = rig();
+    const arm = st.addShape('cylinder', { name: 'Arm', position: [0.5, 1.3, 0], size: [0.2, 0.7, 0.2] });
+    st.update(arm.id, { parent: g.id });
+    const head = st.doc.rig!.find((j) => j.name === 'Head')!;
+    st.setSkin([arm.id], { mode: 'joint', joint: head.id });
+    const { out } = await weightsOf(st, 'x');
+    expect(out.get(head.id)).toBeCloseTo(1, 3);
+    expect(st.get(arm.id)!.skin).toEqual({ mode: 'joint', joint: head.id });
+  });
+
+  it('a small part follows one joint by default, and "bend" makes it blend', async () => {
+    const { st, g } = rig();
+    const p = st.addShape('box', { name: 'Pouch', position: [0.45, 1.15, 0], size: [0.1, 0.1, 0.1] });
+    st.update(p.id, { parent: g.id });
+    const auto = await weightsOf(st, 'a');
+    expect([...auto.out.values()].filter((v) => v > 0.001)).toHaveLength(1);
+    st.setSkin([p.id], { mode: 'bend', soft: 1 });
+    const bend = await weightsOf(st, 'b');
+    expect([...bend.out.values()].filter((v) => v > 0.001).length).toBeGreaterThan(1);
+  });
+
+  it('Reach makes a joint pull more of the points around it', async () => {
+    const { st, g } = rig();
+    const b = st.addShape('cylinder', { name: 'Body', position: [0, 1.2, 0], size: [0.5, 1, 0.3] });
+    st.update(b.id, { parent: g.id });
+    const chest = st.doc.rig!.find((j) => j.name === 'Chest')!;
+    const before = (await weightsOf(st, 'r')).out.get(chest.id) ?? 0;
+    st.setJointReach(chest.id, 2);
+    expect(st.joint(chest.id)!.reach).toBe(2);
+    const after = (await weightsOf(st, 'r')).out.get(chest.id) ?? 0;
+    expect(after).toBeGreaterThan(before);
+    st.setJointReach(chest.id, 1);
+    expect(st.joint(chest.id)!.reach).toBeUndefined();
+  });
+
+  it('back to Automatic with default softness removes the setting', () => {
+    const { st, g } = rig();
+    const p = st.addShape('box', { name: 'P', position: [0, 1, 0] });
+    st.update(p.id, { parent: g.id });
+    st.setSkin([p.id], { mode: 'bend' });
+    st.setSkin([p.id], { mode: 'auto' });
+    expect(st.get(p.id)!.skin).toBeUndefined();
+  });
+});

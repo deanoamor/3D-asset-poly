@@ -41,7 +41,7 @@ export function childIndexes(joints: Joint[]): number[][] {
  * @param points world-space xyz triples
  * @param rigid  true: the whole piece follows ONE joint (a helmet, a pouch). false: it bends with the skeleton (a limb).
  */
-export function skinWeights(points: ArrayLike<number>, joints: Joint[], rigid: boolean, sharpness = 4): Skin {
+export function skinWeights(points: ArrayLike<number>, joints: Joint[], rigid: boolean, sharpness = 4, pin = -1): Skin {
   const n = points.length / 3;
   const index = new Uint16Array(n * 4);
   const weight = new Float32Array(n * 4);
@@ -49,7 +49,7 @@ export function skinWeights(points: ArrayLike<number>, joints: Joint[], rigid: b
   const kids = childIndexes(joints);
   const scratch = joints.map(() => 0);
   const score = (p: Vec3) => {
-    for (let i = 0; i < joints.length; i++) scratch[i] = boneReach(joints, kids, i, p);
+    for (let i = 0; i < joints.length; i++) scratch[i] = boneReach(joints, kids, i, p) / Math.max(0.05, joints[i].reach ?? 1);
   };
   if (rigid) {
     let cx = 0, cy = 0, cz = 0;
@@ -61,6 +61,7 @@ export function skinWeights(points: ArrayLike<number>, joints: Joint[], rigid: b
     score([cx / n, cy / n, cz / n]);
     let best = 0;
     for (let i = 1; i < joints.length; i++) if (scratch[i] < scratch[best]) best = i;
+    if (pin >= 0 && pin < joints.length) best = pin;
     for (let i = 0; i < n; i++) {
       index[i * 4] = best;
       weight[i * 4] = 1;

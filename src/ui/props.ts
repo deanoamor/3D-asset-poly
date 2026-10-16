@@ -184,6 +184,52 @@ export function mountProps(root: HTMLElement, store: Store): void {
     );
   }
 
+  /** How a shape follows the skeleton: blend between joints, or follow one joint; and how soft the blend is. */
+  function skinSection(ids: string[]): HTMLElement | null {
+    const rig = store.doc.rig;
+    if (!rig?.length) return null;
+    const all = new Set<string>();
+    for (const id of ids) {
+      all.add(id);
+      descendantIds(store.doc, id).forEach((c) => all.add(c));
+    }
+    const shapes = () => store.doc.objects.filter((o) => all.has(o.id) && o.kind === 'shape');
+    if (!shapes().length) return null;
+    const mode = h('select', { id: 'skin-mode', 'aria-label': 'How it follows the skeleton' },
+      h('option', { value: 'auto' }, 'Automatic'),
+      h('option', { value: 'bend' }, 'Bend with the skeleton'),
+      h('option', { value: 'joint' }, 'Follow one joint'),
+    ) as HTMLSelectElement;
+    const joint = h('select', { id: 'skin-joint', 'aria-label': 'Joint to follow' }, h('option', { value: '' }, 'The nearest joint'), ...rig.map((j) => h('option', { value: j.id }, j.name))) as HTMLSelectElement;
+    const soft = h('input', { type: 'range', min: '0', max: '100', step: '5', id: 'skin-soft', 'aria-label': 'Softness' }) as HTMLInputElement;
+    const val = h('output', { class: 'rval' });
+    mode.addEventListener('change', () => store.setSkin(ids, { mode: mode.value as 'auto' | 'bend' | 'joint' }));
+    joint.addEventListener('change', () => store.setSkin(ids, { joint: joint.value || null }));
+    soft.addEventListener('input', () => store.setSkin(ids, { soft: +soft.value / 100 }, false));
+    soft.addEventListener('change', () => store.commit());
+    fields.push({
+      update: () => {
+        const list = shapes();
+        if (!list.length) return;
+        const first = list[0].skin;
+        mode.value = first?.mode ?? 'auto';
+        joint.value = first?.joint ?? '';
+        joint.disabled = mode.value !== 'joint';
+        soft.disabled = mode.value === 'joint';
+        const avg = list.reduce((a, o) => a + (o.skin?.soft ?? 0.6), 0) / list.length;
+        if (document.activeElement !== soft) soft.value = String(Math.round(avg * 100));
+        val.textContent = `${Math.round(avg * 100)}%`;
+      },
+    });
+    return section(
+      'Skin (skeleton)',
+      h('label', { class: 'field' }, h('span', {}, 'Follows'), mode),
+      h('label', { class: 'field' }, h('span', {}, 'Joint'), joint),
+      h('label', { class: 'prow' }, h('span', {}, 'Softness'), soft, val),
+      h('div', { class: 'tris' }, 'Tip: turn on Weights in the Skeleton panel to see which joint pulls which part. A helmet or pouch should follow one joint; an arm or leg should bend. Raise a joint’s Reach if the skin tears there.'),
+    );
+  }
+
   /** Where a group turns around, and buttons to put it in the middle, at the bottom or at the top of what is inside. */
   function pivotSection(o: SceneObject): HTMLElement {
     const read = h('div', { class: 'tris', id: 'pivot-readout' });
@@ -279,6 +325,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
     if (!isShape) fs.append(pivotSection(o));
     fs.append(spinSection(o));
     if (!isShape) fs.append(surfaceSection([o.id], 'Surface (all parts)'));
+    { const sk = skinSection([o.id]); if (sk) fs.append(sk); }
     if (isShape) {
       const shape = o.shape!;
       const colorIn = h('input', { type: 'color', value: o.color, 'aria-label': 'Color', class: 'colorin' }) as HTMLInputElement;

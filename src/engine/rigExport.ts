@@ -76,7 +76,10 @@ export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, 
         geo.applyMatrix4(m.matrixWorld);
         geo.computeBoundingBox();
         const size = geo.boundingBox!.getSize(new THREE.Vector3());
-        const skin = skinWeights(geo.getAttribute('position').array, joints, Math.max(size.x, size.y, size.z) < RIGID_SIZE);
+        const sk = o.skin;
+        const pin = sk?.mode === 'joint' && sk.joint ? joints.findIndex((j) => j.id === sk.joint) : -1;
+        const rigid = sk?.mode === 'joint' ? true : sk?.mode === 'bend' ? false : Math.max(size.x, size.y, size.z) < RIGID_SIZE;
+        const skin = skinWeights(geo.getAttribute('position').array, joints, rigid, sk?.soft === undefined ? 4 : 8 - 6.67 * sk.soft, pin);
         geo.setAttribute('skinIndex', new THREE.BufferAttribute(skin.index, 4));
         geo.setAttribute('skinWeight', new THREE.BufferAttribute(skin.weight, 4));
         const r = bakeVertexColors(geo, m.material as THREE.MeshStandardMaterial, baked);

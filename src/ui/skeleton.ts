@@ -86,8 +86,16 @@ export function mountSkeleton(root: HTMLElement, store: Store): void {
       p[axis] = v;
       store.moveJoint(j.id, p, { withChildren });
     };
+    const reach = h('input', { type: 'range', min: '40', max: '200', step: '10', id: 'joint-reach', 'aria-label': 'Reach', value: String(Math.round((j.reach ?? 1) * 100)), title: 'How far this joint pulls the points around it. Raise it where the skin tears (shoulder, hip, neck), lower it where it drags too much.' }) as HTMLInputElement;
+    const reachVal = h('output', { class: 'rval' }, `${Math.round((j.reach ?? 1) * 100)}%`);
+    reach.addEventListener('input', () => {
+      reachVal.textContent = `${reach.value}%`;
+      store.setJointReach(j.id, +reach.value / 100, false);
+    });
+    reach.addEventListener('change', () => store.commit());
     return h('div', { class: 'jedit', id: 'joint-editor' },
       h('label', { class: 'field' }, h('span', {}, 'Name'), name),
+      h('label', { class: 'prow reach' }, h('span', {}, 'Reach'), reach, reachVal),
       h('div', { class: 'jrow' }, num('X', j.pos[0], at(0)), num('Y', j.pos[1], at(1)), num('Z', j.pos[2], at(2))),
       h('label', { class: 'field' }, h('span', {}, 'Parent (the bone runs from it to this joint)'), parent),
       kids.size
@@ -135,6 +143,9 @@ export function mountSkeleton(root: HTMLElement, store: Store): void {
         ? h('button', { class: `btn xs${store.ui.pose ? ' primary' : ''}`, id: 'btn-pose-mode', title: store.ui.pose ? 'Leave Pose mode' : 'Pose mode: turn joints to bend the character', 'aria-pressed': String(store.ui.pose), onclick: () => store.setUi({ pose: !store.ui.pose }) }, 'Pose')
         : null,
       rig.length
+        ? h('button', { class: `btn xs${store.ui.weights ? ' primary' : ''}`, id: 'btn-weights', title: 'Weights: colour the character by how strongly the picked joint pulls each point (red = fully, blue = not at all)', 'aria-pressed': String(!!store.ui.weights), onclick: () => store.setUi({ weights: !store.ui.weights }) }, 'Weights')
+        : null,
+      rig.length
         ? h('button', { class: 'tbtn sm', id: 'btn-rig-show', title: store.ui.showRig ? 'Hide the joints and bones' : 'Show the joints and bones', 'aria-pressed': String(store.ui.showRig), 'aria-label': 'Show skeleton', onclick: () => store.setUi({ showRig: !store.ui.showRig }) }, icon(store.ui.showRig ? 'eye' : 'eyeOff', 15))
         : null,
     );
@@ -167,7 +178,7 @@ export function mountSkeleton(root: HTMLElement, store: Store): void {
 
   let last = '';
   const refresh = () => {
-    const sig = JSON.stringify([store.doc.rig, store.doc.pose, store.selectedJoint, store.ui.showRig, store.ui.pose]);
+    const sig = JSON.stringify([store.doc.rig, store.doc.pose, store.selectedJoint, store.ui.showRig, store.ui.pose, store.ui.weights]);
     if (sig === last) return;
     last = sig;
     render();

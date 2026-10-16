@@ -68,6 +68,8 @@ export interface UiState {
   showRig: boolean;
   /** Pose mode: turn joints and see the character bend. */
   pose: boolean;
+  /** Weight view: the character is coloured by how strongly the picked joint pulls each point. */
+  weights?: boolean;
 }
 
 export type StoreEvent = 'anim' | 'rig' | 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
@@ -901,6 +903,40 @@ export class Store {
   }
 
   /** Surface look for shapes (and every shape inside the given groups): smooth shading and painted color variation. */
+  /** How shapes (and every shape inside groups) follow the skeleton. */
+  setSkin(ids: string[], patch: { mode?: 'auto' | 'bend' | 'joint'; joint?: string | null; soft?: number }, commit = true): void {
+    this.mutate((d) => {
+      const all = new Set<string>();
+      for (const id of ids) {
+        all.add(id);
+        descendantIds(d, id).forEach((c) => all.add(c));
+      }
+      for (const o of d.objects) {
+        if (!all.has(o.id) || o.kind !== 'shape') continue;
+        const s = { ...(o.skin ?? {}) };
+        if (patch.mode !== undefined) s.mode = patch.mode;
+        if (patch.joint !== undefined) {
+          if (patch.joint) s.joint = patch.joint;
+          else delete s.joint;
+        }
+        if (patch.soft !== undefined) s.soft = Math.round(Math.max(0, Math.min(1, patch.soft)) * 100) / 100;
+        if ((!s.mode || s.mode === 'auto') && s.soft === undefined) delete o.skin;
+        else o.skin = s;
+      }
+    }, commit);
+  }
+
+  /** How far a joint's pull reaches (1 = normal). */
+  setJointReach(id: string, v: number, commit = true): void {
+    this.mutate((d) => {
+      const j = d.rig?.find((x) => x.id === id);
+      if (!j) return;
+      const r = Math.round(Math.max(0.4, Math.min(2, v)) * 100) / 100;
+      if (r === 1) delete j.reach;
+      else j.reach = r;
+    }, commit);
+  }
+
   /** Roughness, metalness and glow (emissive) for shapes (and every shape inside the given groups). */
   setMaterial(ids: string[], patch: { rough?: number; metal?: number; glow?: number }, commit = true): void {
     this.mutate((d) => {

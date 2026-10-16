@@ -172,7 +172,12 @@ Press **Pose** in the Skeleton section, click a joint and turn it with the rings
 ## Material and file size
 - **Roughness, Metal, Glow** (Properties → Surface) go into the GLB as a real PBR material (`roughness`, `metallic`, `emissive`).
 - The export dialog shows the **file size** (and its gzip size), **draw calls** (meshes) and **materials**, with a warning when the file is large.
-- Not done yet: texture atlas / UV, editable skin weights, morph targets, Draco/KTX2 compression.
+- Not done yet: texture atlas / UV, morph targets, Draco/KTX2 compression.
+
+## Skin weights
+- **Weights** (button in the Skeleton header) colours the character by how strongly the picked joint pulls each point: red = fully, blue = not at all.
+- **Reach** (joint editor): how far a joint's pull reaches. Raise it where the skin tears (shoulder, hip, neck).
+- **Skin (skeleton)** (Properties, for a part or a group): *Automatic*, *Bend with the skeleton*, or *Follow one joint* (a helmet, a pouch), with a *Softness* slider for how wide the blend is. These settings are used by the exported skinned mesh.
 
 ## Animation
 With a skeleton, **Animation** (under Skeleton) makes clips of poses that play over time.

@@ -304,7 +304,7 @@ export class Viewport {
   /** Only while Pose mode is on (also in its Preview) the model is drawn bent by the skeleton; otherwise it is shown at rest. */
   private poseView(): boolean {
     if (!this.store.doc.rig?.length || this.store.edit) return false;
-    return this.store.ui.pose || this.store.animView;
+    return this.store.ui.pose || this.store.animView || !!this.store.ui.weights;
   }
 
   /** The pose to show now: the clip at the current time while one is being viewed or played, otherwise the editable pose. */
@@ -381,7 +381,7 @@ export class Viewport {
       return;
     }
     const doc = this.store.doc;
-    const sig = JSON.stringify([doc.objects, doc.rig, this.store.ui.preview]);
+    const sig = JSON.stringify([doc.objects, doc.rig, this.store.ui.preview, !!this.store.ui.weights]);
     if (!this.poseRoot || sig !== this.poseSig) {
       this.disposePose();
       this.poseSig = sig;
@@ -400,7 +400,44 @@ export class Viewport {
     }
     applyPose(this.poseBones, doc, this.shownPose(), this.shownRoot());
     this.poseRoot!.updateMatrixWorld(true);
+    this.paintWeights();
     this.requestRender();
+  }
+
+  private weightKey = '';
+  private heatMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+
+  /** Weight view: colour every point by how strongly the picked joint pulls it (blue none, green half, red all). */
+  private paintWeights(): void {
+    if (!this.poseRoot || !this.store.ui.weights) {
+      this.weightKey = '';
+      return;
+    }
+    const want = this.store.selectedJoint ?? '';
+    const key = `${want}|${this.poseSig}`;
+    if (key === this.weightKey) return;
+    this.weightKey = key;
+    const c = new THREE.Color();
+    this.poseRoot.traverse((o) => {
+      const sm = o as THREE.SkinnedMesh;
+      if (!sm.isSkinnedMesh) return;
+      const bi = sm.skeleton.bones.findIndex((b) => b.userData.jointId === want);
+      const geo = sm.geometry;
+      const idx = geo.getAttribute('skinIndex');
+      const w = geo.getAttribute('skinWeight');
+      const col = new Float32Array(idx.count * 3);
+      for (let i = 0; i < idx.count; i++) {
+        let x = 0;
+        if (bi >= 0) for (let k = 0; k < 4; k++) if (idx.getComponent(i, k) === bi) x += w.getComponent(i, k);
+        x = Math.max(0, Math.min(1, x));
+        c.setHSL((1 - x) * 0.66, 1, 0.5); // 0.66 = blue ... 0 = red
+        col[i * 3] = c.r;
+        col[i * 3 + 1] = c.g;
+        col[i * 3 + 2] = c.b;
+      }
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      sm.material = this.heatMat;
+    });
   }
 
   /** Drag a joint on the plane facing the camera. Shift moves everything below it too. */
