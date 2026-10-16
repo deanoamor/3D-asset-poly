@@ -36,9 +36,10 @@ for (const id of ['police', 'car', 'house', 'footballer', 'soldier']) {
   await page.waitForTimeout(500);
 }
 let d = await D();
-const groups = d.filter((o) => o.kind === 'group');
+const kidsOf = (all, id) => all.filter((o) => o.parent === id).flatMap((o) => [o, ...kidsOf(all, o.id)]);
+const groups = d.filter((o) => o.kind === 'group' && !o.parent);
 ok(groups.map((g) => g.name).join() === 'Police Officer,Car,House,Football Player,Soldier', `five groups: ${groups.map((g) => g.name).join(', ')}`);
-ok(groups.every((g) => d.filter((o) => o.parent === g.id).length >= 75), `each group has dozens of parts (${groups.map((g) => d.filter((o) => o.parent === g.id).length).join(', ')})`);
+ok(groups.every((g) => kidsOf(d, g.id).filter((o) => o.kind === 'shape').length >= 75), `each group has dozens of parts (${groups.map((g) => kidsOf(d, g.id).filter((o) => o.kind === 'shape').length).join(', ')})`);
 const xs = groups.map((g) => g.position[0]);
 ok(xs.every((x, i) => i === 0 || x > xs[i - 1]), `placed left to right, not on top of each other (${xs.map((x) => x.toFixed(1)).join(', ')})`);
 ok(d.some((o) => o.name === 'Cabin' && o.mesh) && d.some((o) => o.name === 'Roof' && o.mesh), 'cabin and roof are real edited shapes (Edit shape works on them)');
@@ -63,10 +64,10 @@ await page.click('#btn-assets');
 await page.click('.acard[data-asset="car"] [data-act="learn"]');
 await page.waitForSelector('#coach-learn:not(.hidden)');
 d = await D();
-const carGroups = d.filter((o) => o.kind === 'group' && /^Car( \d+)?$/.test(o.name));
+const carGroups = d.filter((o) => o.kind === 'group' && !o.parent && /^Car( \d+)?$/.test(o.name));
 ok(carGroups.length === 2 && carGroups[1].name === 'Car 2', 'learning adds a second, uniquely named Car without touching the first');
 const learnGroup = carGroups[1];
-const learnParts = d.filter((o) => o.parent === learnGroup.id);
+const learnParts = kidsOf(d, learnGroup.id).filter((o) => o.kind === 'shape');
 const hidden = () => page.evaluate(() => window.__app.store.learnHidden?.size ?? 0);
 const visibleDocFlags = () => page.evaluate((gid) => window.__app.store.doc.objects.filter((o) => o.parent === gid).every((o) => o.visible), learnGroup.id);
 ok((await hidden()) > 0 && (await hidden()) < learnParts.length, `step 1 shows only the first parts (${learnParts.length - (await hidden())} of ${learnParts.length})`);
