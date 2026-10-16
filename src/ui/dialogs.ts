@@ -84,6 +84,7 @@ export function openProjectFile(store: Store): void {
 let exportFormat: ExportFormat = 'glb';
 let exportCollision = false;
 let exportSkeleton = true;
+let exportAnimations = true;
 
 export function openExportDialog(store: Store): void {
   let close: () => void = () => {};
@@ -176,6 +177,18 @@ export function openExportDialog(store: Store): void {
               h('span', {}, h('strong', {}, 'Include the skeleton'), h('br'), h('small', {}, 'On: each character becomes one skinned mesh with joints, ready to pose. Off: parts stay separate and named, with no joints.', doc.pose ? (store.ui.pose ? ' Your pose is included.' : ' Pose is off, so the character is exported at rest.') : '')),
             )
           : null,
+        doc.anims?.length && doc.rig?.length && exportSkeleton && exportFormat !== 'obj'
+          ? h('label', { class: 'check' },
+              (() => {
+                const cb = h('input', { type: 'checkbox', id: 'export-animations', checked: exportAnimations, onchange: () => {
+                  exportAnimations = cb.checked;
+                  render();
+                } }) as HTMLInputElement;
+                return cb;
+              })(),
+              h('span', {}, h('strong', {}, `Include the animations (${doc.anims.length})`), h('br'), h('small', {}, exportAnimations ? `${doc.anims.map((c) => c.name).join(', ')}. The character is exported at rest and each clip turns its bones.` : 'Off: no clips in the file.')),
+            )
+          : null,
       ),
       h('div', { class: 'field' }, h('span', {}, 'Checks'),
         h('ul', { class: 'checks' }, ...(checks.length ? checks : [{ level: 'ok', message: 'Everything looks good. This model is ready for your engine.' } as OkRow]).map((c) => checkRow(c, store, render, close))),
@@ -195,7 +208,7 @@ export function openExportDialog(store: Store): void {
           disabled: blocked,
           onclick: async () => {
             try {
-              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose });
+              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose, animations: exportAnimations });
               const saved = await download(res.blob, res.filename);
               if (!saved) return; // viewer declined the save
               const first = !hasEvent('first_export');
@@ -220,7 +233,7 @@ export function openExportDialog(store: Store): void {
     }
     void (async () => {
       try {
-        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose });
+        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose, animations: exportAnimations });
         const v = await verifyExport(res, exportCollision ? preset.collision?.nodeSuffix : undefined);
         if (mine !== token) return;
         verify.className = `verify ${v.ok ? 'good' : 'bad'}`;

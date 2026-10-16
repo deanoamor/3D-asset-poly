@@ -6,6 +6,7 @@ import { effectivelyVisible, isLockedChain } from '../core/docmath';
 import type { SceneObject, ShapeType, Vec3 } from '../core/types';
 import { GeometryCache, MaterialCache, applyTransform, buildExportScene } from './sceneBuild';
 import { applyPose } from './rigExport';
+import { samplePose } from '../core/anim';
 import { EditController } from './editMode';
 import { meshSignature } from '../core/mesh';
 import { RigOverlay } from './rigOverlay';
@@ -47,6 +48,8 @@ export class Viewport {
   private pivotMarker = new THREE.Group();
   private pivotId: string | null = null;
   private spinOn = false;
+  private animLast = 0;
+  private animEmit = 0;
   private poseRoot: THREE.Group | null = null;
   private poseBones = new Map<string, THREE.Bone>();
   private poseSig = '';
@@ -164,7 +167,7 @@ export class Viewport {
 
     store.subscribe((e) => {
       if (e === 'doc' || e === 'reset' || e === 'learn') this.sync();
-      if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool' || e === 'history') this.syncRig();
+      if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool' || e === 'history' || e === 'anim') this.syncRig();
       if (e === 'doc' || e === 'selection' || e === 'reset' || e === 'tool' || e === 'edit' || e === 'history') this.syncPivot();
       if (e === 'selection' || e === 'reset') this.onSelection();
       if (e === 'tool') this.onToolChange();
@@ -301,7 +304,55 @@ export class Viewport {
   /** Only while Pose mode is on (also in its Preview) the model is drawn bent by the skeleton; otherwise it is shown at rest. */
   private poseView(): boolean {
     if (!this.store.doc.rig?.length || this.store.edit) return false;
-    return this.store.ui.pose;
+    return this.store.ui.pose || this.store.animView;
+  }
+
+  /** The pose to show now: the clip at the current time while one is being viewed or played, otherwise the editable pose. */
+  private shownPose(): Record<string, [number, number, number]> | undefined {
+    const s = this.store;
+    const clip = s.animView ? s.clip(s.animId) : undefined;
+    if (!clip) return s.doc.pose;
+    return samplePose(clip, s.animTime, (s.doc.rig ?? []).map((j) => j.id));
+  }
+
+  /** While a clip plays: step its time and bend the character. Returns true while playing. */
+  private animTick(): boolean {
+    const s = this.store;
+    const clip = s.animPlaying ? s.clip(s.animId) : undefined;
+    if (!clip) {
+      this.animLast = 0;
+      if (s.animPlaying) s.setAnimPlaying(false);
+      return false;
+    }
+    const now = performance.now() / 1000;
+    const dt = this.animLast ? Math.min(0.1, now - this.animLast) : 0;
+    this.animLast = now;
+    let t = s.animTime + dt;
+    if (t >= clip.duration) {
+      if (clip.loop) t %= clip.duration;
+      else {
+        t = clip.duration;
+        s.animPlaying = false;
+        s.emit('anim');
+      }
+    }
+    s.animTime = t;
+    if (this.poseRoot) {
+      applyPose(this.poseBones, s.doc, this.shownPose());
+      this.poseRoot.updateMatrixWorld(true);
+      const posed = new Map<string, [number, number, number]>();
+      const v = new THREE.Vector3();
+      for (const [id, b] of this.poseBones) {
+        b.getWorldPosition(v);
+        posed.set(id, [v.x, v.y, v.z]);
+      }
+      this.rig.sync(posed);
+    }
+    if (now - this.animEmit > 0.08) {
+      this.animEmit = now;
+      s.emit('anim'); // the timeline in the panel follows
+    }
+    return true;
   }
 
   private disposePose(): void {
@@ -341,7 +392,7 @@ export class Viewport {
       this.scene.add(root);
       this.poseRoot = root;
     }
-    applyPose(this.poseBones, doc);
+    applyPose(this.poseBones, doc, this.shownPose());
     this.poseRoot!.updateMatrixWorld(true);
     this.requestRender();
   }
@@ -557,7 +608,7 @@ export class Viewport {
     const { tool, preview } = this.store.ui;
     if (this.poseActive) {
       // Pose mode: the gizmo turns the picked joint
-      const bone = !preview && this.store.selectedJoint ? this.poseBones.get(this.store.selectedJoint) : undefined;
+      const bone = !preview && !this.store.animView && this.store.selectedJoint ? this.poseBones.get(this.store.selectedJoint) : undefined;
       const helper = this.tc.getHelper();
       if (bone) {
         this.tc.setMode('rotate');
@@ -1019,6 +1070,7 @@ export class Viewport {
       animating = true;
     }
     if (this.spinTick()) animating = true;
+    if (this.animTick()) animating = true;
     if (animating || this.dirty) {
       this.dirty = false;
       this.controls.update();

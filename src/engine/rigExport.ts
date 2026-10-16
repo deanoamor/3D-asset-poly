@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Doc, Joint } from '../core/types';
 import { descendantIds } from '../core/docmath';
 import { skinWeights } from '../core/skin';
+import { quatOf, samplePose, clipKeys } from '../core/anim';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { bakeVertexColors } from './bakeColor';
 
@@ -39,14 +40,21 @@ export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, 
     const armature = new THREE.Group();
     armature.name = ownerObj ? `${ownerObj.name} Armature` : 'Armature';
     const at = new Map(joints.map((j) => [j.id, j]));
+    // the skeleton stands the way the character stands: its rest orientation is the group's own, so "forward" is the character's forward
+    const q0 = new THREE.Quaternion();
+    if (owner) nodes.get(owner)?.getWorldQuaternion(q0);
+    const q0inv = q0.clone().invert();
     for (const j of joints) {
       const b = bones.get(j.id)!;
       const parent = j.parent ? at.get(j.parent) : undefined;
       if (parent) {
-        b.position.set(j.pos[0] - parent.pos[0], j.pos[1] - parent.pos[1], j.pos[2] - parent.pos[2]);
+        b.position.set(j.pos[0] - parent.pos[0], j.pos[1] - parent.pos[1], j.pos[2] - parent.pos[2]).applyQuaternion(q0inv);
+        b.userData.rest = new THREE.Quaternion();
         bones.get(parent.id)!.add(b);
       } else {
         b.position.set(...j.pos);
+        b.userData.rest = q0.clone();
+        b.quaternion.copy(q0);
         armature.add(b);
       }
     }
@@ -145,11 +153,47 @@ export function settleSkins(root: THREE.Group): void {
 }
 
 /** Turn the bones to the project's pose (degrees, relative to rest). Joints with no entry go back to rest. */
-export function applyPose(bones: Map<string, THREE.Bone>, doc: Doc): void {
+export function applyPose(bones: Map<string, THREE.Bone>, doc: Doc, pose: Record<string, [number, number, number]> | undefined = doc.pose): void {
+  const q = new THREE.Quaternion();
   for (const [id, b] of bones) {
-    const r = doc.pose?.[id] ?? [0, 0, 0];
-    b.rotation.set(THREE.MathUtils.degToRad(r[0]), THREE.MathUtils.degToRad(r[1]), THREE.MathUtils.degToRad(r[2]));
+    const rest = (b.userData.rest as THREE.Quaternion | undefined) ?? new THREE.Quaternion();
+    b.quaternion.copy(rest).multiply(quatOf(pose?.[id] ?? [0, 0, 0], q));
   }
+}
+
+/** The project's animation clips as three.js clips (turning bones), ready for the glTF exporter. */
+export function animationClips(root: THREE.Object3D, doc: Doc): THREE.AnimationClip[] {
+  if (!doc.anims?.length || !doc.rig?.length) return [];
+  const bones = new Map<string, THREE.Bone>();
+  root.traverse((o) => (o as THREE.Bone).isBone && o.userData.jointId && bones.set(o.userData.jointId as string, o as THREE.Bone));
+  const out: THREE.AnimationClip[] = [];
+  const names = new Set<string>();
+  for (const clip of doc.anims) {
+    const ids = doc.rig.filter((j) => (!clip.owner || j.owner === clip.owner) && bones.has(j.id)).map((j) => j.id);
+    if (!ids.length || !clip.keys.length) continue;
+    const keys = clipKeys(clip);
+    const times = [...new Set([0, ...keys.map((k) => k.t), ...(clip.loop ? [clip.duration] : [])])].sort((a, b) => a - b);
+    const poses = times.map((t) => samplePose(clip, t >= clip.duration && clip.loop ? 0 : t, ids));
+    const tracks: THREE.KeyframeTrack[] = [];
+    for (const id of ids) {
+      const bone = bones.get(id)!;
+      const rest = (bone.userData.rest as THREE.Quaternion | undefined) ?? new THREE.Quaternion();
+      const values: number[] = [];
+      let prev: THREE.Quaternion | null = null;
+      for (let ti = 0; ti < times.length; ti++) {
+        const q = rest.clone().multiply(quatOf(poses[ti][id] ?? [0, 0, 0]));
+        if (prev && prev.dot(q) < 0) q.set(-q.x, -q.y, -q.z, -q.w); // stay on the same side so it turns the short way
+        values.push(q.x, q.y, q.z, q.w);
+        prev = q;
+      }
+      tracks.push(new THREE.QuaternionKeyframeTrack(`${bone.uuid}.quaternion`, times, values));
+    }
+    let name = clip.name || 'Animation';
+    for (let i = 2; names.has(name); i++) name = `${clip.name} ${i}`;
+    names.add(name);
+    out.push(new THREE.AnimationClip(name, Math.max(...times), tracks));
+  }
+  return out;
 }
 
 /** Move the points of a skinned mesh to where the current bone pose puts them (linear blend skinning on the CPU). */

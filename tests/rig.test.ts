@@ -271,3 +271,159 @@ describe('duplicating a character', () => {
     expect(st.doc.objects).toHaveLength(2);
   });
 });
+
+import { PRESETS as ANIM_PRESETS, clipKeys, quatOf, samplePose } from '../src/core/anim';
+import type { AnimClip } from '../src/core/types';
+
+describe('animation clips', () => {
+  const person = () => {
+    const st = new Store(emptyDoc());
+    const g = st.addShape('box', { name: 'Hero' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; });
+    st.addJoints(jointsFromSpec(humanSpec(), g.id));
+    return { st, g };
+  };
+
+  it('ready-made clips use the joints of the person, by name', () => {
+    const { st } = person();
+    for (const p of ANIM_PRESETS) {
+      const id = st.addPresetClip(p.id)!;
+      const c = st.clip(id)!;
+      expect(c.name.startsWith(p.label)).toBe(true);
+      expect(c.loop).toBe(true);
+      expect(c.keys.length).toBe(8);
+      expect(c.keys.every((k) => Object.keys(k.pose).every((j) => st.joint(j)))).toBe(true);
+    }
+    expect(st.doc.anims).toHaveLength(4);
+    st.addPresetClip('walk');
+    expect(st.doc.anims!.map((c) => c.name)).toContain('Walk 2'); // names stay unique
+  });
+
+  it('a walk swings opposite arms and legs, and bends the knee of the leg that passes', () => {
+    const { st } = person();
+    const c = st.clip(st.addPresetClip('walk')!)!;
+    const id = (n: string) => st.doc.rig!.find((j) => j.name === n)!.id;
+    const at = (t: number) => samplePose(c, t, st.doc.rig!.map((j) => j.id));
+    const quarter = at(0.25);
+    expect(quarter[id('Hip Left')][0]).toBeLessThan(-20); // left leg forward (negative X)
+    expect(quarter[id('Hip Right')][0]).toBeGreaterThan(20); // right leg back
+    expect(quarter[id('Shoulder Left')][0]).toBeGreaterThan(10); // the left arm goes back while the left leg goes forward
+    expect(Math.max(...[0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875].map((t) => at(t)[id('Knee Left')]?.[0] ?? 0))).toBeGreaterThan(25);
+  });
+
+  it('sampling turns smoothly between keys and loops back to the first', () => {
+    const clip: AnimClip = { id: 'c', name: 'x', duration: 2, loop: true, keys: [{ t: 0, pose: { a: [0, 0, 0] } }, { t: 1, pose: { a: [0, 0, 90] } }] };
+    const mid = samplePose(clip, 0.5, ['a']).a;
+    expect(mid[2]).toBeCloseTo(45, 2);
+    expect(samplePose(clip, 1, ['a']).a[2]).toBeCloseTo(90, 3);
+    expect(samplePose(clip, 1.5, ['a']).a[2]).toBeCloseTo(45, 2); // back toward the start
+    expect(samplePose(clip, 2, ['a']).a).toBeUndefined(); // the loop is complete
+    const once = { ...clip, loop: false };
+    expect(samplePose(once, 5, ['a']).a[2]).toBeCloseTo(90, 3); // holds the last pose
+    expect(clipKeys({ ...clip, keys: [clip.keys[1], clip.keys[0]] }).map((k) => k.t)).toEqual([0, 1]);
+    expect(quatOf([0, 0, 90]).z).toBeCloseTo(Math.SQRT1_2, 5);
+  });
+
+  it('keys are stored, replaced near the same time, sorted and removed', () => {
+    const { st } = person();
+    const id = st.addClip('Mine')!;
+    const j = st.doc.rig!.find((q) => q.name === 'Elbow Left')!.id;
+    st.setJointPose(j, [-60, 0, 0]);
+    st.setKey(id, 0.5);
+    st.setKey(id, 0.51); // within a frame of the last: replaces it
+    st.setJointPose(j, [0, 0, 0]);
+    st.setKey(id, 0.25);
+    const c = st.clip(id)!;
+    expect(c.keys.map((k) => k.t)).toEqual([0, 0.25, 0.5]);
+    expect(c.keys[2].pose[j]).toEqual([-60, 0, 0]);
+    st.setClip(id, { duration: 0.3 });
+    expect(st.clip(id)!.keys.map((k) => k.t)).toEqual([0, 0.25, 0.3]); // keys beyond the end come in
+    st.removeKey(id, 2);
+    st.removeKey(id, 1);
+    st.removeKey(id, 0); // the last key stays
+    expect(st.clip(id)!.keys).toHaveLength(1);
+    st.removeClip(id);
+    expect(st.doc.anims).toBeUndefined();
+  });
+
+  it('the editable pose can be loaded from a clip, and turning a joint leaves the clip view', () => {
+    const { st } = person();
+    const c = st.clip(st.addPresetClip('wave')!)!;
+    st.setAnimTime(0.4);
+    expect(st.animView).toBe(true);
+    st.loadPoseFromClip(c.id, 0.4);
+    expect(st.animView).toBe(false);
+    expect(Object.keys(st.doc.pose!).length).toBeGreaterThan(3);
+    st.setAnimTime(0.2);
+    st.setJointPose(st.doc.rig![0].id, [5, 0, 0]);
+    expect(st.animView).toBe(false);
+  });
+
+  it('a deleted character takes its animations along, and a copy gets its own', () => {
+    const { st, g } = person();
+    st.addPresetClip('walk');
+    st.select([g.id]);
+    const [copy] = st.duplicateSelected([4, 0, 0]);
+    expect(st.doc.anims).toHaveLength(2);
+    const mine = st.doc.anims!.find((c) => c.owner === copy)!;
+    const ids = new Set(st.doc.rig!.filter((j) => j.owner === copy).map((j) => j.id));
+    expect(Object.keys(mine.keys[2].pose).every((k) => ids.has(k))).toBe(true); // the copy's clip turns the copy's joints
+    st.select([g.id]);
+    st.deleteSelected();
+    expect(st.doc.anims).toHaveLength(1);
+    expect(st.doc.anims![0].owner).toBe(copy);
+  });
+});
+
+describe('animation in the exported file', () => {
+  it('every clip becomes a glTF animation turning the 22 bones, looping back to its first pose', async () => {
+    const { prepareExport } = await import('../src/engine/exporter');
+    const { animationClips } = await import('../src/engine/rigExport');
+    const st = new Store(emptyDoc('Hero'));
+    const g = st.addShape('box', { name: 'Hero' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; });
+    const body = st.addShape('cylinder', { name: 'Body', position: [0, 1, 0], size: [0.4, 1.8, 0.4] });
+    st.update(body.id, { parent: g.id });
+    st.addJoints(jointsFromSpec(humanSpec(), g.id));
+    st.addPresetClip('walk');
+    st.addPresetClip('idle');
+    const { root } = prepareExport(st.doc);
+    const clips = animationClips(root, st.doc);
+    expect(clips.map((c) => c.name)).toEqual(['Walk', 'Idle']);
+    const walk = clips[0];
+    expect(walk.tracks).toHaveLength(22);
+    expect(walk.duration).toBeCloseTo(1, 5);
+    const t = walk.tracks[0];
+    expect(t.name.endsWith('.quaternion')).toBe(true);
+    expect(t.times[0]).toBe(0);
+    expect(t.times[t.times.length - 1]).toBeCloseTo(1, 5); // a looping clip ends where it began
+    const v = t.values;
+    const first = [v[0], v[1], v[2], v[3]];
+    const last = [v[v.length - 4], v[v.length - 3], v[v.length - 2], v[v.length - 1]];
+    expect(first.every((x, i) => Math.abs(x - last[i]) < 1e-5) || first.every((x, i) => Math.abs(x + last[i]) < 1e-5)).toBe(true);
+    // consecutive quaternions are on the same side, so a turn never takes the long way round
+    for (const tr of walk.tracks) for (let i = 4; i < tr.values.length; i += 4) {
+      const dot = tr.values[i] * tr.values[i - 4] + tr.values[i + 1] * tr.values[i - 3] + tr.values[i + 2] * tr.values[i - 2] + tr.values[i + 3] * tr.values[i - 1];
+      expect(dot).toBeGreaterThanOrEqual(0);
+    }
+    // the knee really moves during the walk
+    const knee = walk.tracks.find((tr) => root.getObjectByProperty('uuid', tr.name.split('.')[0])?.name === 'Knee Left')!;
+    const xs: number[] = [];
+    for (let i = 0; i < knee.values.length; i += 4) xs.push(knee.values[i]);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(0.2);
+  });
+
+  it('a turned character animates in its own frame (forward is its forward)', async () => {
+    const { prepareExport } = await import('../src/engine/exporter');
+    const st = new Store(emptyDoc('Hero'));
+    const g = st.addShape('box', { name: 'Hero' });
+    st.mutate((d) => { const o = d.objects.find((x) => x.id === g.id)!; o.kind = 'group'; o.position = [0, 0, 0]; o.rotation = [0, 90, 0]; });
+    const body2 = st.addShape('cylinder', { name: 'Body', position: [0, 1, 0] });
+    st.update(body2.id, { parent: g.id });
+    st.addJoints(jointsFromSpec(humanSpec(), g.id));
+    const { root } = prepareExport(st.doc);
+    const hips = root.getObjectByName('Hips')!;
+    const q = hips.quaternion;
+    expect(Math.abs(q.y)).toBeCloseTo(Math.SQRT1_2, 3); // the root bone stands turned 90 degrees, like the character
+  });
+});

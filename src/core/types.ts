@@ -54,6 +54,26 @@ export interface Joint {
   owner?: string;
 }
 
+/** One moment of an animation: how far each joint is turned (degrees) at time `t`. A joint not listed is at rest. */
+export interface AnimKey {
+  t: number;
+  pose: Record<string, Vec3>;
+}
+
+/** A clip of skeleton animation: poses at moments in time, with smooth turning in between. */
+export interface AnimClip {
+  id: string;
+  name: string;
+  /** Seconds. */
+  duration: number;
+  /** Plays again from the start when it ends (in Preview; players decide for the exported file). */
+  loop: boolean;
+  /** The character (group) it belongs to, if any. */
+  owner?: string;
+  /** Sorted by time. */
+  keys: AnimKey[];
+}
+
 export interface Doc {
   version: 1;
   name: string;
@@ -64,6 +84,8 @@ export interface Doc {
   rig?: Joint[];
   /** The pose: how far each joint is turned from rest, in degrees (X, Y, Z), by joint id. */
   pose?: Record<string, Vec3>;
+  /** Skeleton animations. */
+  anims?: AnimClip[];
 }
 
 export const SHAPE_LABELS: Record<ShapeType, string> = {

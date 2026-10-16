@@ -83,6 +83,8 @@ export const ICONS: Record<string, string> = {
   roundoff: P('M5 3h6l2 2v6l-2 2H5l-2-2V5z'),
   mirror: P('M8 2v12M5.5 4.5L2 8l3.5 3.5zM10.5 4.5L14 8l-3.5 3.5z'),
   xray: P('M3 3h10v10H3zM6 6h7v7H6z'),
+  play: '<path d="M5 3.2l7.5 4.8L5 12.8z" fill="currentColor"/>',
+  pause: '<rect x="4" y="3" width="3" height="10" rx="0.6" fill="currentColor"/><rect x="9" y="3" width="3" height="10" rx="0.6" fill="currentColor"/>',
 };
 
 export function icon(name: string, size = 16): HTMLElement {

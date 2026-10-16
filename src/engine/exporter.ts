@@ -3,7 +3,7 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
 import { bakeVertexColors } from './bakeColor';
 import { spinClip } from './spinExport';
-import { settleSkins } from './rigExport';
+import { animationClips, settleSkins } from './rigExport';
 import { PRESETS, importGuide, packsObj, type ExportFormat } from '../core/presets';
 import { writeObj } from './objExport';
 import { slug } from './slug';
@@ -20,6 +20,8 @@ export interface ExportOptions {
   skeleton?: boolean;
   /** Bake the pose into the file (default). Off: the character is exported at rest. */
   pose?: boolean;
+  /** Include the animation clips (default). The character is then exported at rest, with the clips turning its bones. */
+  animations?: boolean;
 }
 
 export interface ExportResult {
@@ -93,7 +95,8 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
   const name = slug(doc.name);
   const preset = PRESETS[doc.enginePreset];
   const collision = opts.collision && !!preset.collision;
-  const exportDoc = docForExport(doc, opts.skeleton, opts.pose);
+  const withAnims = opts.animations !== false && opts.skeleton !== false && !!doc.anims?.length && !!doc.rig?.length;
+  const exportDoc = docForExport(doc, opts.skeleton, withAnims ? false : opts.pose);
   const { root, size } = prepareExport(exportDoc, collision);
   const triangles = triangleTotal(root, (o) => collision && !!preset.collision && o.name.endsWith(preset.collision.nodeSuffix));
   const sizeText = `${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)} m`;
@@ -105,9 +108,10 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
     root.traverse((o) => (o as THREE.SkinnedMesh).isSkinnedMesh && skins.push(o));
     skins.forEach((o) => o.removeFromParent());
     try {
-      const clip = spinClip(root);
+      const spin = spinClip(root);
+      const clips = [...(withAnims ? animationClips(root, exportDoc) : []), ...(spin ? [spin] : [])];
       // animated nodes must carry position / rotation / scale, not a matrix
-      return await exporter.parseAsync(skins.length ? [root, ...skins] : root, { binary, onlyVisible: true, trs: !!clip, ...(clip ? { animations: [clip] } : {}) });
+      return await exporter.parseAsync(skins.length ? [root, ...skins] : root, { binary, onlyVisible: true, trs: clips.length > 0, ...(clips.length ? { animations: skins.length ? [clips, ...skins.map(() => [])] : clips } : {}) });
     } finally {
       skins.forEach((o) => root.add(o));
     }

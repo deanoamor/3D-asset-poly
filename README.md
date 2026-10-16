@@ -168,3 +168,11 @@ Press **Pose** in the Skeleton section, click a joint and turn it with the rings
 - **Pivot:** a group turns, spins and resizes around its pivot (its origin). Select a group and look for the orange diamond in the scene (with small X / Y / Z lines): drag it to move the pivot, for example onto a wheel's axle. What is inside the group stays exactly where it is. In Properties, **Pivot** has *Middle / Bottom / Top* buttons. A new group's pivot starts at the bottom middle of its parts.
 - **Spin:** in Properties, **Spin** makes an object turn by itself around its pivot (Off / X / Y / Z, and turns per second). Preview shows it turning, and GLB/glTF export writes a looping animation called **Spin** that every engine and 3D app can play.
 - The car's four wheels are groups with the pivot on the axle and a spin around X, so they roll in Preview and in the exported file. Plain objects need no bones for this: a bone is only for bending things.
+
+## Animation
+With a skeleton, **Animation** (under Skeleton) makes clips of poses that play over time.
+- **Ready-made:** pick *Walk*, *Run*, *Idle* or *Wave* and the character moves right away (found by joint names, so any figure with the person skeleton works).
+- **Your own:** press **New**, then for each moment: move the time slider, press **Edit pose here**, turn the joints (Pose mode), press **Key here**. Between two keys every joint turns smoothly. A diamond on the timeline is a key; click one to jump to it, **Delete key** removes it. A clip has a length in seconds and can **Loop**.
+- **Play** shows the clip in the editor, and in **Preview**. Playing never changes your saved pose.
+- **Export:** GLB/glTF carries every clip as a glTF animation turning the bones (the character itself is exported at rest), together with **Spin**. Untick *Include the animations* in the export dialog to export a single static pose instead. Clips are saved with the project, Saves and `.3pi` bags, and a duplicated character gets its own copy of its clips.
+- Clips move joints only (rotation), so the body does not travel. Move a character in your game or 3D app while the Walk plays.

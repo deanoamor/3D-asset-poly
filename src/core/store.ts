@@ -3,6 +3,7 @@ import {
   DEFAULT_SEGMENTS,
   SHAPE_LABELS,
   type Doc,
+  type AnimClip,
   type Joint,
   type EnginePreset,
   type SceneObject,
@@ -11,6 +12,7 @@ import {
 } from './types';
 import { byId, childrenOf, decomposeTo, descendantIds, effectivelyVisible, isLockedChain, localMatrix, worldMatrix } from './docmath';
 import { clampSegments, objectTriangles } from './shapes';
+import { presetClip, samplePose, type Preset } from './anim';
 import {
   bakeScale, cloneMesh, convertSelection, deleteEdges, deleteFaces, deleteVerts, edgeMap, extrudeEdges, extrudeFaces, insetFaces, loopCut, meshTriangles,
   averageNormal, boundsOf, mergeVerts, moveVerts, normalizeMesh, parseEdge, polyMeshFor, pullDistance, subdivide, vertCount, verticesOfSelection,
@@ -68,7 +70,7 @@ export interface UiState {
   pose: boolean;
 }
 
-export type StoreEvent = 'rig' | 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
+export type StoreEvent = 'anim' | 'rig' | 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
 
 export interface EditState {
   id: string;
@@ -100,6 +102,11 @@ export class Store {
   };
   /** The joint picked in the viewport or the Skeleton list (not saved). */
   selectedJoint: string | null = null;
+  /** Animation player state (not saved): which clip, the time in it, whether it plays, and whether the character shows the clip's pose. */
+  animId: string | null = null;
+  animTime = 0;
+  animPlaying = false;
+  animView = false;
   /** Set while a change must not carry the skeleton along (moving a pivot). */
   private keepJoints = false;
   /** After Shrink face: the shape as it was, so the inset can be dragged bigger or smaller until something else is done. */
@@ -147,6 +154,10 @@ export class Store {
     this.shrinkSession = null;
     this.selection = [];
     this.selectedJoint = null;
+    this.animId = null;
+    this.animPlaying = false;
+    this.animView = false;
+    this.animTime = 0;
     this.emit('reset');
     this.emit('selection');
   }
@@ -347,6 +358,143 @@ export class Store {
     this.fixJointSelection();
   }
 
+  // ----- animation clips -----
+
+  clip(id: string | null | undefined): AnimClip | undefined {
+    return id ? this.doc.anims?.find((c) => c.id === id) : undefined;
+  }
+
+  private jointIdsOf(owner: string | undefined): string[] {
+    return (this.doc.rig ?? []).filter((j) => !owner || j.owner === owner).map((j) => j.id);
+  }
+
+  private uniqueClipName(base: string): string {
+    const names = new Set((this.doc.anims ?? []).map((c) => c.name));
+    let n = base;
+    for (let i = 2; names.has(n); i++) n = `${base} ${i}`;
+    return n;
+  }
+
+  /** Make a ready-made clip (Walk, Run, Idle, Wave) for the picked joint's character (or the first skeleton). */
+  addPresetClip(kind: Preset): string | null {
+    const rig = this.doc.rig;
+    if (!rig?.length) return null;
+    const owner = this.joint(this.selectedJoint)?.owner ?? rig[0].owner;
+    const joints = rig.filter((j) => j.owner === owner);
+    const clip = presetClip(kind, joints.length ? joints : rig, newId());
+    clip.name = this.uniqueClipName(clip.name);
+    this.mutate((d) => (d.anims = [...(d.anims ?? []), clip]));
+    this.selectClip(clip.id);
+    return clip.id;
+  }
+
+  /** An empty clip that starts with the current pose. */
+  addClip(name = 'Animation'): string | null {
+    const rig = this.doc.rig;
+    if (!rig?.length) return null;
+    const owner = this.joint(this.selectedJoint)?.owner ?? rig[0].owner;
+    const clip: AnimClip = { id: newId(), name: this.uniqueClipName(name), duration: 1, loop: true, ...(owner ? { owner } : {}), keys: [{ t: 0, pose: { ...(this.doc.pose ?? {}) } }] };
+    this.mutate((d) => (d.anims = [...(d.anims ?? []), clip]));
+    this.selectClip(clip.id);
+    return clip.id;
+  }
+
+  removeClip(id: string): void {
+    if (!this.clip(id)) return;
+    this.mutate((d) => {
+      d.anims = (d.anims ?? []).filter((c) => c.id !== id);
+      if (!d.anims.length) delete d.anims;
+    });
+    if (this.animId === id) this.selectClip(null);
+    else this.emit('anim');
+  }
+
+  setClip(id: string, patch: Partial<Pick<AnimClip, 'name' | 'duration' | 'loop'>>): void {
+    this.mutate((d) => {
+      const c = d.anims?.find((x) => x.id === id);
+      if (!c) return;
+      if (patch.name !== undefined) c.name = patch.name.trim() || c.name;
+      if (patch.loop !== undefined) c.loop = patch.loop;
+      if (patch.duration !== undefined) {
+        const dur = Math.max(0.1, Math.min(60, patch.duration));
+        // keys keep their place on the timeline; any beyond the new end are brought in
+        c.duration = dur;
+        for (const k of c.keys) k.t = Math.min(k.t, dur);
+      }
+    });
+    this.emit('anim');
+  }
+
+  /** Store a pose (default: the current pose) as the key at time `t` (replaces a key within a frame of it). */
+  setKey(clipId: string, t: number, pose?: Record<string, Vec3>): void {
+    const snapshot = JSON.parse(JSON.stringify(pose ?? this.doc.pose ?? {})) as Record<string, Vec3>;
+    this.mutate((d) => {
+      const c = d.anims?.find((x) => x.id === clipId);
+      if (!c) return;
+      const tt = Math.round(Math.max(0, Math.min(c.duration, t)) * 1000) / 1000;
+      const i = c.keys.findIndex((k) => Math.abs(k.t - tt) < 1 / 60);
+      if (i >= 0) c.keys[i] = { t: c.keys[i].t, pose: snapshot };
+      else c.keys.push({ t: tt, pose: snapshot });
+      c.keys.sort((a, b) => a.t - b.t);
+    });
+    this.emit('anim');
+  }
+
+  removeKey(clipId: string, index: number): void {
+    this.mutate((d) => {
+      const c = d.anims?.find((x) => x.id === clipId);
+      if (c && c.keys[index] && c.keys.length > 1) c.keys.splice(index, 1);
+    });
+    this.emit('anim');
+  }
+
+  /** Put the clip's pose at time `t` into the editable pose, so it can be changed with the rings and stored as a key. */
+  loadPoseFromClip(clipId: string, t: number): void {
+    const c = this.clip(clipId);
+    if (!c) return;
+    const pose = samplePose(c, t, this.jointIdsOf(c.owner));
+    this.animView = false;
+    this.animPlaying = false;
+    this.mutate((d) => {
+      if (Object.keys(pose).length) d.pose = pose;
+      else delete d.pose;
+    });
+    this.emit('rig');
+    this.emit('anim');
+  }
+
+  selectClip(id: string | null): void {
+    this.animId = id && this.clip(id) ? id : null;
+    this.animTime = 0;
+    this.animPlaying = false;
+    this.animView = false;
+    this.emit('anim');
+  }
+
+  /** Scrub: show the clip at this time. */
+  setAnimTime(t: number): void {
+    const c = this.clip(this.animId);
+    if (!c) return;
+    this.animTime = Math.max(0, Math.min(c.duration, t));
+    this.animView = true;
+    this.emit('anim');
+  }
+
+  setAnimPlaying(on: boolean): void {
+    if (!this.clip(this.animId)) return;
+    this.animPlaying = on;
+    if (on) this.animView = true;
+    this.emit('anim');
+  }
+
+  /** Back to the editable pose. */
+  leaveAnimView(): void {
+    if (!this.animView && !this.animPlaying) return;
+    this.animView = false;
+    this.animPlaying = false;
+    this.emit('anim');
+  }
+
   // ----- pivot and spin -----
 
   /** Where a group's pivot (its origin, the point it turns around) is, in the world. */
@@ -410,6 +558,12 @@ export class Store {
 
   /** Forget the pose of joints that no longer exist. */
   private prunePose(d: Doc): void {
+    if (d.anims) {
+      const live = new Set((d.rig ?? []).map((j) => j.id));
+      const owners = new Set((d.rig ?? []).map((j) => j.owner));
+      d.anims = d.anims.filter((c) => !c.owner || owners.has(c.owner)).map((c) => ({ ...c, keys: c.keys.map((k) => ({ ...k, pose: Object.fromEntries(Object.entries(k.pose).filter(([id]) => live.has(id))) })) }));
+      if (!d.anims.length) delete d.anims;
+    }
     if (!d.pose) return;
     const ids = new Set((d.rig ?? []).map((j) => j.id));
     for (const k of Object.keys(d.pose)) if (!ids.has(k) || d.pose[k].every((v) => Math.abs(v) < 1e-6)) delete d.pose[k];
@@ -419,6 +573,7 @@ export class Store {
   /** Turn a joint (degrees). The bone and everything below it follows. */
   setJointPose(id: string, rot: Vec3, commit = true): void {
     if (!this.joint(id)) return;
+    if (this.animView || this.animPlaying) this.leaveAnimView();
     this.mutate((d) => {
       d.pose = { ...(d.pose ?? {}), [id]: [...rot] as Vec3 };
       this.prunePose(d);
@@ -593,6 +748,15 @@ export class Store {
       return { ...j, id: ids.get(j.id)!, parent: j.parent && ids.has(j.parent) ? ids.get(j.parent)! : null, owner: idMap.get(j.owner!)!, pos: [r(v.x), r(v.y), r(v.z)] as Vec3 };
     });
     d.rig = [...(d.rig ?? []), ...copies];
+    // the copy gets its own copy of the character's animations
+    const owners = new Set(owned.map((j) => j.owner));
+    const copyClips = (d.anims ?? []).filter((c) => c.owner && owners.has(c.owner)).map((c) => ({
+      ...c,
+      id: newId(),
+      owner: idMap.get(c.owner!)!,
+      keys: c.keys.map((k) => ({ t: k.t, pose: Object.fromEntries(Object.entries(k.pose).filter(([id]) => ids.has(id)).map(([id, v]) => [ids.get(id)!, [...v] as Vec3])) })),
+    }));
+    if (copyClips.length) d.anims = [...(d.anims ?? []), ...copyClips];
     if (d.pose) for (const j of owned) if (d.pose[j.id]) d.pose[ids.get(j.id)!] = [...d.pose[j.id]] as Vec3;
   }
 
