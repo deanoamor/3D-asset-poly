@@ -99,3 +99,27 @@ describe('export', () => {
     expect(importGuide('unity', { modelName: 'x', hasObj: true, collision: false, sizeText: '1 x 1 x 1 m', tris: 12 })).toContain('com.unity.cloud.gltfast');
   });
 });
+
+describe('web compression (meshopt)', () => {
+  it('packs a GLB much smaller and keeps it a valid, loadable glTF', async () => {
+    // GLTFExporter reads blobs with FileReader, which node does not have
+    (globalThis as any).FileReader ??= class {
+      result: unknown = null;
+      onloadend: null | (() => void) = null;
+      readAsArrayBuffer(b: Blob) { void b.arrayBuffer().then((r) => { this.result = r; this.onloadend?.(); }); }
+      readAsDataURL(b: Blob) { void b.arrayBuffer().then((r) => { this.result = `data:${b.type};base64,${Buffer.from(r).toString('base64')}`; this.onloadend?.(); }); }
+    };
+    const { Store, emptyDoc } = await import('../src/core/store');
+    const { exportFiles } = await import('../src/engine/exporter');
+    const st = new Store(emptyDoc('Rock'));
+    for (let i = 0; i < 12; i++) st.addShape('sphere', { name: `S${i}`, position: [i * 0.3, 0.5, 0], size: [0.5, 0.5, 0.5] });
+    const plain = await exportFiles(st.doc, { format: 'glb', collision: false });
+    const packed = await exportFiles(st.doc, { format: 'glb', collision: false, compress: true });
+    expect(packed.blob.size).toBeLessThan(plain.blob.size * 0.6);
+    const data = packed.model.data as ArrayBuffer;
+    const dv = new DataView(data);
+    const json = JSON.parse(new TextDecoder().decode(new Uint8Array(data, 20, dv.getUint32(12, true))));
+    expect(json.extensionsUsed).toContain('EXT_meshopt_compression');
+    expect(packed.triangles).toBe(plain.triangles);
+  });
+});

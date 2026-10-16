@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { ExportResult } from './exporter';
 
@@ -47,7 +48,7 @@ export async function verifyExport(res: ExportResult, skipSuffix?: string): Prom
     } else {
       const data = res.model.data;
       const gltf = await new Promise<{ scene: THREE.Group }>((resolve, reject) =>
-        new GLTFLoader().parse(data, '', (g) => resolve(g as { scene: THREE.Group }), (e) => reject(e)),
+        new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parse(data, '', (g) => resolve(g as { scene: THREE.Group }), (e) => reject(e)),
       );
       gltf.scene.updateMatrixWorld(true);
       gltf.scene.traverse((o) => {

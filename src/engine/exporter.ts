@@ -22,6 +22,8 @@ export interface ExportOptions {
   pose?: boolean;
   /** Include the animation clips (default). The character is then exported at rest, with the clips turning its bones. */
   animations?: boolean;
+  /** Pack the GLB with meshopt for smaller downloads (GLB and package only). */
+  compress?: boolean;
 }
 
 export interface ExportResult {
@@ -129,7 +131,12 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
       skins.forEach((o) => root.add(o));
     }
   };
-  const glb = async () => (await parse(true)) as ArrayBuffer;
+  const glb = async () => {
+    const raw = (await parse(true)) as ArrayBuffer;
+    if (!opts.compress) return raw;
+    const { compressGlb } = await import('./compress');
+    return compressGlb(raw);
+  };
 
   if (opts.format === 'glb') {
     const data = await glb();

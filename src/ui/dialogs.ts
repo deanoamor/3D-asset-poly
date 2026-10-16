@@ -96,6 +96,7 @@ let exportFormat: ExportFormat = 'glb';
 let exportCollision = false;
 let exportSkeleton = true;
 let exportAnimations = true;
+let exportCompress = false;
 
 export function openExportDialog(store: Store): void {
   let close: () => void = () => {};
@@ -189,6 +190,18 @@ export function openExportDialog(store: Store): void {
               h('span', {}, h('strong', {}, 'Include the skeleton'), h('br'), h('small', {}, 'On: each character becomes one skinned mesh with joints, ready to pose. Off: parts stay separate and named, with no joints.', doc.pose ? (store.ui.pose ? ' Your pose is included.' : ' Pose is off, so the character is exported at rest.') : '')),
             )
           : null,
+        exportFormat === 'glb' || exportFormat === 'package'
+          ? h('label', { class: 'check' },
+              (() => {
+                const cb = h('input', { type: 'checkbox', id: 'export-compress', checked: exportCompress, onchange: () => {
+                  exportCompress = cb.checked;
+                  render();
+                } }) as HTMLInputElement;
+                return cb;
+              })(),
+              h('span', {}, h('strong', {}, 'Compress for the web (meshopt)'), h('br'), h('small', {}, exportCompress ? 'Much smaller download. Works in three.js, Babylon.js, PlayCanvas, Blender 4+ and model-viewer. Unity, Godot and Unreal need a plugin, so leave it off for them.' : 'Off: a plain GLB that every tool opens.')),
+            )
+          : null,
         doc.anims?.length && doc.rig?.length && exportSkeleton && exportFormat !== 'obj'
           ? h('label', { class: 'check' },
               (() => {
@@ -221,7 +234,7 @@ export function openExportDialog(store: Store): void {
           disabled: blocked,
           onclick: async () => {
             try {
-              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose, animations: exportAnimations });
+              const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose, animations: exportAnimations, compress: exportCompress && exportFormat !== 'gltf' && exportFormat !== 'obj' });
               const saved = await download(res.blob, res.filename);
               if (!saved) return; // viewer declined the save
               const first = !hasEvent('first_export');
@@ -246,7 +259,7 @@ export function openExportDialog(store: Store): void {
     }
     void (async () => {
       try {
-        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose, animations: exportAnimations });
+        const res = await exportFiles(store.doc, { format: exportFormat, collision: exportCollision, skeleton: exportSkeleton, pose: store.ui.pose, animations: exportAnimations, compress: exportCompress && exportFormat !== 'gltf' && exportFormat !== 'obj' });
         const gz = await gzipSize(res.blob);
         if (mine === token) {
           const kb = (n: number) => (n < 1024 * 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${(n / 1048576).toFixed(2)} MB`);

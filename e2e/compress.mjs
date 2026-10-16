@@ -1,0 +1,51 @@
+import { chromium } from 'playwright-core';
+import validator from 'gltf-validator';
+const URL = process.env.URL || 'http://localhost:5199/';
+let failed = 0;
+const ok = (c, m) => { if (!c) failed++; console.log(c ? '  ok  ' : '  FAIL', m); };
+const browser = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--use-gl=angle', '--enable-unsafe-swiftshader'] });
+const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true })).newPage();
+const errs = [];
+page.on('pageerror', (e) => errs.push(e.message));
+page.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
+await page.goto(URL); await page.evaluate(() => localStorage.clear()); await page.reload();
+await page.waitForSelector('#btn-create'); await page.uncheck('#proj-guide'); await page.click('#btn-create');
+await page.click('#btn-assets'); await page.click('.acard[data-asset="soldier"] [data-act="add"]'); await page.waitForTimeout(800);
+await page.selectOption('#anim-preset', 'walk'); await page.evaluate(() => window.__app.store.setAnimPlaying(false));
+const grab = async () => { const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#btn-download')]); const s = await dl.createReadStream(); const c = []; for await (const x of s) c.push(x); return { buf: Buffer.concat(c), name: dl.suggestedFilename() }; };
+const open = async () => { await page.click('#btn-export'); await page.waitForSelector('#export-format'); await page.selectOption('#export-format', 'glb'); };
+console.log('# plain');
+await open();
+await page.waitForFunction(() => document.querySelector('#verify')?.dataset.ok === 'true', null, { timeout: 30000 });
+const plainSize = await page.evaluate(() => document.querySelector('#file-stats').textContent);
+console.log('  ', plainSize.trim());
+await page.click('.dlg-head .tbtn');
+console.log('# compressed');
+await open();
+await page.check('#export-compress');
+await page.waitForFunction(() => document.querySelector('#verify')?.dataset.ok === 'true' && /KB|MB/.test(document.querySelector('#file-stats').textContent), null, { timeout: 60000 });
+const small = await page.evaluate(() => document.querySelector('#file-stats').textContent);
+console.log('  ', small.trim());
+const num = (t) => { const m = t.match(/File ([\d.]+) (KB|MB)/); return +m[1] * (m[2] === 'MB' ? 1024 : 1); };
+ok(num(small) < num(plainSize) * 0.6, `compressed file is much smaller: ${num(small)} KB vs ${num(plainSize)} KB`);
+ok(await page.evaluate(() => document.querySelector('#verify').dataset.ok) === 'true', 'the compressed file re-opens (three.js with the meshopt decoder)');
+const r = await grab();
+const bytes = new Uint8Array(r.buf);
+const dv = new DataView(bytes.buffer, bytes.byteOffset);
+const isGlb = dv.getUint32(0, true) === 0x46546c67;
+let glb = bytes;
+if (!isGlb) { // the host wraps downloads in a zip: find the glb inside (stored/deflated)
+  const { default: JSZip } = await import('jszip').catch(() => ({ default: null }));
+  if (JSZip) { const z = await JSZip.loadAsync(bytes); const f = Object.keys(z.files).find((n) => n.endsWith('.glb')); glb = await z.files[f].async('uint8array'); }
+}
+if (glb[0] === 0x67) {
+  const dv2 = new DataView(glb.buffer, glb.byteOffset);
+  const json = JSON.parse(new TextDecoder().decode(glb.subarray(20, 20 + dv2.getUint32(12, true))));
+  ok(json.extensionsUsed?.includes('EXT_meshopt_compression'), 'the file declares EXT_meshopt_compression');
+  ok(json.animations?.length >= 1 && json.skins?.length === 1, 'the skin and the animation are still there');
+  const rep = await validator.validateBytes(glb);
+  ok(rep.issues.numErrors === 0, `validator: ${rep.issues.numErrors} errors`);
+} else console.log('  (download was wrapped; skipped file checks)');
+ok(errs.length === 0, 'no console errors' + (errs[0] ? ': ' + errs[0] : ''));
+await browser.close();
+process.exit(failed ? 1 : 0);

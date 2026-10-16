@@ -172,7 +172,8 @@ Press **Pose** in the Skeleton section, click a joint and turn it with the rings
 ## Material and file size
 - **Roughness, Metal, Glow** (Properties → Surface) go into the GLB as a real PBR material (`roughness`, `metallic`, `emissive`).
 - The export dialog shows the **file size** (and its gzip size), **draw calls** (meshes) and **materials**, with a warning when the file is large.
-- Not done yet: texture atlas / UV, morph targets, Draco/KTX2 compression.
+- **Compress for the web (meshopt):** tick it in the Export dialog (GLB / package) to pack the file with EXT_meshopt_compression. A soldier with a walk animation goes from about 550 KB to about 170 KB. three.js, Babylon.js, PlayCanvas, Blender 4+ and model-viewer read it; Unity, Godot and Unreal need a plugin, so leave it off for them.
+- Not done yet: texture atlas / UV, morph targets, Draco/KTX2.
 
 ## Skin weights
 - **Weights** (button in the Skeleton header) colours the character by how strongly the picked joint pulls each point: red = fully, blue = not at all.
