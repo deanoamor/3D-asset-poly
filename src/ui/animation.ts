@@ -4,7 +4,7 @@ import { clear, h, icon, toast } from './dom';
 
 /** Animation clips for a skeleton: ready-made Walk / Run / Idle / Wave, or your own from poses stored as keys on a timeline. */
 export function mountAnimation(root: HTMLElement, store: Store): void {
-  const box = h('section', { class: 'anim', id: 'animation', 'aria-label': 'Animation' });
+  const box = h('section', { class: 'anim timeline', id: 'animation', 'aria-label': 'Animation timeline' });
   root.append(box);
   let open = true;
   let built = '';
@@ -86,35 +86,55 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
     if (!store.addClip()) toast('Add a skeleton first.');
   });
 
-  const head = h('div', { class: 'panel-head skel-head' });
-  const body = h('div', { class: 'anim-body' });
+  const KEY = 'polystudio.timeline';
+  try {
+    open = localStorage.getItem(KEY) !== 'closed';
+  } catch {
+    /* ignore */
+  }
+  const toggle = () => {
+    open = !open;
+    try {
+      localStorage.setItem(KEY, open ? 'open' : 'closed');
+    } catch {
+      /* ignore */
+    }
+    built = '';
+    render();
+    tick();
+  };
+  const head = h('div', { class: 'tl-head' });
+  const body = h('div', { class: 'tl-body' });
   box.append(head, body);
 
   const renderHead = () => {
     clear(head);
     const n = store.doc.anims?.length ?? 0;
     head.append(
-      h('button', { class: 'caret', 'aria-label': open ? 'Collapse animation' : 'Expand animation', onclick: () => { open = !open; built = ''; render(); } }, icon(open ? 'chevD' : 'chevR', 12)),
-      h('span', { class: 'skel-title' }, 'Animation'),
-      ...(n ? [h('span', { class: 'skel-count', title: `${n} clips` }, String(n))] : []),
+      h('button', { class: 'tl-toggle', id: 'anim-toggle', 'aria-expanded': String(open), title: open ? 'Hide the timeline' : 'Show the timeline', onclick: toggle },
+        icon(open ? 'chevD' : 'chevU', 12), h('span', { class: 'skel-title' }, 'Animation'), ...(n ? [h('span', { class: 'skel-count', title: `${n} clips` }, String(n))] : [])),
     );
+    if (!open) return;
+    head.append(select, newBtn, presetSel);
+    const c = store.clip(store.animId);
+    if (c) head.append(h('label', { class: 'anim-name' }, nameIn), h('label', { class: 'anim-dur' }, durIn, h('span', {}, 's')), h('label', { class: 'check inline' }, loopIn, h('span', {}, 'Loop')), h('span', { class: 'tl-gap' }), delClip);
   };
 
   /** Everything that only changes when clips or keys do. */
   function render(): void {
     const rig = store.doc.rig;
     box.classList.toggle('hidden', !rig?.length);
+    box.classList.toggle('collapsed', !open);
     if (!rig?.length) return;
     const c = store.clip(store.animId);
     const sig = JSON.stringify([open, (store.doc.anims ?? []).map((x) => [x.id, x.name]), store.animId, c && [c.duration, c.loop, c.keys.map((k) => k.t)]]);
     if (sig === built) return;
     built = sig;
+    select.replaceChildren(h('option', { value: '' }, (store.doc.anims?.length ? 'Choose an animation…' : 'No animations yet')), ...(store.doc.anims ?? []).map((x) => h('option', { value: x.id }, x.name)));
+    select.value = store.animId ?? '';
     renderHead();
     clear(body);
     if (!open) return;
-    select.replaceChildren(h('option', { value: '' }, (store.doc.anims?.length ? 'Choose an animation…' : 'No animations yet')), ...(store.doc.anims ?? []).map((x) => h('option', { value: x.id }, x.name)));
-    select.value = store.animId ?? '';
-    body.append(h('div', { class: 'anim-row' }, select, newBtn), h('div', { class: 'anim-row' }, presetSel));
     if (!c) {
       body.append(h('p', { class: 'fnote' }, 'Pick a ready-made Walk, Run, Idle or Wave, or press New and pose the character yourself: store poses as keys on the timeline and the character moves between them.'));
       return;
@@ -123,6 +143,9 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
     durIn.value = String(c.duration);
     loopIn.checked = c.loop;
     slider.max = String(c.duration);
+    const step = c.duration <= 2 ? 0.25 : c.duration <= 6 ? 0.5 : 1;
+    const ticks: HTMLElement[] = [];
+    for (let t = 0; t <= c.duration + 1e-6; t += step) ticks.push(h('span', { class: 'tick', style: `left:${(t / c.duration) * 100}%` }, Number.isInteger(t) ? String(t) : t.toFixed(2)));
     keysBar.replaceChildren(...c.keys.map((k, i) =>
       h('button', {
         class: 'akey',
@@ -135,12 +158,11 @@ export function mountAnimation(root: HTMLElement, store: Store): void {
       }),
     ));
     body.append(
-      h('div', { class: 'anim-row' }, h('label', { class: 'anim-name' }, nameIn), h('label', { class: 'anim-dur' }, durIn, h('span', {}, 's')), h('label', { class: 'check inline' }, loopIn, h('span', {}, 'Loop'))),
-      h('div', { class: 'anim-row transport' }, play, readout),
-      h('div', { class: 'anim-track' }, slider, keysBar),
-      h('div', { class: 'anim-row wrap' }, addKey, loadBtn, delKey),
-      h('div', { class: 'anim-row' }, delClip),
-      h('p', { class: 'fnote' }, 'Play shows the character moving. To make your own motion: press Pose, turn the joints, then Key here. Move the time slider, pose again, Key here again. In Preview the animation plays too; GLB export includes every clip.'),
+      h('div', { class: 'tl-side' }, h('div', { class: 'anim-row transport' }, play), readout, h('div', { class: 'anim-row wrap' }, addKey, loadBtn, delKey)),
+      h('div', { class: 'tl-main' },
+        h('div', { class: 'tl-ruler' }, ...ticks),
+        h('div', { class: 'anim-track' }, slider, keysBar),
+        h('p', { class: 'fnote' }, 'Play shows the character moving. To make your own motion: press Pose, turn the joints, then Key here. Move the time slider, pose again, Key here again. GLB export includes every clip.')),
     );
   }
 

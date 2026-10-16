@@ -38,7 +38,7 @@ async function boot(): Promise<void> {
   const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour(), assets: () => openAssetLibrary(store, vp, learnPlayer), saves: () => openSavesDialog(store, vp) });
   mountLayers(layers, store);
   mountSkeleton(layers, store);
-  mountAnimation(layers, store);
+  mountAnimation(app, store);
   mountProps(props, store);
   mountToolbar(stage, store, vp);
   mountPolyCounter(stage, store);

@@ -44,6 +44,15 @@ const hip0 = await bone('Hip Left'); await page.waitForTimeout(250); const hip1 
 ok(hip0.some((v, i) => Math.abs(v - hip1[i]) > 0.01), 'and so is the hip');
 ok(!(await page.evaluate(() => !!window.__app.store.doc.pose)), 'playing never changes the saved pose');
 
+console.log('# bottom timeline can be hidden');
+const bx = await page.evaluate(() => { const r = document.querySelector('#animation').getBoundingClientRect(); const v = document.querySelector('#stage').getBoundingClientRect(); return { top: r.top, w: r.width, vw: v.width, vb: v.bottom }; });
+ok(bx.top >= bx.vb - 1 && bx.w > 600, `timeline sits under the viewport, ${Math.round(bx.w)}px wide`);
+await page.screenshot({ path: 'e2e/out/animation/timeline.png' });
+await page.click('#anim-toggle');
+ok(!(await page.isVisible('#anim-play')) && await page.isVisible('#anim-toggle'), 'hiding leaves only the Animation tab');
+await page.click('#anim-toggle');
+ok(await page.isVisible('#anim-play'), 'showing brings the timeline back');
+
 console.log('# pause and scrub');
 await page.click('#anim-play');
 ok(!(await page.evaluate(() => window.__app.store.animPlaying)), 'Pause stops it');
