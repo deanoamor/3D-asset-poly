@@ -365,3 +365,8 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .shrinkrow input[type="range"] { flex: 0 1 220px; }
 .shrinkval { min-width: 38px; font-variant-numeric: tabular-nums; font-weight: 600; }
 .shrinkhelp { color: var(--muted); font-size: 12px; }
+.segrow.four { grid-template-columns: repeat(4, 1fr); }
+.segbtn.on { background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); color: var(--accent); }
+.spinrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 4px; font-size: 13px; }
+.spinrow input { width: 80px; }
+.actrow { display: flex; gap: 6px; flex-wrap: wrap; }

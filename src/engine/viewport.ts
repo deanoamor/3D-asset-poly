@@ -44,6 +44,9 @@ export class Viewport {
   readonly tc: TransformControls;
   private model = new THREE.Group();
   private rig: RigOverlay;
+  private pivotMarker = new THREE.Group();
+  private pivotId: string | null = null;
+  private spinOn = false;
   private poseRoot: THREE.Group | null = null;
   private poseBones = new Map<string, THREE.Bone>();
   private poseSig = '';
@@ -80,6 +83,8 @@ export class Viewport {
     this.scene.add(this.model);
     this.rig = new RigOverlay(store);
     this.scene.add(this.rig.group);
+    this.buildPivotMarker();
+    this.scene.add(this.pivotMarker);
     const hemi = new THREE.HemisphereLight(0xffffff, 0x9aa0a8, 1.6);
     const sun = new THREE.DirectionalLight(0xffffff, 2.2);
     sun.position.set(5, 9, 4);
@@ -160,6 +165,7 @@ export class Viewport {
     store.subscribe((e) => {
       if (e === 'doc' || e === 'reset' || e === 'learn') this.sync();
       if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool' || e === 'history') this.syncRig();
+      if (e === 'doc' || e === 'selection' || e === 'reset' || e === 'tool' || e === 'edit' || e === 'history') this.syncPivot();
       if (e === 'selection' || e === 'reset') this.onSelection();
       if (e === 'tool') this.onToolChange();
       if (e === 'edit') {
@@ -172,6 +178,107 @@ export class Viewport {
     this.onSelection();
     this.onToolChange();
     this.loop();
+  }
+
+  // ----- pivot marker and spin -----
+
+  private buildPivotMarker(): void {
+    const mat = (c: number) => new THREE.MeshBasicMaterial({ color: c, depthTest: false, depthWrite: false, transparent: true, opacity: 0.95 });
+    const ball = new THREE.Mesh(new THREE.OctahedronGeometry(0.06), mat(0xff8a1f));
+    ball.renderOrder = 1004;
+    ball.userData.pivot = true;
+    this.pivotMarker.add(ball);
+    for (const [axis, color] of [[0, 0xe5484d], [1, 0x3fb950], [2, 0x3b82f6]] as const) {
+      const len = 0.28;
+      const g = new THREE.CylinderGeometry(0.012, 0.012, len, 6);
+      g.translate(0, len / 2 + 0.05, 0);
+      const m = new THREE.Mesh(g, mat(color));
+      m.renderOrder = 1003;
+      m.raycast = () => {};
+      if (axis === 0) m.rotation.z = -Math.PI / 2;
+      if (axis === 2) m.rotation.x = Math.PI / 2;
+      this.pivotMarker.add(m);
+    }
+    this.pivotMarker.visible = false;
+  }
+
+  /** Show the pivot of the selected group as an orange diamond with axis lines. */
+  private syncPivot(): void {
+    const sel = this.store.selection;
+    const ui = this.store.ui;
+    const id = sel.length === 1 && this.store.get(sel[0])?.kind === 'group' && !ui.preview && !this.store.edit && !this.poseActive ? sel[0] : null;
+    this.pivotId = id;
+    const p = id ? this.store.pivotOf(id) : null;
+    this.pivotMarker.visible = !!p;
+    if (p && id) {
+      this.pivotMarker.position.set(...p);
+      // the axis lines follow the group's own turn
+      const m = this.store.worldMatrixOf(id);
+      const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().extractRotation(m));
+      this.pivotMarker.quaternion.copy(q);
+    }
+    this.requestRender();
+  }
+
+  /** Drag the pivot of the selected group; what is inside stays where it is. */
+  private beginPivotDrag(e: PointerEvent, id: string): void {
+    const from = this.store.pivotOf(id);
+    if (!from) return;
+    const normal = this.camera.getWorldDirection(new THREE.Vector3());
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, new THREE.Vector3(...from));
+    const start = new THREE.Vector3();
+    this.raycaster.setFromCamera(this.ndc(e), this.camera);
+    if (!this.raycaster.ray.intersectPlane(plane, start)) return;
+    this.controls.enabled = false;
+    let moved = false;
+    const step = this.store.ui.snapGrid ? this.store.ui.gridStep / 5 : 0.001;
+    const snap = (v: number) => Math.round(v / step) * step;
+    const move = (m: PointerEvent) => {
+      if (!moved && Math.hypot(m.clientX - e.clientX, m.clientY - e.clientY) < 3) return;
+      moved = true;
+      this.raycaster.setFromCamera(this.ndc(m), this.camera);
+      const p = new THREE.Vector3();
+      if (!this.raycaster.ray.intersectPlane(plane, p)) return;
+      const to = new THREE.Vector3(...from).add(p.sub(start));
+      const r = (v: number) => Math.round(snap(v) * 1000) / 1000;
+      this.store.setPivot(id, [r(to.x), r(to.y), r(to.z)], false);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      this.controls.enabled = true;
+      if (moved) this.store.commit();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  /** Preview: objects with Spin turn around their pivot. Returns true while something is spinning. */
+  private spinTick(): boolean {
+    const doc = this.store.doc;
+    const spins = this.store.ui.preview && !this.poseActive ? doc.objects.filter((o) => o.spin) : [];
+    if (spins.length) {
+      const t = performance.now() / 1000;
+      const axes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
+      const q = new THREE.Quaternion();
+      for (const o of spins) {
+        const node = this.nodes.get(o.id);
+        if (!node) continue;
+        applyTransform(node, o);
+        node.quaternion.multiply(q.setFromAxisAngle(axes[o.spin!.axis], Math.PI * 2 * o.spin!.speed * t));
+      }
+      this.spinOn = true;
+      return true;
+    }
+    if (this.spinOn) {
+      this.spinOn = false;
+      for (const o of doc.objects) if (o.spin) {
+        const node = this.nodes.get(o.id);
+        if (node) applyTransform(node, o);
+      }
+      this.dirty = true;
+    }
+    return false;
   }
 
   // ----- skeleton overlay -----
@@ -639,6 +746,11 @@ export class Viewport {
         return;
       }
     }
+    if (!this.store.edit && this.pivotMarker.visible && this.pivotId) {
+      this.raycaster.setFromCamera(this.ndc(e), this.camera);
+      const c = this.pivotMarker.position;
+      if (this.raycaster.ray.distanceToPoint(c) <= 0.07 + this.raycaster.ray.origin.distanceTo(c) * 0.006) return this.beginPivotDrag(e, this.pivotId);
+    }
     if (this.store.edit) return this.edit.pointerDown(e);
     const tool = this.store.ui.tool;
 
@@ -906,6 +1018,7 @@ export class Viewport {
       this.controls.update();
       animating = true;
     }
+    if (this.spinTick()) animating = true;
     if (animating || this.dirty) {
       this.dirty = false;
       this.controls.update();

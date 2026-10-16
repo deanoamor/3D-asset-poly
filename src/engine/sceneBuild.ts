@@ -81,6 +81,7 @@ export function buildExportScene(doc: Doc, name: string, opts: { bakePose?: bool
     }
     node.name = o.name;
     applyTransform(node, o);
+    if (o.spin) node.userData.spin = { ...o.spin };
     nodes.set(o.id, node);
   }
   for (const o of doc.objects) {

@@ -18,8 +18,8 @@ export function assetThumbnails(defs: AssetDef[] = ASSETS): Map<string, string> 
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       for (const def of todo) {
         const doc = emptyDoc(def.name);
-        const { group, parts } = instantiateAsset(def);
-        doc.objects.push(group, ...parts);
+        const { group, groups, parts } = instantiateAsset(def);
+        doc.objects.push(group, ...groups, ...parts);
         const model = buildExportScene(doc, def.name);
         model.traverse((o) => {
           if ((o as THREE.Mesh).isMesh) {

@@ -56,10 +56,10 @@ const parts: AssetPart[] = [
       const X = s * x;
       return [
         tube(4, `${nm} Wheel Well ${side}`, [s * 0.9, 0.4, z], [0.8, 0.24, 0.8], DARK, 12, { rot: [0, 0, 90] }),
-        tube(4, `${nm} Tire ${side}`, [X, 0.36, z], [0.72, 0.26, 0.72], RUBBER, 14, { rot: [0, 0, 90] }),
-        tube(4, `${nm} Rim ${side}`, [s * 0.9, 0.36, z], [0.46, 0.27, 0.46], RIM, 10, { rot: [0, 0, 90] }),
-        tube(4, `${nm} Rim Dark ${side}`, [s * 0.905, 0.36, z], [0.33, 0.272, 0.33], HUB, 10, { rot: [0, 0, 90] }),
-        tube(4, `${nm} Hubcap ${side}`, [s * 0.915, 0.36, z], [0.15, 0.275, 0.15], CHROME, 6, { rot: [0, 0, 90] }),
+        tube(4, `${nm} Tire ${side}`, [X, 0.36, z], [0.72, 0.26, 0.72], RUBBER, 14, { rot: [0, 0, 90], group: `Wheel ${nm} ${side}` }),
+        tube(4, `${nm} Rim ${side}`, [s * 0.9, 0.36, z], [0.46, 0.27, 0.46], RIM, 10, { rot: [0, 0, 90], group: `Wheel ${nm} ${side}` }),
+        tube(4, `${nm} Rim Dark ${side}`, [s * 0.905, 0.36, z], [0.33, 0.272, 0.33], HUB, 10, { rot: [0, 0, 90], group: `Wheel ${nm} ${side}` }),
+        tube(4, `${nm} Hubcap ${side}`, [s * 0.915, 0.36, z], [0.15, 0.275, 0.15], CHROME, 6, { rot: [0, 0, 90], group: `Wheel ${nm} ${side}` }),
       ];
     });
   }),
@@ -100,6 +100,8 @@ applyStyle(parts, [
 
 export const CAR: AssetDef = {
   id: 'car',
+  // each wheel is its own group with the pivot on the axle, and it spins around it
+  groups: [1, -1].flatMap((sd) => FL.map(([, z], i) => ({ name: `Wheel ${i === 0 ? 'Front' : 'Rear'} ${sd === 1 ? 'Left' : 'Right'}`, pivot: [sd * 0.87, 0.36, z] as [number, number, number], spin: { axis: 0 as const, speed: 1 } }))),
   name: 'Car',
   tagline: 'A detailed hatchback: sloped glass, wheel wells, lights and trim',
   level: 'Detailed',
@@ -110,7 +112,7 @@ export const CAR: AssetDef = {
     { title: 'Hood and trunk', text: 'The hood and the trunk lid are separate thin Boxes on top of the body, each reshaped so the far end is narrower. Tilt them a few degrees with Rotate (E) so they slope. A thin darker line marks the center of the hood.', tools: ['Edit shape: narrow one end', 'Rotate (E)', 'Properties: Rotation'] },
     { title: 'Cabin and roof', text: 'The cabin is a Box where the top is smaller than the bottom, in both width and length. That gives the sloped windshield and sloping sides. A pale roof panel sits on top, with two rails and two crossbars for a roof rack.', tools: ['Edit shape: select the top face, Size (R)', 'Thin boxes', 'Duplicate Ctrl+D'] },
     { title: 'Windows and pillars', text: 'Glass is thin blue Boxes tilted to match the cabin slopes: about 35 degrees for the front and back and about 15 degrees on the sides. Dark pillars separate the side windows, and thin lines mark the doors.', tools: ['Rotate (E)', 'Thin boxes', 'Mirror ideas: duplicate and flip'] },
-    { title: 'Wheels', text: 'Each wheel is five parts stacked on one axis. A dark Cylinder is the wheel well and shows as a ring around the tire. Then come the tire (14 sides), a light rim (10 sides), a gray inner disc and a small chrome hubcap. Rotate Z 90 degrees turns each cylinder on its side. Make one wheel, group it, and duplicate it three times.', tools: ['Shape: Cylinder', 'Rotation Z 90°', 'Group Ctrl+G, Duplicate Ctrl+D', 'Sides slider'] },
+    { title: 'Wheels', text: 'Each wheel is five parts stacked on one axis. A dark Cylinder is the wheel well and shows as a ring around the tire. Then come the tire (14 sides), a light rim (10 sides), a gray inner disc and a small chrome hubcap. Rotate Z 90 degrees turns each cylinder on its side. Group the four parts of a wheel (Ctrl+G) and put the pivot of the group on the axle: then turning the group around X rolls the whole wheel, and the wheel in this car is set to spin (try Preview).', tools: ['Shape: Cylinder', 'Rotation Z 90°', 'Group Ctrl+G, Duplicate Ctrl+D', 'Sides slider'] },
     { title: 'Front', text: 'Front details: a bumper reshaped to be narrower at the front, a dark grille with three chrome slats, chrome headlight housings with a flattened sphere as the lens, orange indicators, small fog lights and a license plate.', tools: ['Shape: Sphere + Size (R)', 'Thin boxes', 'Color palette'] },
     { title: 'Rear', text: 'The back mirrors the front: a bumper, red taillights, small white reverse lights, a license plate, an exhaust pipe (a Cylinder turned to point backward) and a trunk handle.', tools: ['Rotation X 90°', 'Duplicate Ctrl+D', 'Thin boxes'] },
     { title: 'Final details', text: 'Mirrors, door handles, wipers and an antenna finish the car. They are tiny, but they are what makes a model look finished instead of just built. Name every part in Layers and group them as Car.', tools: ['Rename in Layers', 'Group Ctrl+G', 'Cylinder: Top size for the antenna'] },

@@ -17,9 +17,9 @@ const SEPARATE: Record<string, RegExp> = {
 
 function boxesOf(id: string) {
   const def = ASSETS.find((a) => a.id === id)!;
-  const { group, parts } = instantiateAsset(def);
+  const { group, groups, parts } = instantiateAsset(def);
   const st = new Store(emptyDoc());
-  st.mutate((d) => d.objects.push(group, ...parts), false);
+  st.mutate((d) => d.objects.push(group, ...groups, ...parts), false);
   return parts.map((p) => ({ name: p.name, box: st.worldBounds([p.id]) }));
 }
 

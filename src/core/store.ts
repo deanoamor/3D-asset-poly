@@ -17,6 +17,7 @@ import {
   type EditMode, type PolyMesh, type Sel, type V3,
 } from './mesh';
 
+const D2R = Math.PI / 180;
 export const DEFAULT_COLOR = '#c9ced6';
 const HISTORY_CAP = 500;
 
@@ -99,6 +100,8 @@ export class Store {
   };
   /** The joint picked in the viewport or the Skeleton list (not saved). */
   selectedJoint: string | null = null;
+  /** Set while a change must not carry the skeleton along (moving a pivot). */
+  private keepJoints = false;
   /** After Shrink face: the shape as it was, so the inset can be dragged bigger or smaller until something else is done. */
   shrinkSession: { base: PolyMesh; faces: number[]; amount: number } | null = null;
   edit: EditState | null = null;
@@ -171,7 +174,7 @@ export class Store {
 
   /** A character's joints travel with it: when its group is moved, turned or resized, so are its joints. */
   private followOwners(before: Map<string, THREE.Matrix4>): void {
-    if (!before.size || !this.doc.rig) return;
+    if (this.keepJoints || !before.size || !this.doc.rig) return;
     const v = new THREE.Vector3();
     for (const [owner, m0] of before) {
       if (!this.doc.objects.some((o) => o.id === owner)) continue;
@@ -342,6 +345,65 @@ export class Store {
       this.prunePose(d);
     });
     this.fixJointSelection();
+  }
+
+  // ----- pivot and spin -----
+
+  /** Where a group's pivot (its origin, the point it turns around) is, in the world. */
+  pivotOf(id: string): Vec3 | null {
+    const o = this.get(id);
+    if (!o || o.kind !== 'group') return null;
+    const v = new THREE.Vector3().setFromMatrixPosition(this.worldMatrixOf(id));
+    return [v.x, v.y, v.z];
+  }
+
+  /**
+   * Move a group's pivot to a point in the world. The things inside stay exactly where they are: only the point the
+   * group moves, turns and spins around changes.
+   */
+  setPivot(id: string, world: Vec3, commit = true): void {
+    const g = this.get(id);
+    if (!g || g.kind !== 'group') return;
+    const parentInv = g.parent ? this.worldMatrixOf(g.parent).invert() : new THREE.Matrix4();
+    const n = new THREE.Vector3(...world).applyMatrix4(parentInv); // the new origin, in the parent's space
+    const old = new THREE.Vector3(...g.position);
+    // children keep their place: they move by the opposite of the pivot's move, measured inside the group
+    const d = old.clone().sub(n);
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(g.rotation[0] * D2R, g.rotation[1] * D2R, g.rotation[2] * D2R, 'XYZ'));
+    d.applyQuaternion(q.invert());
+    d.set(d.x / (g.size[0] || 1), d.y / (g.size[1] || 1), d.z / (g.size[2] || 1));
+    const r = (x: number) => Math.round(x * 1e5) / 1e5;
+    this.keepJoints = true; // the skeleton does not move: only the group's origin does
+    this.mutate((doc) => {
+      for (const o of doc.objects) {
+        if (o.id === id) o.position = [r(n.x), r(n.y), r(n.z)];
+        else if (o.parent === id) o.position = [r(o.position[0] + d.x), r(o.position[1] + d.y), r(o.position[2] + d.z)];
+      }
+    }, commit);
+    this.keepJoints = false;
+    this.emit('doc');
+  }
+
+  /** Put the pivot at the middle, the bottom or the top of what is inside the group (keeping its X and Z at the middle). */
+  setPivotPreset(id: string, where: 'center' | 'bottom' | 'top'): void {
+    const g = this.get(id);
+    if (!g || g.kind !== 'group') return;
+    const kids = descendantIds(this.doc, id);
+    const box = this.worldBounds(kids.length ? kids : [id]);
+    if (box.isEmpty()) return;
+    const c = box.getCenter(new THREE.Vector3());
+    const y = where === 'center' ? c.y : where === 'bottom' ? box.min.y : box.max.y;
+    this.setPivot(id, [c.x, y, c.z]);
+  }
+
+  /** Make the given groups (or shapes) spin by themselves, or stop them. */
+  setSpin(ids: string[], spin: SceneObject['spin'] | null): void {
+    this.mutate((d) => {
+      for (const o of d.objects) if (ids.includes(o.id)) {
+        if (spin) o.spin = { axis: spin.axis, speed: spin.speed };
+        else delete o.spin;
+      }
+    });
   }
 
   // ----- skeleton: joints and bones -----

@@ -164,6 +164,57 @@ export function mountProps(root: HTMLElement, store: Store): void {
     );
   }
 
+  /** Where a group turns around, and buttons to put it in the middle, at the bottom or at the top of what is inside. */
+  function pivotSection(o: SceneObject): HTMLElement {
+    const read = h('div', { class: 'tris', id: 'pivot-readout' });
+    fields.push({
+      update: () => {
+        const p = store.pivotOf(o.id);
+        read.textContent = p ? `Pivot at ${p.map((v) => v.toFixed(2)).join(', ')} m` : '';
+      },
+    });
+    const btn = (label: string, where: 'center' | 'bottom' | 'top') =>
+      h('button', { class: 'btn sm', id: `pivot-${where}`, title: `Put the pivot at the ${where === 'center' ? 'middle' : where} of what is inside`, onclick: () => store.setPivotPreset(o.id, where) }, label);
+    return section(
+      'Pivot',
+      h('div', { class: 'actrow' }, btn('Middle', 'center'), btn('Bottom', 'bottom'), btn('Top', 'top')),
+      read,
+      h('p', { class: 'fnote' }, 'The orange diamond in the scene is the pivot: the point this group turns and spins around. Drag it, for example onto a wheel’s axle. What is inside stays where it is.'),
+    );
+  }
+
+  /** Make the selected object turn by itself (a wheel, a fan). Shows in Preview and is saved in the exported file. */
+  function spinSection(o: SceneObject): HTMLElement {
+    const AX = ['X', 'Y', 'Z'] as const;
+    const off = h('button', { class: 'segbtn', id: 'spin-off', onclick: () => store.setSpin([o.id], null) }, 'Off');
+    const axBtns = AX.map((a, i) => h('button', { class: 'segbtn', id: `spin-${a.toLowerCase()}`, title: `Turn around its ${a} axis`, onclick: () => store.setSpin([o.id], { axis: i as 0 | 1 | 2, speed: store.get(o.id)?.spin?.speed ?? 1 }) }, a));
+    const speed = h('input', { type: 'number', step: '0.25', value: '1', id: 'spin-speed', 'aria-label': 'Turns per second' }) as HTMLInputElement;
+    speed.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') speed.blur();
+    });
+    speed.addEventListener('change', () => {
+      const v = parseFloat(speed.value);
+      const cur = store.get(o.id)?.spin;
+      if (cur && Number.isFinite(v) && v !== 0) store.setSpin([o.id], { axis: cur.axis, speed: v });
+    });
+    fields.push({
+      update: () => {
+        const sp = store.get(o.id)?.spin;
+        off.classList.toggle('on', !sp);
+        axBtns.forEach((b, i) => b.classList.toggle('on', sp?.axis === i));
+        speed.disabled = !sp;
+        if (sp && document.activeElement !== speed) speed.value = String(sp.speed);
+      },
+    });
+    return section(
+      'Spin',
+      h('div', { class: 'segrow four', role: 'group', 'aria-label': 'Spin around' }, off, ...axBtns),
+      h('label', { class: 'spinrow' }, h('span', {}, 'Turns per second'), speed),
+      h('p', { class: 'fnote' }, 'Turns around the pivot by itself: see it in Preview. In the exported file it becomes a looping animation called Spin.'),
+    );
+  }
+
   function buildSingle(o: SceneObject): void {
     const locked = isLockedChain(store.map, o);
     const isShape = o.kind === 'shape';
@@ -205,6 +256,8 @@ export function mountProps(root: HTMLElement, store: Store): void {
     fs.append(section('Position (m)', vec3Row(o, 'position', AXES, 0.25)));
     fs.append(section('Size (m)', vec3Row(o, 'size', isShape && o.shape === 'plane' ? ['W', '–', 'D'] : SIZE_AXES, 0.25, 0.01)));
     fs.append(section('Rotation', vec3Row(o, 'rotation', AXES, 5, undefined, '°')));
+    if (!isShape) fs.append(pivotSection(o));
+    fs.append(spinSection(o));
     if (!isShape) fs.append(surfaceSection([o.id], 'Surface (all parts)'));
     if (isShape) {
       const shape = o.shape!;

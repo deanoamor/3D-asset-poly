@@ -15,9 +15,9 @@ export function addAsset(store: Store, vp: Viewport, def: AssetDef, opts: { rig?
   const stats = assetStats(def);
   const box = store.worldBounds();
   const x = box.isEmpty() ? 0 : box.max.x + 1.5 + stats.width / 2;
-  const { group, parts, partStep, joints } = instantiateAsset(def, [x, 0, 0], names);
+  const { group, groups, parts, partStep, joints } = instantiateAsset(def, [x, 0, 0], names);
   store.mutate((d) => {
-    d.objects.push(group, ...parts);
+    d.objects.push(group, ...groups, ...parts);
     if (opts.rig !== false && joints.length) d.rig = [...(d.rig ?? []), ...joints];
   });
   store.select([group.id]);

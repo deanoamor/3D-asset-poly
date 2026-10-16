@@ -30,6 +30,11 @@ export interface SceneObject {
   smooth?: boolean;
   /** 0..1: soft color differences across the surface (a hand-painted look), stored as vertex colors. */
   paint?: number;
+  /**
+   * Spin: this object turns by itself around its own pivot (a wheel, a fan, a windmill). `axis` is its local X, Y or Z;
+   * `speed` is turns per second (negative = the other way). Shown in Preview and exported as a looping animation.
+   */
+  spin?: { axis: 0 | 1 | 2; speed: number };
   visible: boolean;
   locked: boolean;
   parent: string | null;

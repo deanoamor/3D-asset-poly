@@ -163,3 +163,8 @@ Inside the claude.ai artifact the host only saves some extensions, so the bag ar
 
 ### Pose mode
 Press **Pose** in the Skeleton section, click a joint and turn it with the rings (or type degrees): the character bends live. With **Pose on**, Preview shows the posed character with its shadow; with Pose off, Preview (like the editing view) shows the character at rest. The pose is saved with the project (and in a save or a `.3pi` bag), and **GLB/glTF export bakes it in while Pose is on** (with Pose off the character is exported at rest), so the file holds the posed mesh with its skeleton in that pose. Undo/redo cover every turn; **Reset whole pose** goes back to rest.
+
+## Pivot and spin
+- **Pivot:** a group turns, spins and resizes around its pivot (its origin). Select a group and look for the orange diamond in the scene (with small X / Y / Z lines): drag it to move the pivot, for example onto a wheel's axle. What is inside the group stays exactly where it is. In Properties, **Pivot** has *Middle / Bottom / Top* buttons. A new group's pivot starts at the bottom middle of its parts.
+- **Spin:** in Properties, **Spin** makes an object turn by itself around its pivot (Off / X / Y / Z, and turns per second). Preview shows it turning, and GLB/glTF export writes a looping animation called **Spin** that every engine and 3D app can play.
+- The car's four wheels are groups with the pivot on the axle and a spin around X, so they roll in Preview and in the exported file. Plain objects need no bones for this: a bone is only for bending things.

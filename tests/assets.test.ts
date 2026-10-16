@@ -26,10 +26,9 @@ describe('asset library', () => {
       });
 
       it('stands on the ground and is a believable size', () => {
-        const { parts } = instantiateAsset(def);
+        const { group, groups, parts } = instantiateAsset(def);
         const st = new Store(emptyDoc());
-        const { group } = instantiateAsset(def);
-        st.mutate((d) => d.objects.push(group, ...parts.map((o) => ({ ...o, parent: group.id }))));
+        st.mutate((d) => d.objects.push(group, ...groups, ...parts));
         const b = st.worldBounds();
         expect(b.min.y).toBeGreaterThanOrEqual(-0.001);
         expect(b.min.y).toBeLessThan(0.02);
@@ -41,9 +40,9 @@ describe('asset library', () => {
       });
 
       it('counts its triangles', () => {
-        const { group, parts } = instantiateAsset(def);
+        const { group, groups, parts } = instantiateAsset(def);
         const st = new Store(emptyDoc('t'));
-        st.mutate((d) => d.objects.push(group, ...parts));
+        st.mutate((d) => d.objects.push(group, ...groups, ...parts));
         expect(polyStats(st.doc).total).toBe(assetStats(def).triangles);
       });
 

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
 import { bakeVertexColors } from './bakeColor';
+import { spinClip } from './spinExport';
 import { settleSkins } from './rigExport';
 import { PRESETS, importGuide, packsObj, type ExportFormat } from '../core/presets';
 import { writeObj } from './objExport';
@@ -104,7 +105,9 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
     root.traverse((o) => (o as THREE.SkinnedMesh).isSkinnedMesh && skins.push(o));
     skins.forEach((o) => o.removeFromParent());
     try {
-      return await exporter.parseAsync(skins.length ? [root, ...skins] : root, { binary, onlyVisible: true, trs: false });
+      const clip = spinClip(root);
+      // animated nodes must carry position / rotation / scale, not a matrix
+      return await exporter.parseAsync(skins.length ? [root, ...skins] : root, { binary, onlyVisible: true, trs: !!clip, ...(clip ? { animations: [clip] } : {}) });
     } finally {
       skins.forEach((o) => root.add(o));
     }
