@@ -18,7 +18,7 @@ P(name='Grass Patch', kind='cylinder', pos=[0.5, 0.31, 0.2], size=[3.2, 0.06, 2.
 # ---- pond and stepping slabs
 P(name='Pond Edge', kind='cylinder', pos=[-1.25, 0.31, 1.3], size=[1.45, 0.05, 1.15], segments=8, color='#dccb82')
 P(name='Pond', kind='cylinder', pos=[-1.25, 0.335, 1.3], size=[1.25, 0.05, 0.98], segments=8, color='#62c9ea')
-for i, (x, z, w, d) in enumerate([(-0.3, 1.55, 0.4, 0.3), (0.1, 1.38, 0.34, 0.34), (0.42, 1.72, 0.4, 0.28), (0.0, 1.9, 0.36, 0.28), (0.5, 1.45, 0.3, 0.26), (0.3, 2.0, 0.34, 0.26)]):
+for i, (x, z, w, d) in enumerate([(0.9, 1.6, 0.4, 0.3), (1.3, 1.5, 0.34, 0.34), (1.05, 1.95, 0.4, 0.28), (1.5, 1.9, 0.36, 0.28), (0.75, 2.3, 0.34, 0.26), (1.3, 2.3, 0.3, 0.26)]):
     P(name=f'Slab {i+1}', kind='box', pos=[x, G + 0.015, z], size=[w, 0.04, d], rot=[0, random.uniform(-14, 14), 0], color='#dcd2b4')
 
 # ---- the big trunk behind the cabin
@@ -43,18 +43,42 @@ def rail(name, x0, z0, x1, z1, n=6):
     ln = math.hypot(x1 - x0, z1 - z0)
     rot = math.degrees(math.atan2(-(z1 - z0), (x1 - x0)))
     P(name=f'{name} Rail', kind='box', pos=[mx, DECK_Y + 0.44, mz], size=[ln, 0.05, 0.05], rot=[0, round(rot, 1), 0], color='#c88848')
-rail('Front Rail', DX0 + 0.03, DZ1 - 0.03, 0.2, DZ1 - 0.03, 6)
+rail('Front Rail A', DX0 + 0.03, DZ1 - 0.03, -0.5, DZ1 - 0.03, 5)
+rail('Front Rail B', 0.3, DZ1 - 0.03, DX1 - 0.03, DZ1 - 0.03, 3)
 rail('West Rail', DX0 + 0.03, DZ0 + 0.03, DX0 + 0.03, DZ1 - 0.03, 9)
 rail('East Rail', DX1 - 0.03, DZ0 + 0.03, DX1 - 0.03, -0.25, 4)
 
-# ---- stairs: one down to the right, one down to the front
+CX, CZ = -0.55, -0.6
+# ---- stairs: they start flush at the deck edge, steps touch each other and the ground, with side boards and a handrail
 def stairs(name, x, z, dx, dz, n, w):
+    """(x, z) is the point on the deck edge where the stairs start; (dx, dz) is the unit direction they run in."""
+    L = 0.3                       # length of one step
+    rise = (DECK_Y - G) / (n + 1)
     for i in range(n):
-        top = DECK_Y - (i + 1) * ((DECK_Y - G) / (n + 0.4))
+        top = DECK_Y - (i + 1) * rise
         hgt = top - G
-        P(name=f'{name} Step {i+1}', kind='box', pos=[x + dx * (i + 1), G + hgt / 2, z + dz * (i + 1)], size=[0.3 if dx else w, round(hgt, 3), w if dx else 0.3], color='#cf9356' if i % 2 else '#c4874b')
-stairs('Stairs East', DX1 + 0.1, 0.5, 0.27, 0, 7, 0.55)
-stairs('Stairs Front', 0.8, DZ1 + 0.1, 0, 0.27, 6, 0.5)
+        cx, cz = x + dx * (0.15 + L * i), z + dz * (0.15 + L * i)
+        P(name=f'{name} Step {i+1}', kind='box', pos=[cx, G + hgt / 2, cz], size=[L if dx else w, round(hgt, 3), w if dx else L], color='#cf9356' if i % 2 else '#c4874b')
+    run = L * n
+    drop = DECK_Y - G - rise
+    ln = math.hypot(run, drop)
+    ang = math.degrees(math.atan2(drop, run))
+    mx, mz = x + dx * run / 2, z + dz * run / 2
+    my = DECK_Y - drop / 2 - rise * 0.2
+    for sgn in (-1, 1):  # side boards on both edges
+        off = sgn * (w / 2 + 0.02)
+        px, pz = (mx, mz + off) if dx else (mx + off, mz)
+        P(name=f'{name} Board {"A" if sgn < 0 else "B"}', kind='box', pos=[px, my, pz], size=[ln, 0.16, 0.05] if dx else [0.05, 0.16, ln], rot=[0, 0, round(-ang * dx, 1)] if dx else [round(ang * dz, 1), 0, 0], color='#8a5a30')
+    # handrail on one side: posts at the top and bottom and a sloped rail
+    for t, nm in ((0.0, 'Top'), (1.0, 'Bottom')):
+        px = x + dx * run * t
+        pz = z + dz * run * t
+        py = DECK_Y - drop * t
+        off = w / 2 + 0.02
+        P(name=f'{name} Post {nm}', kind='box', pos=[px if dx else px + off, py + 0.2, pz + off if dx else pz], size=[0.05, 0.4, 0.05], color='#b7773f')
+    P(name=f'{name} Handrail', kind='box', pos=[mx if dx else mx + w / 2 + 0.02, my + 0.4 - 0.2 * 0 + 0.0, mz + w / 2 + 0.02 if dx else mz], size=[ln, 0.05, 0.05] if dx else [0.05, 0.05, ln], rot=[0, 0, round(-ang * dx, 1)] if dx else [round(ang * dz, 1), 0, 0], color='#c88848')
+stairs('Stairs East', DX1, 0.5, 1, 0, 5, 0.6)
+stairs('Stairs Front', CX + 0.45, DZ1, 0, 1, 4, 0.6)  # straight in front of the door
 
 # ---- cabin (two storeys of windows)
 CX, CZ = -0.55, -0.6

@@ -24,6 +24,15 @@ for (const n of ['knight2', 'witch', 'scout', 'wizard', 'operator', 'mummy', 'is
   const o = run('check', `examples/${n}.json`);
   ok(!/ERROR/.test(o), `${n}: the check has no errors`);
 }
+console.log('# the island stairs touch the deck');
+const info = JSON.parse(run('info', 'examples/island.json', '--json').trim().split('\n').pop());
+const box = (n) => { const q = info.parts[n]; return { min: q.center.map((c, i) => c - q.size[i] / 2), max: q.center.map((c, i) => c + q.size[i] / 2) }; };
+const deckEast = Math.max(...Object.keys(info.parts).filter((n) => /^Deck Plank/.test(n)).map((n) => box(n).max[0]));
+const deckFront = Math.max(...Object.keys(info.parts).filter((n) => /^Deck Plank/.test(n)).map((n) => box(n).max[2]));
+ok(Math.abs(box('Stairs East Step 1').min[0] - deckEast) < 0.02, `the east stairs start at the deck edge (gap ${(box('Stairs East Step 1').min[0] - deckEast).toFixed(3)} m)`);
+ok(Math.abs(box('Stairs Front Step 1').min[2] - deckFront) < 0.02, `the front stairs start at the deck edge (gap ${(box('Stairs Front Step 1').min[2] - deckFront).toFixed(3)} m)`);
+const door = info.parts['Door'].center[0];
+ok(Math.abs(info.parts['Stairs Front Step 1'].center[0] - door) < 0.05, 'the front stairs are in front of the door');
 console.log('# check fails on a bad character');
 fs.writeFileSync(path.join(dir, 'bad.json'), JSON.stringify({ name: 'Bad', parts: [{ name: 'A', kind: 'box', pos: [0, 0.5, 0], size: [0.4, 1, 0.4], color: '#888' }, { name: 'Floater', kind: 'box', pos: [3, 3, 0], size: [0.2, 0.2, 0.2], color: '#f00' }] }));
 let bad = '';

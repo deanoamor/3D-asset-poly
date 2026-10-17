@@ -77,3 +77,11 @@ A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanis
 - **Rocks in water:** lift them so they sit in the water, not below the floor; keep the lowest point at y = 0 with one `LIFT` for the whole scene.
 - **Framing:** `render --focus "Cliff|Sand|Cabin|Pine"` frames only those parts, so the sea disc does not shrink the subject; `--views angle:-30:42` is a typical isometric diorama view (azimuth, elevation).
 - Honest limit: the reference's soft lighting, water depth gradient and tiny details (lanterns, ripples) are not modelled; the layout, colours and building are.
+
+## 15. Things that must connect (stairs, bridges, doors)
+"Nothing floats" only proves each part touches *something*. The first Island stairs touched the ground, so the check passed, yet they stood 0.2 m away from the deck. A staircase must **start flush at the thing it serves** (deck edge, door sill) and each step must touch the next.
+- Build stairs from `(x, z)` = the point on the deck edge, a unit direction, and steps of equal length: step *i* is centred at `0.15 + L·i` from that point, so the first step touches the deck.
+- Put them where people go: straight in front of the door, with a gap in the railing the same width as the stairs.
+- Keep the whole run inside the island (n·L must end before the shore).
+- Add side boards and a handrail so they read as part of the building.
+- The e2e test `e2e/studio.mjs` now measures the gap between the first step and the deck (`info --json`); do the same check (or `info`) after placing any connector.
