@@ -85,3 +85,12 @@ A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanis
 - Keep the whole run inside the island (n·L must end before the shore).
 - Add side boards and a handrail so they read as part of the building.
 - The e2e test `e2e/studio.mjs` now measures the gap between the first step and the deck (`info --json`); do the same check (or `info`) after placing any connector.
+
+## 16. Four seasons from one generator (Island Spring / Summer / Autumn / Winter)
+`examples/islands.gen.py` builds the same island four times; `PAL[season]` holds the colours and `if SEASON == …` blocks hold the props. What made the four read as four seasons:
+- **Colour alone is not a season.** Each one changes the *silhouette*: spring = pink round blossom trees and petals; summer = full green crowns, a parasol and sunflowers; autumn = orange / red / yellow crowns, pumpkins and leaf piles; winter = snow-capped pines, bare trees, snow on the roofs and a snowman.
+- **Ground and water follow the season:** fresh light green → saturated green with bright blue water → ochre grass with cooler grey-blue water → white ground, pale water, ice floes, a frozen pond with cracks.
+- **The big trunk becomes a crown** (a cluster of 6 blobs, in season colours, or bare branches with snow in winter): it ties the scene together and gives the strongest season cue. Lift the crown above the roof, or it hides the cabin from the usual angle.
+- **Snow roof** = the same gable prism again, ~7 % larger and a hair higher, so shingle lines and ridge disappear under it. Icicles are small inverted cones under the eave.
+- **Keep the layout identical across seasons** (same trees spots, cabin, stairs): the contact sheets compare cleanly and a bug fixed once is fixed in all four.
+- **Mistakes the check caught** (it reported `floating`, so run it for every variant): smoke puffs hovering above the chimney (chain them: each touches the previous one); ice cracks placed with `G + …` while the pond top is a different height (derive the y from the surface you sit on); floes above the water surface; snowman eyes and arms made with `mirror`, which mirrors across **x = 0**, not across the snowman, so the twins landed metres away (write both sides explicitly for anything off-centre); snow on a branch not at the branch tip (compute the tip from the rotation).

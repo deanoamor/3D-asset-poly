@@ -1,5 +1,5 @@
 {
- "name": "Island",
+ "name": "Island Summer",
  "rig": "none",
  "engine": "unity",
  "parts": [
@@ -17,7 +17,7 @@
     9.0
    ],
    "segments": 28,
-   "color": "#5cbfe2"
+   "color": "#33b3e8"
   },
   {
    "name": "Water Inner",
@@ -33,7 +33,7 @@
     6.8
    ],
    "segments": 24,
-   "color": "#78cdea"
+   "color": "#56c8f0"
   },
   {
    "name": "Cliff",
@@ -82,7 +82,7 @@
     5.3
    ],
    "segments": 18,
-   "color": "#e9da8e"
+   "color": "#f4dc8a"
   },
   {
    "name": "Grass",
@@ -98,7 +98,7 @@
     4.8
    ],
    "segments": 18,
-   "color": "#cdca68"
+   "color": "#69bd46"
   },
   {
    "name": "Grass Patch",
@@ -114,7 +114,7 @@
     2.4
    ],
    "segments": 14,
-   "color": "#bec95c"
+   "color": "#5cb03e"
   },
   {
    "name": "Pond Edge",
@@ -146,7 +146,7 @@
     0.98
    ],
    "segments": 8,
-   "color": "#62c9ea"
+   "color": "#4fc3ee"
   },
   {
    "name": "Slab 1",
@@ -1695,7 +1695,7 @@
    ],
    "color": "#d6b25a",
    "mat": {
-    "glow": 0.5
+    "glow": 0.3
    }
   },
   {
@@ -1743,7 +1743,7 @@
    ],
    "color": "#d6b25a",
    "mat": {
-    "glow": 0.5
+    "glow": 0.3
    }
   },
   {
@@ -1791,7 +1791,7 @@
    ],
    "color": "#d6b25a",
    "mat": {
-    "glow": 0.5
+    "glow": 0.3
    }
   },
   {
@@ -1839,7 +1839,7 @@
    ],
    "color": "#d6b25a",
    "mat": {
-    "glow": 0.5
+    "glow": 0.3
    }
   },
   {
@@ -1887,7 +1887,7 @@
    ],
    "color": "#d6b25a",
    "mat": {
-    "glow": 0.5
+    "glow": 0.3
    }
   },
   {
@@ -2217,84 +2217,84 @@
    "color": "#9a6a48"
   },
   {
-   "name": "Pine A Trunk",
+   "name": "Tree A Trunk",
    "kind": "cylinder",
    "pos": [
     -2.0,
-    0.707,
+    1.0175,
     -0.35
    ],
    "size": [
-    0.12,
-    0.414,
-    0.12
+    0.1932,
+    1.035,
+    0.1932
    ],
-   "segments": 5,
+   "segments": 6,
    "color": "#7a4a28"
   },
   {
-   "name": "Pine A Layer 1",
-   "kind": "cone",
-   "pos": [
+   "name": "Tree A Leaves 1",
+   "kind": "blob",
+   "center": [
     -2.0,
-    1.2594,
+    2.013,
     -0.35
    ],
-   "size": [
-    1.2,
-    0.731,
-    1.2
+   "radii": [
+    0.69,
+    0.69,
+    0.69
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
-   "name": "Pine A Layer 2",
-   "kind": "cone",
-   "pos": [
-    -2.0,
-    1.7309,
-    -0.35
+   "name": "Tree A Leaves 2",
+   "kind": "blob",
+   "center": [
+    -2.29,
+    1.74,
+    -0.226
    ],
-   "size": [
-    0.96,
-    0.731,
-    0.96
+   "radii": [
+    0.497,
+    0.497,
+    0.497
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#63c056"
   },
   {
-   "name": "Pine A Layer 3",
-   "kind": "cone",
-   "pos": [
-    -2.0,
-    2.2024,
-    -0.35
+   "name": "Tree A Leaves 3",
+   "kind": "blob",
+   "center": [
+    -1.724,
+    1.763,
+    -0.419
    ],
-   "size": [
-    0.72,
-    0.731,
-    0.72
+   "radii": [
+    0.511,
+    0.511,
+    0.511
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#3d9a44"
   },
   {
-   "name": "Pine A Layer 4",
-   "kind": "cone",
-   "pos": [
-    -2.0,
-    2.6739,
-    -0.35
+   "name": "Tree A Leaves 4",
+   "kind": "blob",
+   "center": [
+    -1.966,
+    2.241,
+    -0.316
    ],
-   "size": [
-    0.48,
-    0.731,
-    0.48
+   "radii": [
+    0.469,
+    0.469,
+    0.469
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
    "name": "Pine B Trunk",
@@ -2326,7 +2326,7 @@
     1.05
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine B Layer 2",
@@ -2342,7 +2342,7 @@
     0.84
    ],
    "segments": 7,
-   "color": "#4a9a4c"
+   "color": "#46a653"
   },
   {
    "name": "Pine B Layer 3",
@@ -2358,7 +2358,7 @@
     0.63
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine B Layer 4",
@@ -2374,7 +2374,7 @@
     0.42
    ],
    "segments": 7,
-   "color": "#4a9a4c"
+   "color": "#46a653"
   },
   {
    "name": "Pine C Trunk",
@@ -2406,7 +2406,7 @@
     1.1
    ],
    "segments": 7,
-   "color": "#9cbd5c"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine C Layer 2",
@@ -2422,7 +2422,7 @@
     0.88
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#7cbf5a"
   },
   {
    "name": "Pine C Layer 3",
@@ -2438,7 +2438,7 @@
     0.66
    ],
    "segments": 7,
-   "color": "#9cbd5c"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine C Layer 4",
@@ -2454,87 +2454,87 @@
     0.44
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#7cbf5a"
   },
   {
-   "name": "Pine D Trunk",
+   "name": "Tree D Trunk",
    "kind": "cylinder",
    "pos": [
     1.95,
-    0.707,
+    1.0175,
     -1.05
    ],
    "size": [
-    0.12,
-    0.414,
-    0.12
+    0.1771,
+    1.035,
+    0.1771
    ],
-   "segments": 5,
+   "segments": 6,
    "color": "#7a4a28"
   },
   {
-   "name": "Pine D Layer 1",
-   "kind": "cone",
-   "pos": [
+   "name": "Tree D Leaves 1",
+   "kind": "blob",
+   "center": [
     1.95,
-    1.2594,
+    2.013,
     -1.05
    ],
-   "size": [
-    1.1,
-    0.731,
-    1.1
+   "radii": [
+    0.632,
+    0.632,
+    0.632
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
-   "name": "Pine D Layer 2",
-   "kind": "cone",
-   "pos": [
-    1.95,
-    1.7309,
-    -1.05
+   "name": "Tree D Leaves 2",
+   "kind": "blob",
+   "center": [
+    1.684,
+    1.74,
+    -0.936
    ],
-   "size": [
-    0.88,
-    0.731,
-    0.88
+   "radii": [
+    0.455,
+    0.455,
+    0.455
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#63c056"
   },
   {
-   "name": "Pine D Layer 3",
-   "kind": "cone",
-   "pos": [
-    1.95,
-    2.2024,
-    -1.05
+   "name": "Tree D Leaves 3",
+   "kind": "blob",
+   "center": [
+    2.203,
+    1.763,
+    -1.113
    ],
-   "size": [
-    0.66,
-    0.731,
-    0.66
+   "radii": [
+    0.468,
+    0.468,
+    0.468
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#3d9a44"
   },
   {
-   "name": "Pine D Layer 4",
-   "kind": "cone",
-   "pos": [
-    1.95,
-    2.6739,
-    -1.05
+   "name": "Tree D Leaves 4",
+   "kind": "blob",
+   "center": [
+    1.982,
+    2.241,
+    -1.018
    ],
-   "size": [
-    0.44,
-    0.731,
-    0.44
+   "radii": [
+    0.43,
+    0.43,
+    0.43
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
    "name": "Pine E Trunk",
@@ -2566,7 +2566,7 @@
     1.0
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine E Layer 2",
@@ -2582,7 +2582,7 @@
     0.8
    ],
    "segments": 7,
-   "color": "#4a9a4c"
+   "color": "#46a653"
   },
   {
    "name": "Pine E Layer 3",
@@ -2598,7 +2598,7 @@
     0.6
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine E Layer 4",
@@ -2614,167 +2614,167 @@
     0.4
    ],
    "segments": 7,
-   "color": "#4a9a4c"
+   "color": "#46a653"
   },
   {
-   "name": "Pine F Trunk",
+   "name": "Tree F Trunk",
    "kind": "cylinder",
    "pos": [
     1.55,
-    0.671,
+    0.9275,
     -1.75
    ],
    "size": [
-    0.12,
-    0.34199999999999997,
-    0.12
+    0.161,
+    0.855,
+    0.161
    ],
-   "segments": 5,
+   "segments": 6,
    "color": "#7a4a28"
   },
   {
-   "name": "Pine F Layer 1",
-   "kind": "cone",
-   "pos": [
+   "name": "Tree F Leaves 1",
+   "kind": "blob",
+   "center": [
     1.55,
-    1.1239,
+    1.75,
     -1.75
    ],
-   "size": [
-    1.0,
-    0.604,
-    1.0
+   "radii": [
+    0.575,
+    0.575,
+    0.575
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
-   "name": "Pine F Layer 2",
-   "kind": "cone",
-   "pos": [
-    1.55,
-    1.5134,
-    -1.75
+   "name": "Tree F Leaves 2",
+   "kind": "blob",
+   "center": [
+    1.308,
+    1.524,
+    -1.647
    ],
-   "size": [
-    0.8,
-    0.604,
-    0.8
+   "radii": [
+    0.414,
+    0.414,
+    0.414
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#63c056"
   },
   {
-   "name": "Pine F Layer 3",
-   "kind": "cone",
-   "pos": [
-    1.55,
-    1.9029,
-    -1.75
+   "name": "Tree F Leaves 3",
+   "kind": "blob",
+   "center": [
+    1.78,
+    1.543,
+    -1.808
    ],
-   "size": [
-    0.6,
-    0.604,
-    0.6
+   "radii": [
+    0.425,
+    0.425,
+    0.425
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#3d9a44"
   },
   {
-   "name": "Pine F Layer 4",
-   "kind": "cone",
-   "pos": [
-    1.55,
-    2.2924,
-    -1.75
+   "name": "Tree F Leaves 4",
+   "kind": "blob",
+   "center": [
+    1.579,
+    1.938,
+    -1.721
    ],
-   "size": [
-    0.4,
-    0.604,
-    0.4
+   "radii": [
+    0.391,
+    0.391,
+    0.391
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
-   "name": "Pine G Trunk",
+   "name": "Tree G Trunk",
    "kind": "cylinder",
    "pos": [
     -0.4,
-    0.572,
+    0.68,
     1.95
    ],
    "size": [
-    0.12,
-    0.144,
-    0.12
+    0.0805,
+    0.36000000000000004,
+    0.0805
    ],
-   "segments": 5,
+   "segments": 6,
    "color": "#7a4a28"
   },
   {
-   "name": "Pine G Layer 1",
-   "kind": "cone",
-   "pos": [
+   "name": "Tree G Leaves 1",
+   "kind": "blob",
+   "center": [
     -0.4,
-    0.7511,
+    1.026,
     1.95
    ],
-   "size": [
-    0.5,
-    0.254,
-    0.5
+   "radii": [
+    0.287,
+    0.287,
+    0.287
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
-   "name": "Pine G Layer 2",
-   "kind": "cone",
-   "pos": [
-    -0.4,
-    0.9151,
-    1.95
+   "name": "Tree G Leaves 2",
+   "kind": "blob",
+   "center": [
+    -0.521,
+    0.931,
+    2.002
    ],
-   "size": [
-    0.4,
-    0.254,
-    0.4
+   "radii": [
+    0.207,
+    0.207,
+    0.207
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#63c056"
   },
   {
-   "name": "Pine G Layer 3",
-   "kind": "cone",
-   "pos": [
-    -0.4,
-    1.0791,
-    1.95
+   "name": "Tree G Leaves 3",
+   "kind": "blob",
+   "center": [
+    -0.285,
+    0.939,
+    1.921
    ],
-   "size": [
-    0.3,
-    0.254,
-    0.3
+   "radii": [
+    0.213,
+    0.213,
+    0.213
    ],
-   "segments": 7,
-   "color": "#62b256"
+   "segments": 6,
+   "color": "#3d9a44"
   },
   {
-   "name": "Pine G Layer 4",
-   "kind": "cone",
-   "pos": [
-    -0.4,
-    1.2431,
-    1.95
+   "name": "Tree G Leaves 4",
+   "kind": "blob",
+   "center": [
+    -0.386,
+    1.106,
+    1.964
    ],
-   "size": [
-    0.2,
-    0.254,
-    0.2
+   "radii": [
+    0.196,
+    0.196,
+    0.196
    ],
-   "segments": 7,
-   "color": "#4a9a4c"
+   "segments": 6,
+   "color": "#4fae48"
   },
   {
    "name": "Pine H Trunk",
@@ -2806,7 +2806,7 @@
     0.52
    ],
    "segments": 7,
-   "color": "#4a9a4c"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine H Layer 2",
@@ -2822,7 +2822,7 @@
     0.416
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#46a653"
   },
   {
    "name": "Pine H Layer 3",
@@ -2838,7 +2838,7 @@
     0.312
    ],
    "segments": 7,
-   "color": "#4a9a4c"
+   "color": "#2f8f45"
   },
   {
    "name": "Pine H Layer 4",
@@ -2854,7 +2854,7 @@
     0.208
    ],
    "segments": 7,
-   "color": "#62b256"
+   "color": "#46a653"
   },
   {
    "name": "Rock 1",
@@ -3047,6 +3047,512 @@
    ],
    "segments": 5,
    "color": "#6fb04f"
+  },
+  {
+   "name": "Crown 1",
+   "kind": "blob",
+   "center": [
+    0.1,
+    4.4,
+    -1.55
+   ],
+   "radii": [
+    1.1,
+    0.9,
+    1.1
+   ],
+   "segments": 7,
+   "color": "#4fae48"
+  },
+  {
+   "name": "Crown 2",
+   "kind": "blob",
+   "center": [
+    -0.9,
+    4.05,
+    -1.25
+   ],
+   "radii": [
+    0.748,
+    0.612,
+    0.748
+   ],
+   "segments": 7,
+   "color": "#63c056"
+  },
+  {
+   "name": "Crown 3",
+   "kind": "blob",
+   "center": [
+    1.1,
+    4.1,
+    -1.45
+   ],
+   "radii": [
+    0.792,
+    0.648,
+    0.792
+   ],
+   "segments": 7,
+   "color": "#3d9a44"
+  },
+  {
+   "name": "Crown 4",
+   "kind": "blob",
+   "center": [
+    0.3,
+    5.1,
+    -1.75
+   ],
+   "radii": [
+    0.748,
+    0.612,
+    0.748
+   ],
+   "segments": 7,
+   "color": "#4fae48"
+  },
+  {
+   "name": "Crown 5",
+   "kind": "blob",
+   "center": [
+    -0.2,
+    4.15,
+    -2.45
+   ],
+   "radii": [
+    0.704,
+    0.576,
+    0.704
+   ],
+   "segments": 7,
+   "color": "#63c056"
+  },
+  {
+   "name": "Crown 6",
+   "kind": "blob",
+   "center": [
+    0.5,
+    4.15,
+    -0.65
+   ],
+   "radii": [
+    0.616,
+    0.504,
+    0.616
+   ],
+   "segments": 7,
+   "color": "#3d9a44"
+  },
+  {
+   "name": "Sunflower Stem 1",
+   "kind": "cylinder",
+   "pos": [
+    1.199,
+    0.7,
+    1.958
+   ],
+   "size": [
+    0.03,
+    0.4,
+    0.03
+   ],
+   "segments": 4,
+   "color": "#3f8f35"
+  },
+  {
+   "name": "Sunflower 1",
+   "kind": "cylinder",
+   "pos": [
+    1.199,
+    0.92,
+    1.988
+   ],
+   "size": [
+    0.2,
+    0.03,
+    0.2
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 8,
+   "color": "#ffd23a"
+  },
+  {
+   "name": "Sunflower Heart 1",
+   "kind": "cylinder",
+   "pos": [
+    1.199,
+    0.92,
+    2.008
+   ],
+   "size": [
+    0.1,
+    0.035,
+    0.1
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 7,
+   "color": "#6a3f1c"
+  },
+  {
+   "name": "Sunflower Stem 2",
+   "kind": "cylinder",
+   "pos": [
+    2.217,
+    0.7,
+    0.755
+   ],
+   "size": [
+    0.03,
+    0.4,
+    0.03
+   ],
+   "segments": 4,
+   "color": "#3f8f35"
+  },
+  {
+   "name": "Sunflower 2",
+   "kind": "cylinder",
+   "pos": [
+    2.217,
+    0.92,
+    0.785
+   ],
+   "size": [
+    0.2,
+    0.03,
+    0.2
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 8,
+   "color": "#ffd23a"
+  },
+  {
+   "name": "Sunflower Heart 2",
+   "kind": "cylinder",
+   "pos": [
+    2.217,
+    0.92,
+    0.805
+   ],
+   "size": [
+    0.1,
+    0.035,
+    0.1
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 7,
+   "color": "#6a3f1c"
+  },
+  {
+   "name": "Sunflower Stem 3",
+   "kind": "cylinder",
+   "pos": [
+    0.587,
+    0.7,
+    -1.543
+   ],
+   "size": [
+    0.03,
+    0.4,
+    0.03
+   ],
+   "segments": 4,
+   "color": "#3f8f35"
+  },
+  {
+   "name": "Sunflower 3",
+   "kind": "cylinder",
+   "pos": [
+    0.587,
+    0.92,
+    -1.513
+   ],
+   "size": [
+    0.2,
+    0.03,
+    0.2
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 8,
+   "color": "#ffd23a"
+  },
+  {
+   "name": "Sunflower Heart 3",
+   "kind": "cylinder",
+   "pos": [
+    0.587,
+    0.92,
+    -1.493
+   ],
+   "size": [
+    0.1,
+    0.035,
+    0.1
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 7,
+   "color": "#6a3f1c"
+  },
+  {
+   "name": "Sunflower Stem 4",
+   "kind": "cylinder",
+   "pos": [
+    1.593,
+    0.7,
+    0.015
+   ],
+   "size": [
+    0.03,
+    0.4,
+    0.03
+   ],
+   "segments": 4,
+   "color": "#3f8f35"
+  },
+  {
+   "name": "Sunflower 4",
+   "kind": "cylinder",
+   "pos": [
+    1.593,
+    0.92,
+    0.045
+   ],
+   "size": [
+    0.2,
+    0.03,
+    0.2
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 8,
+   "color": "#ffd23a"
+  },
+  {
+   "name": "Sunflower Heart 4",
+   "kind": "cylinder",
+   "pos": [
+    1.593,
+    0.92,
+    0.065
+   ],
+   "size": [
+    0.1,
+    0.035,
+    0.1
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 7,
+   "color": "#6a3f1c"
+  },
+  {
+   "name": "Sunflower Stem 5",
+   "kind": "cylinder",
+   "pos": [
+    1.023,
+    0.7,
+    -1.849
+   ],
+   "size": [
+    0.03,
+    0.4,
+    0.03
+   ],
+   "segments": 4,
+   "color": "#3f8f35"
+  },
+  {
+   "name": "Sunflower 5",
+   "kind": "cylinder",
+   "pos": [
+    1.023,
+    0.92,
+    -1.819
+   ],
+   "size": [
+    0.2,
+    0.03,
+    0.2
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 8,
+   "color": "#ffd23a"
+  },
+  {
+   "name": "Sunflower Heart 5",
+   "kind": "cylinder",
+   "pos": [
+    1.023,
+    0.92,
+    -1.799
+   ],
+   "size": [
+    0.1,
+    0.035,
+    0.1
+   ],
+   "rot": [
+    75,
+    0,
+    0
+   ],
+   "segments": 7,
+   "color": "#6a3f1c"
+  },
+  {
+   "name": "Umbrella Pole",
+   "kind": "cylinder",
+   "pos": [
+    -2.45,
+    0.9,
+    0.55
+   ],
+   "size": [
+    0.04,
+    0.8,
+    0.04
+   ],
+   "segments": 5,
+   "color": "#e6e0d0"
+  },
+  {
+   "name": "Umbrella",
+   "kind": "cone",
+   "pos": [
+    -2.45,
+    1.38,
+    0.55
+   ],
+   "size": [
+    0.95,
+    0.3,
+    0.95
+   ],
+   "segments": 8,
+   "color": "#e8473a"
+  },
+  {
+   "name": "Umbrella Stripe",
+   "kind": "cone",
+   "pos": [
+    -2.45,
+    1.4,
+    0.55
+   ],
+   "size": [
+    0.62,
+    0.3,
+    0.62
+   ],
+   "segments": 8,
+   "color": "#fafafa"
+  },
+  {
+   "name": "Towel",
+   "kind": "box",
+   "pos": [
+    -2.3000000000000003,
+    0.515,
+    1.0
+   ],
+   "size": [
+    0.7,
+    0.025,
+    0.36
+   ],
+   "rot": [
+    0,
+    20,
+    0
+   ],
+   "color": "#3ea6e8"
+  },
+  {
+   "name": "Towel Stripe",
+   "kind": "box",
+   "pos": [
+    -2.3000000000000003,
+    0.53,
+    1.0
+   ],
+   "size": [
+    0.7,
+    0.01,
+    0.1
+   ],
+   "rot": [
+    0,
+    20,
+    0
+   ],
+   "color": "#ffffff"
+  },
+  {
+   "name": "Beach Ball",
+   "kind": "sphere",
+   "pos": [
+    2.9,
+    0.32,
+    2.2
+   ],
+   "size": [
+    0.28,
+    0.28,
+    0.28
+   ],
+   "segments": 8,
+   "color": "#f26a4a"
+  },
+  {
+   "name": "Beach Ball Band",
+   "kind": "cylinder",
+   "pos": [
+    2.9,
+    0.32,
+    2.2
+   ],
+   "size": [
+    0.285,
+    0.05,
+    0.285
+   ],
+   "segments": 8,
+   "color": "#ffffff"
   }
  ]
 }
