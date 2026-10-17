@@ -61,3 +61,10 @@ A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanis
 - Hands: a flat sweep that continues the forearm reads better than a fist blob; for palm-facing-the-viewer use `r: [thin, wide]` (the first radius runs front-to-back for a diagonal limb).
 - Realistic faces: remove cheeks (`remove: ["Cheek Left","Cheek Right"]`), shrink eyes (`eyeScale: 0.55`), add beard / moustache as blobs, raise helmet rims above the brow line.
 - Honest limit: a spec of boxes, sweeps and blobs gets the silhouette, colours and equipment of a reference right, but not its texture (camo pattern, fabric folds), fingers or facial likeness.
+
+## 13. Wrapped / stacked shapes (Mummy example)
+- A ring of tilted bands is `kind: "band"` (centre, axis, radius, width, tilt in degrees, thickness): a closed slanted collar. Do **not** fake a slant by shifting the ring centres of a `sweep`: the off-centre ring pokes out of the limb as shards (first try) and a large tilt makes spikes. Keep `tilt` at 8–20° on limbs and up to ~20° for the chest criss-cross.
+- Generate repeated parts in a script (`examples/mummy.gen.py`): radius along a limb comes from the template's own ring table, bands cycle through 5–6 shades, so a 70-part character is still ten lines of logic.
+- Pose with `armAngle` + `elbowBend` (hands forward) + `legSpread`. Hands: palm box + 4 finger boxes + thumb, rotated forward-down, read as a claw.
+- Glowing eyes: a dark pocket blob with a smaller `mat: { glow: 1 }` blob in front reads as light in a dark gap. Keep the glow shape small, or it looks like a cartoon hexagon.
+- Faceted style = no `smooth`, few segments (6–7). Keep it consistent: one smooth head on a faceted body looks pasted.

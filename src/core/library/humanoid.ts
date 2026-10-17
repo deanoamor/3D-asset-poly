@@ -28,6 +28,8 @@ export interface HumanParams {
   paint?: { top?: number; bottom?: number };
   /** Raise the arms outwards from hanging (degrees; 35 = an A-pose, 90 = a T-pose). */
   armAngle?: number;
+  /** Bend both elbows forward (degrees; 0 = straight, 40 = relaxed, hands in front). */
+  elbowBend?: number;
   /** Step the feet apart (degrees of each leg from vertical; 8 = a relaxed stance). */
   legSpread?: number;
   /** Scale the eyes (default 1; realistic faces use about 0.6). */
@@ -75,6 +77,15 @@ export function humanJoints(p: HumanParams = {}): BodyJoints {
     const dy = pt[1] - about[1];
     return [about[0] + dx * Math.cos(a) - dy * Math.sin(a), about[1] + dx * Math.sin(a) + dy * Math.cos(a), pt[2]];
   };
+  // the forearm swings forward (+Z) around the elbow
+  const bendDeg = p.elbowBend ?? 0;
+  const bend = (pt: Vec3, elbowPt: Vec3): Vec3 => {
+    if (!bendDeg) return pt;
+    const a = (-bendDeg * Math.PI) / 180;
+    const dy = pt[1] - elbowPt[1];
+    const dz = pt[2] - elbowPt[2];
+    return [pt[0], elbowPt[1] + dy * Math.cos(a) - dz * Math.sin(a), elbowPt[2] + dy * Math.sin(a) + dz * Math.cos(a)];
+  };
   const sh0: Vec3 = [sx, shoulderY, 0.01];
   const ang = p.armAngle ?? 0;
   const elbow0: Vec3 = [sx + 0.025 * H, elbowY, 0.02];
@@ -98,8 +109,8 @@ export function humanJoints(p: HumanParams = {}): BodyJoints {
     headTop: r3([0, H, 0.014]),
     shoulder: r3([sx, shoulderY, 0.01]),
     elbow: r3(turn(elbow0, sh0, ang)),
-    wrist: r3(turn(wrist0, sh0, ang)),
-    fingers: r3(turn(fing0, sh0, ang)),
+    wrist: r3(bend(turn(wrist0, sh0, ang), turn(elbow0, sh0, ang))),
+    fingers: r3(bend(turn(fing0, sh0, ang), turn(elbow0, sh0, ang))),
     hip: r3([hx, hipY, 0]),
     knee: r3(legTurn([hx + 0.004 * H, kneeY, 0.012 * H])),
     ankle: r3(legTurn([hx + 0.002 * H, ankleY, 0])),

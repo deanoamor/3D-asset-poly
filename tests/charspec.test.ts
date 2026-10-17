@@ -111,3 +111,32 @@ describe('gear', () => {
     expect(checkCharacter(doc, { height: 1.8 }).issues.some((i) => i.code === 'height')).toBe(false);
   });
 });
+
+describe('bands and elbow bend', () => {
+  it('a band is a closed slanted collar around its axis, kept inside its radius', () => {
+    const { doc, warnings } = buildCharacter({ name: 'B', parts: [
+      { name: 'Wrap', kind: 'band', center: [0, 1, 0], axis: [0, 1, 0], radius: [0.1, 0.12], width: 0.06, tilt: 20, color: '#e0b04a' },
+      { name: 'Strap Left', kind: 'band', center: [0.3, 1, 0], axis: [0, 1, 0], radius: 0.05, width: 0.05, tilt: 15, color: '#e0b04a', mirror: true },
+    ] });
+    expect(warnings).toEqual([]);
+    const names = doc.objects.filter((o) => o.kind === 'shape').map((o) => o.name).sort();
+    expect(names).toEqual(['Strap Left', 'Strap Right', 'Wrap']);
+    const w = doc.objects.find((o) => o.name === 'Wrap')!;
+    expect(w.mesh).toBeDefined();
+    const st = new Store(doc);
+    const b = st.worldBounds([w.id]);
+    expect(b.max.x - b.min.x).toBeGreaterThan(0.18);
+    expect(b.max.x - b.min.x).toBeLessThan(0.23);
+    expect(b.max.y - b.min.y).toBeGreaterThan(0.06); // the slant makes it taller than its width
+    expect(buildCharacter({ name: 'B', parts: [{ name: 'Bad', kind: 'band', color: '#fff' }] }).warnings[0]).toMatch(/band needs/);
+  });
+  it('elbowBend swings the forearm forward and the body follows', () => {
+    const a = buildCharacter({ name: 'A', template: { kind: 'human' } }).doc;
+    const b = buildCharacter({ name: 'A', template: { kind: 'human', elbowBend: 40 } }).doc;
+    const j = (d: typeof a, n: string) => d.rig!.find((x) => x.name === n)!.pos;
+    expect(j(b, 'Wrist Left')[2]).toBeGreaterThan(j(a, 'Wrist Left')[2] + 0.1);
+    expect(j(b, 'Wrist Left')[1]).toBeGreaterThan(j(a, 'Wrist Left')[1]);
+    expect(j(b, 'Elbow Left')).toEqual(j(a, 'Elbow Left'));
+    expect(checkCharacter(b).issues.filter((i) => i.level === 'error' || i.code === 'joint-hole')).toEqual([]);
+  });
+});

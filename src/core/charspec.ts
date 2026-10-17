@@ -2,7 +2,7 @@ import { DEFAULT_SEGMENTS, type Doc, type EnginePreset, type Picture, type Scene
 import { cloneMesh } from './mesh';
 import { Store, emptyDoc } from './store';
 import type { AssetGroup, AssetPart } from './assets';
-import { blob, sweep, toPart, type Ring } from './library/organic';
+import { blob, bandMesh, sweep, toPart, type Ring } from './library/organic';
 import { humanSpec, jointsFromSpec, type BodyJoints } from './library/rigs';
 import { humanoid, humanJoints, type BodyContext, type HumanParams } from './library/humanoid';
 import { gearParts, GEAR_TYPES, type GearSpec } from './library/gear';
@@ -18,7 +18,7 @@ export interface CharPartSpec {
    * box | sphere | cylinder | cone | pyramid | plane: a primitive placed with pos / size / rot.
    * sweep: a smooth tube along `rings` (limbs, bodies, belts, tails). blob: a low-poly ellipsoid (hands, hair, eyes, noses).
    */
-  kind?: ShapeType | 'sweep' | 'blob';
+  kind?: ShapeType | 'sweep' | 'blob' | 'band';
   pos?: Vec3;
   size?: Vec3;
   rot?: Vec3;
@@ -31,6 +31,12 @@ export interface CharPartSpec {
   end?: 'flat' | 'dome' | 'none';
   center?: Vec3;
   radii?: Vec3;
+  /** band: a slanted collar around a limb. `center` and `axis` (the limb's direction), `radius` (or [across, deep]), `width` along the axis, `tilt` in degrees, `thickness`. */
+  axis?: Vec3;
+  radius?: number | [number, number];
+  width?: number;
+  tilt?: number;
+  thickness?: number;
   /** Describe the Left (+X) part once and get a Right twin: names end in Left / Right, x and the turns are mirrored. */
   mirror?: boolean;
   smooth?: boolean;
@@ -85,6 +91,13 @@ function partFromSpec(s: CharPartSpec, warnings: string[]): AssetPart | null {
     }
     const rings: Ring[] = s.rings.map((r) => ({ p: r.p, r: r.r }));
     part = toPart(0, s.name, sweep(rings, { sides: s.sides ?? 7, start: s.start, end: s.end }), s.color, common);
+  } else if (kind === 'band') {
+    if (!s.center || !s.axis || s.radius === undefined) {
+      warnings.push(`“${s.name}”: a band needs center, axis and radius.`);
+      return null;
+    }
+    const [rx, rz] = typeof s.radius === 'number' ? [s.radius, s.radius] : s.radius;
+    part = toPart(0, s.name, bandMesh(s.center, s.axis, rx, rz, s.width ?? 0.06, s.tilt ?? 0, s.thickness ?? 0.012, s.sides ?? 6), s.color, common);
   } else if (kind === 'blob') {
     if (!s.center || !s.radii) {
       warnings.push(`“${s.name}”: a blob needs center and radii.`);
@@ -105,7 +118,9 @@ function mirrorSpec(s: CharPartSpec): CharPartSpec {
     mirror: false,
     pos: s.pos && mirrorV(s.pos),
     center: s.center && mirrorV(s.center),
+    axis: s.axis && mirrorV(s.axis),
     rot: s.rot && ([s.rot[0], -s.rot[1], -s.rot[2]] as Vec3),
+    tilt: s.tilt === undefined ? undefined : -s.tilt,
     rings: s.rings?.map((r) => ({ p: mirrorV(r.p), r: r.r })),
   };
 }

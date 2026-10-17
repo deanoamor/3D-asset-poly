@@ -58,8 +58,8 @@ See `examples/` (knight2, witch, scout, wizard) and **`docs/CHARACTER_LESSONS.md
 }
 ```
 - **template.build**: `stylized` (default, ~5 heads tall, friendly), `realistic` (7.5), `heroic` (8, wide shoulders), `chibi` (3 heads), `kid`.
-  `weight`: slim / normal / heavy. `face: false` drops the face. `expressions: false` drops Blink / Smile / Surprised.
-- **parts** kinds: `box sphere cylinder cone pyramid plane` (pos, size, rot, segments, taper), `sweep` (a smooth tube through `rings`:
+  `weight`: slim / normal / heavy. Pose: `armAngle` (A-pose 30°), `elbowBend` (forearms forward), `legSpread`; `paint` = camouflage-like variation; `eyeScale`. `face: false` drops the face. `expressions: false` drops Blink / Smile / Surprised.
+- **parts** kinds: `box sphere cylinder cone pyramid plane` (pos, size, rot, segments, taper), `band` (a slanted collar: center, axis, radius, width, tilt°; bandages, cuffs, rings), `sweep` (a smooth tube through `rings`:
   limbs, belts, scarves, tails, capes), `blob` (a low-poly ellipsoid: hair, hands, hats, eyes, noses).
   A part with the same name as a template part **replaces** it. `remove` deletes template parts.
 - **Extras per part**: `smooth`, `paint` (0..1 hand-painted variation), `mat` {rough, metal, glow}, `picture` {id: face|stripes|checker|star, mode: all|front},

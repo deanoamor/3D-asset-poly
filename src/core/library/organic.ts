@@ -77,6 +77,46 @@ export function sweep(path: Ring[], o: { sides?: number; start?: Cap; end?: Cap;
   return m;
 }
 
+/**
+ * A short slanted collar around a limb: a bandage strip, a ring, a cuff. It is a closed shell (outer wall, inner wall and
+ * two rims), so it keeps a little thickness. `tiltDeg` slants the strip: its upper edge rises on one side and drops on the
+ * other, like a bandage that wraps diagonally. The axis is the direction of the limb.
+ */
+export function bandMesh(center: V, axis: V, rx: number, rz: number, width: number, tiltDeg: number, thick = 0.012, sides = 6): PolyMesh {
+  const a = norm(axis);
+  const ref: V = Math.abs(a[1]) > 0.92 ? [0, 0, 1] : [0, 1, 0];
+  const u = norm(cross(ref, a));
+  const w = cross(a, u);
+  const tan = Math.tan((tiltDeg * Math.PI) / 180);
+  const v: number[] = [];
+  const ring = (kx: number, kz: number, edge: number): number => {
+    const start = v.length / 3;
+    for (let k = 0; k < sides; k++) {
+      const th = (k / sides) * Math.PI * 2;
+      const cx = Math.cos(th);
+      const cz = Math.sin(th);
+      const shift = tan * cx * rx; // the slant: along the axis in proportion to how far round the ring we are
+      const p = add(add(center, add(mul(u, cx * kx), mul(w, cz * kz))), mul(a, edge * (width / 2) + shift));
+      v.push(...p);
+    }
+    return start;
+  };
+  const ix = Math.max(rx - thick, rx * 0.5);
+  const iz = Math.max(rz - thick, rz * 0.5);
+  const To = ring(rx, rz, 1), Bo = ring(rx, rz, -1), Ti = ring(ix, iz, 1), Bi = ring(ix, iz, -1);
+  const f: number[][] = [];
+  for (let k = 0; k < sides; k++) {
+    const n = (k + 1) % sides;
+    f.push([Bo + k, Bo + n, To + n, To + k]); // outer wall
+    f.push([Ti + k, Ti + n, Bi + n, Bi + k]); // inner wall
+    f.push([To + k, To + n, Ti + n, Ti + k]); // upper rim
+    f.push([Bi + k, Bi + n, Bo + n, Bo + k]); // lower rim
+  }
+  const m: PolyMesh = { v, f };
+  if (signedVolume(m) < 0) m.f = m.f.map((face) => [...face].reverse());
+  return m;
+}
+
 /** A low-poly ellipsoid: heads, joints, hair masses, hands, eyes. */
 export function blob(center: V, radii: V, segments = 6): PolyMesh {
   const m = polyMeshFor('sphere', { segments, taper: 1 });
