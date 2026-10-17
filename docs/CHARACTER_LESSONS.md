@@ -94,3 +94,13 @@ A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanis
 - **Snow roof** = the same gable prism again, ~7 % larger and a hair higher, so shingle lines and ridge disappear under it. Icicles are small inverted cones under the eave.
 - **Keep the layout identical across seasons** (same trees spots, cabin, stairs): the contact sheets compare cleanly and a bug fixed once is fixed in all four.
 - **Mistakes the check caught** (it reported `floating`, so run it for every variant): smoke puffs hovering above the chimney (chain them: each touches the previous one); ice cracks placed with `G + …` while the pond top is a different height (derive the y from the surface you sit on); floes above the water surface; snowman eyes and arms made with `mirror`, which mirrors across **x = 0**, not across the snowman, so the twins landed metres away (write both sides explicitly for anything off-centre); snow on a branch not at the branch tip (compute the tip from the rotation).
+
+## 17. Measuring instead of eyeballing (`compare`)
+First measurements: Operator 67 %, Mummy 59 % against their references (before this tool I called both "close"). The notes pointed at real differences I had not seen in the contact sheets: the Operator's legs and hips are too wide and its arms not spread enough; the Mummy's legs stand together while the reference strides.
+What went wrong while building the measurement (each is now a unit test or a rule):
+- **Shadows counted as the subject.** A soft floor shadow is the background colour, darker. Remove regions of "darkened background" that are smooth **and in the lower half**; without the lower-half rule a grey-green sleeve (also colourless and smooth) was removed and the arm vanished.
+- **Gradient backgrounds** (studio orange, vignette): use a per-row background model from a band just inside the edge, median per row. Sampling the very edge picked up a white margin strip.
+- **Palette polluted** by the flat magenta behind my own render (it leaks into holes) and by background seen through gaps: skip those pixels when counting colours.
+- **A mirrored match of a symmetric model is the opposite azimuth**: report the effective angle, not the raw one.
+- **Free elevation overfits.** A tall camera made a worse model fit better; search only 2–26°.
+Always look at the `cutout` / the overlay picture first: a number from a wrong cut-out is worse than no number.

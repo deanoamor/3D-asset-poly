@@ -187,6 +187,7 @@ Press **Pose** in the Skeleton section, click a joint and turn it with the rings
 
 ## Scripting and Claude (`scripts/studio.mjs`)
 - **Spec → character:** write a JSON spec (human template + extra parts) and run `node scripts/studio.mjs make spec.json --out out/`: it builds the character (body, face, skeleton, expressions), checks it (floating parts, floor, height, joint holes, left/right, triangle budget), renders front / 3q / side / back / face PNGs plus a contact sheet, and exports a validated GLB.
+- **A way to measure:** `compare --ref picture.png` cuts the subject out of a reference, finds the camera angle that fits best and reports outline, proportions and colour similarity with plain-words notes and a red/blue overlay; `cutout` shows what it treats as the subject.
 - **A way to look:** `render` can also show a clip frame (`--anim Walk@0.25`) or an expression (`--expr Smile=1`).
 - **Gear:** `gear: [cape, backpack, belt, sword, shield, staff, witch-hat, cap, helmet, scarf]` is fitted to the body; `info` prints joints and part positions for custom parts; `examples/` has four finished characters; `docs/CHARACTER_LESSONS.md` records what went wrong in the iterations and how it was fixed.
 - **Places:** `examples/islands.gen.py` generates a low-poly island (cabin on a deck, stairs, pines, pond) in four seasons, `island-spring/summer/autumn/winter.json`; `render --focus REGEX --views angle:-30:38` frames a diorama.

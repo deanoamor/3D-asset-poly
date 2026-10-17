@@ -7,6 +7,9 @@
 //   node scripts/studio.mjs render spec.json [--views front,3q,side,back,face,top] [--size 520]
 //                                            [--ref reference.png] [--focus REGEX] [--anim Walk@0.25] [--expr Smile=1,Blink=0.5] [--out dir]
 //   node scripts/studio.mjs export spec.json [--format glb|gltf] [--atlas] [--compress] [--out file.glb]
+//   node scripts/studio.mjs compare spec.json --ref reference.png [--tol 42] [--bg #rrggbb] [--views angle:20:10] [--focus REGEX]
+//                                            how much it looks like the reference: outline, proportions, colours, best angle
+//   node scripts/studio.mjs cutout picture.png [--tol 42] [--no-shadows]   see what compare treats as the subject (background = magenta)
 //   node scripts/studio.mjs info   spec.json                       joints and part positions, to place gear on the body
 //   node scripts/studio.mjs build  spec.json [--out project.json]  write the project (can be opened in the editor)
 //
@@ -21,7 +24,7 @@ const cmd = argv[0];
 const file = argv[1];
 const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i < 0 ? d : (argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true); };
 if (!cmd || !file) {
-  console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 15).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
+  console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 18).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
   process.exit(cmd ? 1 : 0);
 }
 const URL_ = process.env.URL || 'http://localhost:5199/';
@@ -99,6 +102,31 @@ else if (cmd === 'info') {
   for (const [k, v] of Object.entries(a.joints)) console.log(`  ${k.padEnd(14)} ${v.join(', ')}`);
   console.log('# parts (center | size)');
   for (const [k, v] of Object.entries(a.parts)) console.log(`  ${k.padEnd(18)} ${v.center.join(', ')} | ${v.size.join(', ')}`);
+} else if (cmd === 'cutout') {
+  const ref = `data:image/png;base64,${fs.readFileSync(String(flag('ref') || file)).toString('base64')}`;
+  const cut = await page.evaluate((x) => window.__studio.cutout(x), { ref, ...(flag('tol') ? { tol: +flag('tol') } : {}), ...(flag('no-shadows') ? { shadows: false } : {}) });
+  const target = path.join(outDir('studio-out'), `${path.basename(String(flag('ref') || file)).replace(/\.[^.]+$/, '')}.cutout.png`);
+  fs.writeFileSync(target, b64(cut.url));
+  console.log(`# cut-out: ${target} (background painted magenta)`);
+  console.log(`  background colours found: ${cut.background.map((b) => '#' + b.map((v) => v.toString(16).padStart(2, '0')).join('')).join(' ')}`);
+} else if (cmd === 'compare') {
+  if (!flag('ref')) { console.error('compare needs --ref reference.png'); await browser.close(); done(2); }
+  const ref = `data:image/png;base64,${fs.readFileSync(String(flag('ref'))).toString('base64')}`;
+  const o = { ref, ...(flag('views') ? { views: String(flag('views')).split(',') } : {}), ...(flag('focus') ? { focus: String(flag('focus')) } : {}), ...(flag('tol') ? { tol: +flag('tol') } : {}), ...(flag('bg') ? { bg: String(flag('bg')).replace('#', '').match(/../g).map((h) => parseInt(h, 16)) } : {}), ...(flag('fit') ? { fit: +flag('fit') } : {}) };
+  const r = await page.evaluate((x) => window.__studio.compare(x), o);
+  const dir = outDir('studio-out');
+  fs.writeFileSync(path.join(dir, `${stem}.compare.png`), b64(r.sheet));
+  const { sheet, ...rest } = r;
+  if (flag('json')) console.log(JSON.stringify(rest));
+  else {
+    console.log(`# similarity ${r.similarity} %  (outline ${r.outline} %, proportions ${r.proportions} %, colours ${r.palette} %)`);
+    console.log(`  best view: ${r.effectiveView} (${r.tried} angles tried${r.mirrored ? `; matched as ${r.bestView} mirrored` : ''})`);
+    for (const n of r.notes) console.log(`  proportion: ${n}`);
+    for (const c of r.missingColors) console.log(`  missing colour ${c.color} (${c.share} % of the reference, ΔE ${c.deltaE})`);
+    console.log(`  reference colours: ${r.referenceColors.join(' ')}`);
+    console.log(`  my colours:        ${r.myColors.join(' ')}`);
+    console.log(`# picture: ${path.join(dir, `${stem}.compare.png`)}`);
+  }
 } else if (cmd === 'render') await doRender(outDir('studio-out'));
 else if (cmd === 'export') await doExport(String(flag('out', `${stem}.${flag('format', 'glb')}`)));
 else if (cmd === 'build') {

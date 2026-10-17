@@ -1090,7 +1090,7 @@ export class Viewport {
    * Render the model from a named angle into a PNG of exactly w x h, without moving the editor's own camera.
    * Angles: front, back, side (the character's Left), side-right, 3q (front, from the Left), 3q-back, top, face (a close-up of the head).
    */
-  renderView(view: string, w: number, h: number, fit = 1.08, only?: string[]): string {
+  renderView(view: string, w: number, h: number, fit = 1.08, only?: string[], flat?: number): string {
     const dirs: Record<string, [number, number, number]> = {
       front: [0, 0.06, 1],
       back: [0, 0.06, -1],
@@ -1131,8 +1131,18 @@ export class Viewport {
     this.camera.lookAt(center);
     this.camera.updateMatrixWorld(true);
     this.renderer.setSize(w, h, false);
+    // `flat`: a plain colour behind the subject, no grid and no floor shadow, so the subject can be cut out exactly
+    const keep = { bg: this.scene.background, grid: this.grid.visible, shadow: this.shadowGround.visible };
+    if (flat !== undefined) {
+      this.scene.background = new THREE.Color(flat);
+      this.grid.visible = false;
+      this.shadowGround.visible = false;
+    }
     this.renderer.render(this.scene, this.camera);
     const url = this.renderer.domElement.toDataURL('image/png');
+    this.scene.background = keep.bg;
+    this.grid.visible = keep.grid;
+    this.shadowGround.visible = keep.shadow;
     this.camera.position.copy(prev.pos);
     this.controls.target.copy(prev.target);
     this.camera.aspect = prev.aspect;

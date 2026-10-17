@@ -33,6 +33,14 @@ ok(Math.abs(box('Stairs East Step 1').min[0] - deckEast) < 0.02, `the east stair
 ok(Math.abs(box('Stairs Front Step 1').min[2] - deckFront) < 0.02, `the front stairs start at the deck edge (gap ${(box('Stairs Front Step 1').min[2] - deckFront).toFixed(3)} m)`);
 const door = info.parts['Door'].center[0];
 ok(Math.abs(info.parts['Stairs Front Step 1'].center[0] - door) < 0.05, 'the front stairs are in front of the door');
+console.log('# compare measures the likeness to a reference');
+run('render', 'examples/operator.json', '--views', 'angle:-20:8', '--size', '520', '--out', dir);
+const self = JSON.parse(run('compare', 'examples/operator.json', '--ref', path.join(dir, 'operator.angle:-20:8.png'), '--json', '--out', dir).trim().split('\n').pop());
+ok(self.similarity > 85, `the character against its own render: ${self.similarity} %`);
+ok(Math.abs(+self.effectiveView.split(':')[1] + 20) <= 12 && Math.abs(+self.effectiveView.split(':')[2] - 8) <= 12, `the angle is found: ${self.effectiveView} (true angle:-20:8)`);
+const other = JSON.parse(run('compare', spec, '--ref', path.join(dir, 'operator.angle:-20:8.png'), '--json', '--out', dir).trim().split('\n').pop());
+ok(other.similarity < self.similarity - 8, `another character scores lower: ${other.similarity} % vs ${self.similarity} %`);
+ok(fs.existsSync(path.join(dir, 'operator.compare.png')) || fs.existsSync(path.join(dir, 'kid.compare.png')), 'the comparison picture is written');
 console.log('# check fails on a bad character');
 fs.writeFileSync(path.join(dir, 'bad.json'), JSON.stringify({ name: 'Bad', parts: [{ name: 'A', kind: 'box', pos: [0, 0.5, 0], size: [0.4, 1, 0.4], color: '#888' }, { name: 'Floater', kind: 'box', pos: [3, 3, 0], size: [0.2, 0.2, 0.2], color: '#f00' }] }));
 let bad = '';

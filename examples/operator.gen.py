@@ -1,6 +1,6 @@
 import json, subprocess, sys
 BUILD=sys.argv[1] if len(sys.argv)>1 else 'realistic'
-tmpl={"kind":"human","build":BUILD,"height":1.85,"weight":"normal","skin":"#c79670","hair":"#2b2220","hairStyle":"none","top":"#667060","bottom":"#4e5a6e","shoes":"#17181a","sleeves":"short","legs":"long","armAngle":32,"legSpread":7,"eyeScale":0.55,"paint":{"top":0.3,"bottom":0.85}}
+tmpl={"kind":"human","build":BUILD,"height":1.85,"weight":"normal","skin":"#c79670","hair":"#2b2220","hairStyle":"none","top":"#667060","bottom":"#4e5a6e","shoes":"#17181a","sleeves":"short","legs":"long","armAngle":32,"legSpread":3,"eyeScale":0.55,"paint":{"top":0.3,"bottom":0.85}}
 json.dump({"name":"Operator","template":tmpl},open('/tmp/op_t.json','w'))
 info=json.loads(subprocess.check_output(['node','scripts/studio.mjs','info','/tmp/op_t.json','--json']).decode().strip().splitlines()[-1])
 J=info['joints']; PT=info['parts']
@@ -52,7 +52,7 @@ P(name='Arm Muscle Left',kind='sweep',rings=[{'p':lerp(sp,el,0.45),'r':0.07},{'p
 # thigh straps and knee pad / calf detail are added below
 # --- trousers: thicker legs, pockets, holsters, knee pads, boots
 hp=J['Hip Left']; kn=J['Knee Left']; an=J['Ankle Left']
-P(name='Trouser Left',kind='sweep',rings=[{'p':lerp(hp,kn,-0.06),'r':0.13},{'p':lerp(hp,kn,0.5),'r':0.118},{'p':kn,'r':0.1},{'p':lerp(kn,an,0.5),'r':0.092},{'p':lerp(kn,an,0.92),'r':0.086}],sides=8,color='#4e5a6e',paint=0.85,smooth=True,mirror=True)
+P(name='Trouser Left',kind='sweep',rings=[{'p':lerp(hp,kn,-0.06),'r':0.118},{'p':lerp(hp,kn,0.5),'r':0.106},{'p':kn,'r':0.09},{'p':lerp(kn,an,0.5),'r':0.082},{'p':lerp(kn,an,0.92),'r':0.078}],sides=8,color='#4e5a6e',paint=0.85,smooth=True,mirror=True)
 th=lerp(hp,kn,0.38)
 P(name='Thigh Pocket Left',kind='box',pos=[th[0]+0.0,th[1],0.138],size=[0.12,0.17,0.05],color='#2b2f34',mirror=True)
 ho=lerp(hp,kn,0.3)

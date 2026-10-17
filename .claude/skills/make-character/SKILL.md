@@ -9,9 +9,9 @@ Read `docs/CHARACTER_GUIDE.md` (spec format, conventions, proportions, gear) and
 
 1. Write the spec (`my-character.json`). Start from `template: { "kind": "human", ... }` and `gear: [...]` (cape, helmet, sword, staff, hats…) for people; run `node scripts/studio.mjs info` to place custom parts from real joint and part positions. Look at `examples/*.json`.
 2. Run `node scripts/studio.mjs make my-character.json --out out/` (starts the dev server by itself).
-3. **Open `out/my-character.sheet.png` with the Read tool and really look at it** (front, 3q, side, back, face). Read the check output too.
+3. With a reference picture: run `cutout` to check the subject is cut out right, then `compare --ref`; read the notes (proportions, missing colours, best angle) and look at the overlay picture. Otherwise: **open `out/my-character.sheet.png` with the Read tool and really look at it** (front, 3q, side, back, face). Read the check output too.
 4. Fix everything that looks off or is reported, edit the spec, run `make` again. Do at least two rounds; do not stop at the first render.
-5. Finish only when: no check ERRORs, the silhouette is readable and distinct from the side and the front, the face looks friendly/intentional, and the glTF validator says 0 errors.
+5. With a reference, repeat compare after each round and keep a change only if the similarity goes up; report the numbers. Finish only when: no check ERRORs, the silhouette is readable and distinct from the side and the front, the face looks friendly/intentional, and the glTF validator says 0 errors.
 6. Report to the user in their language with the sheet image (SendUserFile) and the GLB path. Say honestly what is still weak.
 
 Rules of thumb: stylized proportions (head ≈ 1/5), few strong colours plus one accent, overlap parts at joints, details only where the eye goes, 1 000–3 000 triangles for a hero.
