@@ -70,7 +70,7 @@ A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanis
 - Faceted style = no `smooth`, few segments (6–7). Keep it consistent: one smooth head on a faceted body looks pasted.
 
 ## 14. Places and scenes (Island example)
-- A scene is the same spec without a template (`"rig": "none"`): `examples/island.gen.py` builds a 170-part diorama (island, cabin on a deck, stairs, pines, rocks, pond) from loops and helpers. Check it with `check`; ignore the character-only hints (one-sided, height).
+- A scene is the same spec without a template (`"rig": "none"`): `examples/islands.gen.py` builds a 170-part diorama (island, cabin on a deck, stairs, pines, rocks, pond) from loops and helpers. Check it with `check`; ignore the character-only hints (one-sided, height).
 - **Gable roof:** a `sweep` with `sides: 3`, `phase: 90` and two rings along the ridge is a solid triangular prism with the ridge up. `r = [span / 1.732, rise / 1.5]`, centre at `y0 + rise / 3`. No gable fillers needed.
 - **Stairs:** make each step a solid block from the ground up to its tread (not a thin slab), so steps touch each other and the ground (nothing floats) and read as a real staircase.
 - **Trees:** 3–4 stacked cones with alternating greens, wider than you think (width ≈ half the height), and a few in a lighter yellow-green.
