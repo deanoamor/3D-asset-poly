@@ -1102,6 +1102,13 @@ export class Viewport {
     };
     let box = this.store.worldBounds();
     let d = dirs[view] ?? dirs.front;
+    // "angle:25" or "angle:-30:12": turn around the character (degrees from the front, + toward the character's Left), optional height angle
+    const am = /^angle:(-?\d+(?:\.\d+)?)(?::(-?\d+(?:\.\d+)?))?$/.exec(view);
+    if (am) {
+      const az = (parseFloat(am[1]) * Math.PI) / 180;
+      const el = (parseFloat(am[2] ?? '6') * Math.PI) / 180;
+      d = [Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)];
+    }
     if (view === 'face') {
       const head = this.store.doc.objects.find((o) => /^head$/i.test(o.name));
       box = head ? this.store.worldBounds([head.id]) : new THREE.Box3(new THREE.Vector3(box.min.x, box.min.y + (box.max.y - box.min.y) * 0.84, box.min.z), box.max);

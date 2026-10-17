@@ -24,6 +24,14 @@ export interface HumanParams {
   shoes?: string;
   sleeves?: 'none' | 'short' | 'long';
   legs?: 'long' | 'shorts';
+  /** Hand-painted colour variation (0..1) on the top and on the trousers, e.g. camouflage. */
+  paint?: { top?: number; bottom?: number };
+  /** Raise the arms outwards from hanging (degrees; 35 = an A-pose, 90 = a T-pose). */
+  armAngle?: number;
+  /** Step the feet apart (degrees of each leg from vertical; 8 = a relaxed stance). */
+  legSpread?: number;
+  /** Scale the eyes (default 1; realistic faces use about 0.6). */
+  eyeScale?: number;
   /** Eyes, brows, nose, mouth, ears, cheeks (default true). */
   face?: boolean;
   /** Add the Blink, Smile and Surprised expressions (default true when there is a face). */
@@ -60,6 +68,27 @@ export function humanJoints(p: HumanParams = {}): BodyJoints {
   const elbowY = shoulderY - upper;
   const wristY = elbowY - fore;
   const hx = 0.058 * H * b.width;
+  // an A-pose / T-pose: swing the whole arm outwards around the shoulder (CCW about Z for the Left, +X, side)
+  const turn = (pt: Vec3, about: Vec3, deg: number): Vec3 => {
+    const a = (deg * Math.PI) / 180;
+    const dx = pt[0] - about[0];
+    const dy = pt[1] - about[1];
+    return [about[0] + dx * Math.cos(a) - dy * Math.sin(a), about[1] + dx * Math.sin(a) + dy * Math.cos(a), pt[2]];
+  };
+  const sh0: Vec3 = [sx, shoulderY, 0.01];
+  const ang = p.armAngle ?? 0;
+  const elbow0: Vec3 = [sx + 0.025 * H, elbowY, 0.02];
+  const wrist0: Vec3 = [sx + 0.04 * H, wristY, 0.05];
+  const fing0: Vec3 = [sx + 0.042 * H, wristY - hand, 0.065];
+  // legs: rotate outwards about the hip, stretched by 1/cos so the feet stay on the floor
+  const phi = p.legSpread ?? 0;
+  const stretch = 1 / Math.cos((phi * Math.PI) / 180);
+  const hip0: Vec3 = [hx, hipY, 0];
+  const legTurn = (pt: Vec3): Vec3 => {
+    if (!phi) return pt;
+    const v: Vec3 = [pt[0], hipY + (pt[1] - hipY) * stretch, pt[2]];
+    return turn(v, hip0, phi);
+  };
   return {
     hips: r3([0, hipsY, 0]),
     spine: r3([0, hipsY + (chestY - hipsY) * 0.5, 0.004]),
@@ -68,13 +97,13 @@ export function humanJoints(p: HumanParams = {}): BodyJoints {
     head: r3([0, chin + 0.16 * headH, 0.014]),
     headTop: r3([0, H, 0.014]),
     shoulder: r3([sx, shoulderY, 0.01]),
-    elbow: r3([sx + 0.025 * H, elbowY, 0.02]),
-    wrist: r3([sx + 0.04 * H, wristY, 0.05]),
-    fingers: r3([sx + 0.042 * H, wristY - hand, 0.065]),
+    elbow: r3(turn(elbow0, sh0, ang)),
+    wrist: r3(turn(wrist0, sh0, ang)),
+    fingers: r3(turn(fing0, sh0, ang)),
     hip: r3([hx, hipY, 0]),
-    knee: r3([hx + 0.004 * H, kneeY, 0.012 * H]),
-    ankle: r3([hx + 0.002 * H, ankleY, 0]),
-    toe: r3([hx + 0.002 * H, 0.025 * H, 0.1 * H]),
+    knee: r3(legTurn([hx + 0.004 * H, kneeY, 0.012 * H])),
+    ankle: r3(legTurn([hx + 0.002 * H, ankleY, 0])),
+    toe: r3(legTurn([hx + 0.002 * H, 0.025 * H, 0.1 * H])),
   };
 }
 
@@ -206,7 +235,7 @@ export function humanoid(p: HumanParams = {}): HumanBuild {
   const expressions: HumanBuild['expressions'] = [];
   if (p.face !== false) {
     const sc = headH / 0.49;
-    const face = faceOn(6, head, hc, { skin, skinDark: skinD, brow: darken(hairC, 0.9), iris: p.eyes ?? '#5a3d28', eye: Math.max(0.6, sc * 1.05), sep: 0.43 });
+    const face = faceOn(6, head, hc, { skin, skinDark: skinD, brow: darken(hairC, 0.9), iris: p.eyes ?? '#5a3d28', eye: Math.max(0.4, sc * 1.05 * (p.eyeScale ?? 1)), sep: 0.43 });
     add(...face);
     if (p.expressions !== false) {
       const by = (n: string) => parts.find((q) => q.name === n);
@@ -226,6 +255,12 @@ export function humanoid(p: HumanParams = {}): HumanBuild {
         }
         expressions.push({ name: 'Surprised', parts: sur });
       }
+    }
+  }
+  if (p.paint) {
+    for (const q of parts) {
+      if (p.paint.top && /^(Torso|Sleeve)/.test(q.name)) q.paint = p.paint.top;
+      if (p.paint.bottom && /^(Hips|Leg|Shorts)/.test(q.name) && q.color === bottom) q.paint = p.paint.bottom;
     }
   }
   void HUMAN;

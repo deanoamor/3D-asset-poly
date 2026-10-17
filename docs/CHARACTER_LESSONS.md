@@ -52,3 +52,12 @@ Always read the contact sheet, and always the **face close-up**: most mistakes a
 
 ## 11. Layer order on the torso
 A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanished). Start the skirt just under the belt, or make the belt ring a few cm larger than the skirt's top ring.
+
+## 12. Copying a reference picture (Operator example)
+- Put the picture in `examples/ref/` and render **next to it**: `render spec.json --ref examples/ref/x.png --views angle:20,front,side`. `angle:<deg>[:<elevation>]` turns around the character (+ toward its Left).
+- Pose first: `template.armAngle` (A-pose ≈ 30–35°, T-pose 90°) and `legSpread` (≈ 7°) set the skeleton **and** the body, so the pose is right before any gear is added.
+- Read sizes with `info --json` and generate the spec from them (see `examples/operator.gen.py`): vest, pouches, holsters and pads are all placed from the torso / leg / hand numbers, so one change of build re-fits everything.
+- A thick layer (trousers, muscle) **swallows** thin parts (pockets, pads) placed against the old surface: place details on the new, bigger radius.
+- Hands: a flat sweep that continues the forearm reads better than a fist blob; for palm-facing-the-viewer use `r: [thin, wide]` (the first radius runs front-to-back for a diagonal limb).
+- Realistic faces: remove cheeks (`remove: ["Cheek Left","Cheek Right"]`), shrink eyes (`eyeScale: 0.55`), add beard / moustache as blobs, raise helmet rims above the brow line.
+- Honest limit: a spec of boxes, sweeps and blobs gets the silhouette, colours and equipment of a reference right, but not its texture (camo pattern, fabric folds), fingers or facial likeness.

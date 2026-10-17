@@ -20,7 +20,7 @@ ok(!/ERROR/.test(out), 'the check has no errors');
 const png = fs.readFileSync(path.join(dir, 'kid.sheet.png'));
 ok(png.readUInt32BE(16) > 1500 && png.readUInt32BE(20) > 400, `the contact sheet is ${png.readUInt32BE(16)} x ${png.readUInt32BE(20)}`);
 console.log('# the example characters');
-for (const n of ['knight2', 'witch', 'scout', 'wizard']) {
+for (const n of ['knight2', 'witch', 'scout', 'wizard', 'operator']) {
   const o = run('check', `examples/${n}.json`);
   ok(!/ERROR/.test(o), `${n}: the check has no errors`);
 }

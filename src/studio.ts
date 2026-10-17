@@ -14,6 +14,8 @@ export interface RenderOptions {
   anim?: { name: string; t: number };
   /** Expression weights by name (0..1). */
   expr?: Record<string, number>;
+  /** A reference picture (data URL) shown first on the contact sheet, to compare against. */
+  ref?: string;
   /** Show the pose that is stored in the project. */
   pose?: boolean;
 }
@@ -84,13 +86,30 @@ export function installStudio(store: Store, vp: Viewport): void {
       // one contact sheet with every view side by side, labelled
       const load = (src: string) => new Promise<HTMLImageElement>((res) => { const i = new Image(); i.onload = () => res(i); i.src = src; });
       const imgs = await Promise.all(images.map((i) => load(i.png)));
+      let refImg: HTMLImageElement | null = null;
+      if (o.ref) {
+        const r = await load(o.ref);
+        const k = size / r.height;
+        const c = document.createElement('canvas');
+        c.width = Math.round(r.width * k);
+        c.height = size;
+        c.getContext('2d')!.drawImage(r, 0, 0, c.width, c.height);
+        refImg = await load(c.toDataURL('image/png'));
+      }
       const sheet = document.createElement('canvas');
-      sheet.width = imgs.reduce((a, i) => a + i.width + 6, 6);
+      sheet.width = imgs.reduce((a, i) => a + i.width + 6, 6) + (refImg ? refImg.width + 6 : 0);
       sheet.height = size + 30;
       const g = sheet.getContext('2d')!;
       g.fillStyle = '#ffffff';
       g.fillRect(0, 0, sheet.width, sheet.height);
       let x = 6;
+      if (refImg) {
+        g.drawImage(refImg, x, 24);
+        g.fillStyle = '#b00';
+        g.font = '600 14px sans-serif';
+        g.fillText('reference', x + 4, 17);
+        x += refImg.width + 6;
+      }
       imgs.forEach((img, k) => {
         g.drawImage(img, x, 24);
         g.fillStyle = '#333';
