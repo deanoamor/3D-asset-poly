@@ -38,6 +38,8 @@ export interface SceneObject {
   /** Material: 0..1 roughness (default .85), 0..1 metalness (default 0), glow = how strongly the color lights itself (emissive, default 0). */
   mat?: { rough?: number; metal?: number; glow?: number };
   /** Skin: how this shape follows the skeleton. auto = small parts follow one joint, big ones bend; bend = always blend between joints; joint = follow one joint only. `soft` 0..1 = how wide the blend is. */
+  /** A picture on this shape (a face, a label, a pattern). `front` puts it only on the +Z side; the other sides keep the colour. */
+  tex?: { id: string; mode?: 'all' | 'front' };
   skin?: { mode?: 'auto' | 'bend' | 'joint'; joint?: string; soft?: number };
   visible: boolean;
   locked: boolean;
@@ -84,6 +86,16 @@ export interface AnimClip {
   ease?: 'linear' | 'smooth' | 'in' | 'out';
 }
 
+/** A small picture stored in the project, used by shapes (`SceneObject.tex`). */
+export interface Picture {
+  id: string;
+  name: string;
+  /** PNG data URL, at most 128 px on the long side. */
+  src: string;
+  w: number;
+  h: number;
+}
+
 export interface Doc {
   version: 1;
   name: string;
@@ -96,6 +108,8 @@ export interface Doc {
   pose?: Record<string, Vec3>;
   /** Skeleton animations. */
   anims?: AnimClip[];
+  /** Pictures that shapes can wear. */
+  pictures?: Picture[];
 }
 
 export const SHAPE_LABELS: Record<ShapeType, string> = {

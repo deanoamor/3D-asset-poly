@@ -84,7 +84,8 @@ export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, 
         geo.setAttribute('skinWeight', new THREE.BufferAttribute(skin.weight, 4));
         const r = bakeVertexColors(geo, m.material as THREE.MeshStandardMaterial, baked);
         geo = r.geometry;
-        for (const name of Object.keys(geo.attributes)) if (!['position', 'normal', 'color', 'skinIndex', 'skinWeight'].includes(name)) geo.deleteAttribute(name);
+        const keep = ['position', 'normal', 'color', 'skinIndex', 'skinWeight', ...((r.material as THREE.MeshStandardMaterial).map ? ['uv'] : [])];
+        for (const name of Object.keys(geo.attributes)) if (!keep.includes(name)) geo.deleteAttribute(name);
         byMaterial.set(r.material, [...(byMaterial.get(r.material) ?? []), geo]);
       }
       node.removeFromParent();
@@ -102,6 +103,12 @@ export function attachSkeletons(doc: Doc, root: THREE.Group, nodes: Map<string, 
     if (prepared.some((p) => p.geo.getAttribute('color'))) {
       for (const p of prepared) {
         if (!p.geo.getAttribute('color')) p.geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(p.geo.getAttribute('position').count * 3).fill(1), 3));
+      }
+    }
+    // the geometries are merged into one mesh, so they must all carry the same attributes
+    if (prepared.some((p) => p.geo.getAttribute('uv'))) {
+      for (const p of prepared) {
+        if (!p.geo.getAttribute('uv')) p.geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(p.geo.getAttribute('position').count * 2), 2));
       }
     }
     const materials = prepared.map((p) => p.mat);

@@ -3,6 +3,7 @@ import {
   DEFAULT_SEGMENTS,
   SHAPE_LABELS,
   type Doc,
+  type Picture,
   type AnimClip,
   type Joint,
   type EnginePreset,
@@ -903,6 +904,40 @@ export class Store {
   }
 
   /** Surface look for shapes (and every shape inside the given groups): smooth shading and painted color variation. */
+  /** Keep a picture in the project (so shapes can wear it). */
+  addPicture(p: Picture): void {
+    this.mutate((d) => {
+      d.pictures = [...(d.pictures ?? []).filter((x) => x.id !== p.id), p];
+    });
+  }
+
+  /** Put a picture on shapes (and every shape inside the given groups), change how it sits, or take it off with null. */
+  setPicture(ids: string[], tex: { id?: string; mode?: 'all' | 'front' } | null, commit = true): void {
+    this.mutate((d) => {
+      const all = new Set<string>();
+      for (const id of ids) {
+        all.add(id);
+        descendantIds(d, id).forEach((c) => all.add(c));
+      }
+      for (const o of d.objects) {
+        if (!all.has(o.id) || o.kind !== 'shape') continue;
+        if (!tex) {
+          delete o.tex;
+          continue;
+        }
+        const id = tex.id ?? o.tex?.id;
+        if (!id) continue;
+        o.tex = { id, ...((tex.mode ?? o.tex?.mode) === 'front' ? { mode: 'front' as const } : {}) };
+      }
+      // pictures nobody wears any more are forgotten, so the project does not grow
+      const used = new Set(d.objects.map((o) => o.tex?.id).filter(Boolean));
+      if (d.pictures) {
+        d.pictures = d.pictures.filter((p) => used.has(p.id));
+        if (!d.pictures.length) delete d.pictures;
+      }
+    }, commit);
+  }
+
   /** How shapes (and every shape inside groups) follow the skeleton. */
   setSkin(ids: string[], patch: { mode?: 'auto' | 'bend' | 'joint'; joint?: string | null; soft?: number }, commit = true): void {
     this.mutate((d) => {

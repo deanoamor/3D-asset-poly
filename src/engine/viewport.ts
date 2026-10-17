@@ -3,8 +3,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import type { Store } from '../core/store';
 import { effectivelyVisible, isLockedChain } from '../core/docmath';
-import type { SceneObject, ShapeType, Vec3 } from '../core/types';
-import { GeometryCache, MaterialCache, applyTransform, buildExportScene } from './sceneBuild';
+import type { Doc, SceneObject, ShapeType, Vec3 } from '../core/types';
+import { GeometryCache, LookResolver, MaterialCache, applyTransform, buildExportScene } from './sceneBuild';
+import { ensureImages, imageOf, pictureOf } from './textures';
 import { applyPose } from './rigExport';
 import { samplePose, sampleRoot } from '../core/anim';
 import { EditController } from './editMode';
@@ -60,6 +61,9 @@ export class Viewport {
   private sig = new Map<string, string>();
   private geos = new GeometryCache();
   readonly mats = new MaterialCache();
+  private imgBusy = false;
+  private imgVer = 0;
+  private looks = new LookResolver({ objects: [] } as unknown as Doc, this.geos, this.mats);
   private outlines: THREE.LineSegments[] = [];
   private outlineMat = new THREE.LineBasicMaterial({ color: 0x0d99ff });
   private ghost: THREE.Mesh | null = null;
@@ -381,7 +385,7 @@ export class Viewport {
       return;
     }
     const doc = this.store.doc;
-    const sig = JSON.stringify([doc.objects, doc.rig, this.store.ui.preview, !!this.store.ui.weights]);
+    const sig = JSON.stringify([doc.objects, doc.rig, this.store.ui.preview, !!this.store.ui.weights, this.imgVer, doc.pictures?.map((p) => p.id)]);
     if (!this.poseRoot || sig !== this.poseSig) {
       this.disposePose();
       this.poseSig = sig;
@@ -519,15 +523,35 @@ export class Viewport {
     return `${o.shape}:${o.params.segments}:${o.params.taper}:${o.color}:${l}`;
   }
 
+  /** What changes a shape's material beyond its geometry: roughness / metal / glow and the picture it wears. */
+  private lookSignature(o: SceneObject): string {
+    const p = o.tex ? pictureOf(this.store.doc, o.tex.id) : undefined;
+    return `${JSON.stringify(o.mat ?? 0)}${o.tex ? `|${o.tex.id}:${o.tex.mode ?? 'all'}:${imageOf(p) ? p!.src.length : 'x'}` : ''}`;
+  }
+
   sync(): void {
     const doc = this.store.doc;
+    this.looks.setDoc(doc);
+    if (doc.pictures?.length && !this.imgBusy) {
+      this.imgBusy = true;
+      void ensureImages(doc).then((changed) => {
+        this.imgBusy = false;
+        if (changed) {
+          this.imgVer++;
+          this.sync();
+        }
+      });
+    }
     const alive = new Set<string>();
     for (const o of doc.objects) {
       alive.add(o.id);
       let node = this.nodes.get(o.id);
-      const sig = this.nodeSignature(o);
+      const sig = this.nodeSignature(o) + (o.kind === 'shape' ? this.lookSignature(o) : '');
       if (!node) {
-        node = o.kind === 'shape' ? new THREE.Mesh(this.geos.get(o), this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o), matOf(o))) : new THREE.Group();
+        if (o.kind === 'shape') {
+          const r = this.looks.resolve(o);
+          node = new THREE.Mesh(r.geometry, r.material);
+        } else node = new THREE.Group();
         node.userData.id = o.id;
         node.castShadow = true;
         node.receiveShadow = true;
@@ -535,9 +559,10 @@ export class Viewport {
         this.sig.set(o.id, sig);
       } else if (this.sig.get(o.id) !== sig && node instanceof THREE.Mesh) {
         const old = node.geometry;
-        node.geometry = this.geos.get(o);
-        if (old.userData.faceOfTri) old.dispose(); // edited meshes own their geometry
-        node.material = this.mats.get(o.color, needsDoubleSide(o), usesVertexColors(o), matOf(o));
+        const r = this.looks.resolve(o);
+        node.geometry = r.geometry;
+        if (old.userData.faceOfTri || old.userData.owned) old.dispose(); // edited or picture-mapped meshes own their geometry
+        node.material = r.material;
         this.sig.set(o.id, sig);
         this.refreshOutlines();
       }

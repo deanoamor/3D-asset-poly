@@ -4,8 +4,9 @@ import { isLockedChain } from '../core/docmath';
 import { PALETTE } from '../core/palette';
 import { objectTriangles } from '../core/shapes';
 import { edgeMap, vertCount } from '../core/mesh';
-import { MIN_SEGMENTS, SHAPE_LABELS, type SceneObject, type Vec3 } from '../core/types';
-import { clear, fmt, h, icon } from './dom';
+import { MIN_SEGMENTS, SHAPE_LABELS, type Picture, type SceneObject, type Vec3 } from '../core/types';
+import { BUILTIN_PICTURES, builtinPicture, pictureFromFile } from '../engine/textures';
+import { clear, fmt, h, icon, toast } from './dom';
 import { descendantIds } from '../core/docmath';
 
 interface Field {
@@ -184,6 +185,72 @@ export function mountProps(root: HTMLElement, store: Store): void {
     );
   }
 
+  /** A picture on the shape (a face, a label, a pattern): pick a ready-made one or add your own image. */
+  function pictureSection(ids: string[]): HTMLElement {
+    const all = new Set<string>();
+    for (const id of ids) {
+      all.add(id);
+      descendantIds(store.doc, id).forEach((c) => all.add(c));
+    }
+    const shapes = () => store.doc.objects.filter((o) => all.has(o.id) && o.kind === 'shape');
+    const wear = (pic: Picture) => {
+      store.addPicture(pic);
+      store.setPicture(ids, { id: pic.id });
+    };
+    const builtin = h('select', { id: 'pic-builtin', 'aria-label': 'Ready-made picture' },
+      h('option', { value: '' }, 'Ready-made picture…'),
+      ...BUILTIN_PICTURES.map((b) => h('option', { value: b.id }, b.label)),
+    ) as HTMLSelectElement;
+    builtin.addEventListener('change', () => {
+      const pic = builtinPicture(builtin.value);
+      builtin.value = '';
+      if (pic) wear(pic);
+    });
+    const upload = h('button', { class: 'btn sm', id: 'pic-upload', title: 'Use an image from your computer (PNG, JPG). It is shrunk to 128 px.' }, 'Add your own image…');
+    upload.addEventListener('click', () => {
+      const input = h('input', { type: 'file', accept: 'image/*', id: 'pic-file' }) as HTMLInputElement;
+      input.addEventListener('change', async () => {
+        const f = input.files?.[0];
+        if (!f) return;
+        try {
+          wear(await pictureFromFile(f));
+        } catch {
+          toast('That image could not be opened.');
+        }
+      });
+      input.click();
+    });
+    const all_ = h('button', { class: 'segbtn', id: 'pic-all', title: 'The picture on every side', onclick: () => store.setPicture(ids, { mode: 'all' }) }, 'All sides');
+    const front = h('button', { class: 'segbtn', id: 'pic-front', title: 'The picture only on the front (+Z) side; the other sides keep the colour', onclick: () => store.setPicture(ids, { mode: 'front' }) }, 'Front only');
+    const remove = h('button', { class: 'btn sm', id: 'pic-remove', onclick: () => store.setPicture(ids, null) }, 'Take the picture off');
+    const thumb = h('img', { class: 'picthumb', alt: '' }) as HTMLImageElement;
+    const label = h('span', { class: 'fnote' });
+    fields.push({
+      update: () => {
+        const list = shapes();
+        const withPic = list.filter((o) => o.tex);
+        const first = withPic[0];
+        const pic = first ? store.doc.pictures?.find((x) => x.id === first.tex!.id) : undefined;
+        thumb.hidden = !pic;
+        if (pic) thumb.src = pic.src;
+        label.textContent = pic ? `Wearing “${pic.name}”${withPic.length > 1 ? ` (${withPic.length} shapes)` : ''}.` : 'No picture. A face for a head, a label, a pattern…';
+        all_.classList.toggle('on', !!first && first.tex!.mode !== 'front');
+        front.classList.toggle('on', !!first && first.tex!.mode === 'front');
+        all_.disabled = front.disabled = remove.hidden = !first;
+        remove.hidden = !first;
+      },
+    });
+    return section(
+      'Picture',
+      h('div', { class: 'picrow' }, thumb, label),
+      builtin,
+      upload,
+      h('div', { class: 'segrow', role: 'group', 'aria-label': 'Where the picture goes' }, all_, front),
+      remove,
+      h('div', { class: 'tris' }, 'The picture is projected onto each side. In the export, “one texture atlas” packs every picture and colour into a single image.'),
+    );
+  }
+
   /** How a shape follows the skeleton: blend between joints, or follow one joint; and how soft the blend is. */
   function skinSection(ids: string[]): HTMLElement | null {
     const rig = store.doc.rig;
@@ -325,6 +392,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
     if (!isShape) fs.append(pivotSection(o));
     fs.append(spinSection(o));
     if (!isShape) fs.append(surfaceSection([o.id], 'Surface (all parts)'));
+    if (!isShape) fs.append(pictureSection([o.id]));
     { const sk = skinSection([o.id]); if (sk) fs.append(sk); }
     if (isShape) {
       const shape = o.shape!;
@@ -348,6 +416,7 @@ export function mountProps(root: HTMLElement, store: Store): void {
         ),
       );
       fs.append(surfaceSection([o.id]));
+      fs.append(pictureSection([o.id]));
       const params: HTMLElement[] = [];
       if (!o.mesh && ['cylinder', 'cone', 'sphere'].includes(shape)) {
         const label = shape === 'sphere' ? 'Smoothness' : 'Sides';

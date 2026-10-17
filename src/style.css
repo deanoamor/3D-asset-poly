@@ -405,3 +405,7 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .anim .fnote { margin: 4px 0 0; }
 .fstats { font-size: 12px; color: var(--muted); background: #f6f6f4; border-radius: 8px; padding: 8px 10px; margin: 8px 0 0; }
 .fstats.warn { color: #8a4b00; background: #fff4e0; }
+.picrow { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.picthumb { width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--line); image-rendering: pixelated; object-fit: cover; flex: none; }
+.picrow .fnote { margin: 0; }
+#pic-upload, #pic-remove, #pic-builtin { width: 100%; margin-bottom: 6px; }

@@ -1,3 +1,4 @@
+import { ensureImages } from './textures';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
@@ -24,6 +25,8 @@ export interface ExportOptions {
   animations?: boolean;
   /** Pack the GLB with meshopt for smaller downloads (GLB and package only). */
   compress?: boolean;
+  /** Put every colour and picture into one texture, so the model needs a single material. */
+  atlas?: boolean;
 }
 
 export interface ExportResult {
@@ -53,9 +56,9 @@ function bakeBaseColors(content: THREE.Object3D): void {
 }
 
 /** Wrap everything in a root whose origin is the bottom center of the model, scaled for the preset. */
-export function prepareExport(doc: Doc, collision = false): { root: THREE.Group; size: THREE.Vector3 } {
+export function prepareExport(doc: Doc, collision = false, atlas = false): { root: THREE.Group; size: THREE.Vector3 } {
   const preset = PRESETS[doc.enginePreset];
-  const content = buildExportScene(doc, doc.name);
+  const content = buildExportScene(doc, doc.name, { atlas });
   bakeBaseColors(content);
   content.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(content);
@@ -102,7 +105,8 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
   const collision = opts.collision && !!preset.collision;
   const withAnims = opts.animations !== false && opts.skeleton !== false && !!doc.anims?.length && !!doc.rig?.length;
   const exportDoc = docForExport(doc, opts.skeleton, withAnims ? false : opts.pose);
-  const { root, size } = prepareExport(exportDoc, collision);
+  await ensureImages(exportDoc); // pictures must be decoded before they can go into the file
+  const { root, size } = prepareExport(exportDoc, collision, !!opts.atlas && opts.format !== 'obj');
   const triangles = triangleTotal(root, (o) => collision && !!preset.collision && o.name.endsWith(preset.collision.nodeSuffix));
   let drawCalls = 0;
   const matSet = new Set<THREE.Material>();
