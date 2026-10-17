@@ -67,12 +67,12 @@ export async function pictureFromFile(file: File): Promise<Picture> {
 }
 
 /** Ready-made pictures, drawn on demand. */
-export const BUILTIN_PICTURES: { id: string; label: string; draw: (g: CanvasRenderingContext2D, s: number) => void }[] = [
+export const BUILTIN_PICTURES: { id: string; label: string; draw: (g: CanvasRenderingContext2D, s: number, skin?: string) => void }[] = [
   {
     id: 'face',
     label: 'Face',
-    draw: (g, s) => {
-      g.fillStyle = '#f2c9a0';
+    draw: (g, s, skin) => {
+      g.fillStyle = skin ?? '#f2c9a0';
       g.fillRect(0, 0, s, s);
       g.fillStyle = '#ffffff';
       for (const x of [0.3, 0.7]) {
@@ -133,11 +133,11 @@ export const BUILTIN_PICTURES: { id: string; label: string; draw: (g: CanvasRend
   },
 ];
 
-export function builtinPicture(id: string): Picture | null {
+export function builtinPicture(id: string, skin?: string): Picture | null {
   const b = BUILTIN_PICTURES.find((x) => x.id === id);
   if (!b) return null;
   const c = document.createElement('canvas');
   c.width = c.height = 128;
-  b.draw(c.getContext('2d')!, 128);
+  b.draw(c.getContext('2d')!, 128, skin);
   return makePicture(b.label, c, 128, 128);
 }

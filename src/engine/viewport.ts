@@ -1086,6 +1086,56 @@ export class Viewport {
     this.flyTo(this.controls.target.clone(), dir.multiplyScalar(dist).add(this.controls.target));
   }
 
+  /**
+   * Render the model from a named angle into a PNG of exactly w x h, without moving the editor's own camera.
+   * Angles: front, back, side (the character's Left), side-right, 3q (front, from the Left), 3q-back, top, face (a close-up of the head).
+   */
+  renderView(view: string, w: number, h: number, fit = 1.08): string {
+    const dirs: Record<string, [number, number, number]> = {
+      front: [0, 0.06, 1],
+      back: [0, 0.06, -1],
+      side: [1, 0.06, 0],
+      'side-right': [-1, 0.06, 0],
+      '3q': [0.75, 0.32, 1],
+      '3q-back': [-0.75, 0.32, -1],
+      top: [0.0001, 1, 0.0001],
+    };
+    let box = this.store.worldBounds();
+    let d = dirs[view] ?? dirs.front;
+    if (view === 'face') {
+      const head = this.store.doc.objects.find((o) => /^head$/i.test(o.name));
+      box = head ? this.store.worldBounds([head.id]) : new THREE.Box3(new THREE.Vector3(box.min.x, box.min.y + (box.max.y - box.min.y) * 0.84, box.min.z), box.max);
+      d = [0.18, 0.08, 1];
+    }
+    if (box.isEmpty()) return this.snapshot();
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const dir = new THREE.Vector3(...d).normalize();
+    const prev = { pos: this.camera.position.clone(), target: this.controls.target.clone(), aspect: this.camera.aspect, size: this.renderer.getSize(new THREE.Vector2()) };
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    // distance so that the whole box fits both the vertical and the horizontal field of view
+    const vfov = THREE.MathUtils.degToRad(this.camera.fov);
+    const hfov = 2 * Math.atan(Math.tan(vfov / 2) * this.camera.aspect);
+    const rad = size.length() / 2;
+    const dist = Math.max((size.y / 2 + rad * 0.25) / Math.tan(vfov / 2), (Math.max(size.x, size.z) / 2 + rad * 0.25) / Math.tan(hfov / 2), rad) * fit;
+    this.camera.position.copy(center).add(dir.multiplyScalar(dist));
+    this.controls.target.copy(center);
+    this.camera.lookAt(center);
+    this.camera.updateMatrixWorld(true);
+    this.renderer.setSize(w, h, false);
+    this.renderer.render(this.scene, this.camera);
+    const url = this.renderer.domElement.toDataURL('image/png');
+    this.camera.position.copy(prev.pos);
+    this.controls.target.copy(prev.target);
+    this.camera.aspect = prev.aspect;
+    this.camera.updateProjectionMatrix();
+    this.camera.lookAt(prev.target);
+    this.renderer.setSize(prev.size.x, prev.size.y, false);
+    this.requestRender();
+    return url;
+  }
+
   focus(): void {
     const sel = this.store.selection;
     const box = this.store.worldBounds(sel.length ? sel : undefined);

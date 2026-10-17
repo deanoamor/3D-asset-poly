@@ -1,0 +1,80 @@
+# Making a game character with Poly Studio (for Claude, or anyone scripting)
+
+A person makes a character by adding shapes, looking at the result from every side, fixing what looks wrong and exporting.
+`scripts/studio.mjs` gives you the same loop from the command line: **write a spec → build → check → look → fix → export.**
+
+```
+node scripts/studio.mjs make my-hero.json --out out/        # build + check + render 5 views + export a GLB, in one go
+node scripts/studio.mjs check my-hero.json --height 1.8 --max-tris 3000
+node scripts/studio.mjs render my-hero.json --views face,front --anim Walk@0.25 --expr Smile=1
+node scripts/studio.mjs export my-hero.json --atlas --compress --out hero.glb
+```
+
+`render` writes one PNG per view and `<name>.sheet.png` with all views side by side. **Open the sheet and look at it**
+(the Read tool shows images). The check cannot see ugliness; your eyes can. Look at least at front, 3q, side, back and face.
+
+## The loop
+1. Write `my-hero.json` (below). Start from the human template; do not build a body from scratch unless the character is not a person.
+2. `make` it. Read the check output, then **look at the sheet**.
+3. Fix what is wrong, change the spec, run `make` again. Two or three rounds is normal.
+4. Done when: check has no ERROR, the sheet looks right from every angle, and the GLB validator says 0 errors.
+
+## Conventions
+- Metres. The character stands on `y = 0`, faces **+Z**. **Left is +X, Right is -X** (the character's own sides).
+- Names end in `Left` / `Right` for pairs. Use `"mirror": true` and describe only the Left one.
+- Keep the figure one connected thing: parts must touch or overlap their neighbours (the check reports floating parts).
+- Overlap a little at joints (elbows, knees, neck) so nothing tears when it bends.
+
+## The spec
+```json
+{
+  "name": "Ranger",
+  "template": { "kind": "human", "build": "stylized", "height": 1.8,
+                "skin": "#e8b894", "hair": "#5a3a22", "hairStyle": "short",
+                "top": "#3f6b4a", "bottom": "#5a4632", "shoes": "#2b2118", "sleeves": "long", "legs": "long" },
+  "remove": ["Hair"],
+  "parts": [
+    { "name": "Hood", "kind": "blob", "center": [0, 1.66, -0.05], "radii": [0.19, 0.2, 0.2], "color": "#3f6b4a", "smooth": true },
+    { "name": "Belt", "kind": "sweep", "rings": [{ "p": [0, 0.97, 0], "r": [0.2, 0.12] }, { "p": [0, 1.01, 0], "r": [0.2, 0.12] }], "sides": 8, "color": "#2b2118" },
+    { "name": "Pouch", "kind": "box", "pos": [0.2, 0.93, 0.1], "size": [0.1, 0.12, 0.07], "color": "#7a5230", "mirror": true }
+  ],
+  "morphs": [ { "name": "Angry", "parts": { "Eyebrow Left": { "rot": [0, 0, -25] }, "Eyebrow Right": { "rot": [0, 0, 25] } } } ]
+}
+```
+- **template.build**: `stylized` (default, ~5 heads tall, friendly), `realistic` (7.5), `heroic` (8, wide shoulders), `chibi` (3 heads), `kid`.
+  `weight`: slim / normal / heavy. `face: false` drops the face. `expressions: false` drops Blink / Smile / Surprised.
+- **parts** kinds: `box sphere cylinder cone pyramid plane` (pos, size, rot, segments, taper), `sweep` (a smooth tube through `rings`:
+  limbs, belts, scarves, tails, capes), `blob` (a low-poly ellipsoid: hair, hands, hats, eyes, noses).
+  A part with the same name as a template part **replaces** it. `remove` deletes template parts.
+- **Extras per part**: `smooth`, `paint` (0..1 hand-painted variation), `mat` {rough, metal, glow}, `picture` {id: face|stripes|checker|star, mode: all|front},
+  `skin` {mode: auto|bend|joint, joint, soft}, `group` (a named sub-group from `groups`, with its own pivot / spin).
+- **rig**: `human` (default with a template) fits the 22-joint person skeleton to the body; `none` for props; `joints` overrides positions.
+- **morphs**: expressions as new pos / size / rot of named parts. The template already brings Blink, Smile, Surprised.
+
+## What good looks like
+- **Silhouette first.** Squint at the front and side views: can you tell who it is from the outline? Exaggerate one feature (big hat, wide shoulders, long coat).
+- **Proportions (stylized):** head ≈ 1/5 of the height, legs ≈ 40–45 %, arms reach the middle of the thighs, shoulders ≈ 2 head-widths. Chibi: head ≈ 1/3.
+- **Few, readable colours:** 4–8 main colours, one accent. A dark outline colour for shoes/belt/gloves helps. Avoid pure black and pure white big areas.
+- **Detail where eyes go:** face, hands, belt, shoes, collar, insignia. Skip detail hidden under clothes.
+- **Layering reads as clothing:** a collar ring, cuffs, a belt, a hem slightly bigger than the body it covers (a few cm).
+- **Budget:** 1 000–3 000 triangles for a hero, 300–1 000 for a crowd character. Use fewer `sides` / `segments` on small or distant parts.
+- Sweeps with 7–8 sides look round enough; spheres/blobs with 6–9 segments read as low-poly.
+
+## Common mistakes the check and the sheet reveal
+| You see | Fix |
+| --- | --- |
+| `floating` parts | move/scale the part so it overlaps the body, or remove it |
+| `joint-hole` | a part should cover that joint (elbow, knee, neck): extend or overlap the limb parts |
+| `below-floor` / `above-floor` | feet to `y = 0` |
+| head looks tiny or huge | `template.build`, or `Head` radii |
+| arms/legs like sticks | raise `weight`, or add thicker sleeve/trouser parts |
+| hair covers the face | the hair blob must sit up and back of the head centre |
+| flat, boring colours | add `paint: 0.3` on big parts, a trim colour, a belt, a collar |
+| bumpy body when it bends | raise a joint's Reach, or set a part's `skin` to `joint` (rigid things: helmets, pouches, weapons) |
+
+## Animation, expressions, export
+- Ready-made clips (Walk, Run, Idle, Wave, Strafe, Jump, Attack, Hit, Death, Crouch) are added from the editor's Animation panel;
+  `render --anim Walk@0.25` previews any of them on the character (frame at 0.25 s).
+- Expressions: `render --expr Smile=1,Blink=0.5`. Exported as glTF morph targets.
+- Export options: `--atlas` (one material, one draw call for the whole character), `--compress` (meshopt: smaller file for three.js / Babylon.js / PlayCanvas / Blender 4+; leave off for Unity / Godot / Unreal).
+- The `make` output folder holds: the view PNGs, `*.sheet.png`, `*.glb` (validated) and `*.project.json` (open it in the editor via Saves → Import, or send it on).

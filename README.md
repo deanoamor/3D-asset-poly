@@ -185,6 +185,11 @@ Press **Pose** in the Skeleton section, click a joint and turn it with the rings
 - GLB / glTF export writes them as **morph targets** with their names (`mesh.morphTargetDictionary` in three.js). A character with a skeleton keeps ONE skinned mesh that carries all of them; separate parts get a target on the mesh of each part that moves. They survive meshopt compression.
 - Not done yet: keyframing expressions inside an animation clip (drive them from game code for now).
 
+## Scripting and Claude (`scripts/studio.mjs`)
+- **Spec → character:** write a JSON spec (human template + extra parts) and run `node scripts/studio.mjs make spec.json --out out/`: it builds the character (body, face, skeleton, expressions), checks it (floating parts, floor, height, joint holes, left/right, triangle budget), renders front / 3q / side / back / face PNGs plus a contact sheet, and exports a validated GLB.
+- **A way to look:** `render` can also show a clip frame (`--anim Walk@0.25`) or an expression (`--expr Smile=1`).
+- Guide: `docs/CHARACTER_GUIDE.md`; Claude Code skill: `.claude/skills/make-character`.
+
 ## Skin weights
 - **Weights** (button in the Skeleton header) colours the character by how strongly the picked joint pulls each point: red = fully, blue = not at all.
 - **Reach** (joint editor): how far a joint's pull reaches. Raise it where the skin tears (shoulder, hip, neck).

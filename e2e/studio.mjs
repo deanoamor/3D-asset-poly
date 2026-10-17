@@ -1,0 +1,31 @@
+// The command-line studio: spec -> check -> renders -> validated GLB.
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+let failed = 0;
+const ok = (c, m) => { if (!c) failed++; console.log(c ? '  ok  ' : '  FAIL', m); };
+const dir = 'e2e/out/studio';
+fs.rmSync(dir, { recursive: true, force: true });
+fs.mkdirSync(dir, { recursive: true });
+const spec = path.join(dir, 'kid.json');
+fs.writeFileSync(spec, JSON.stringify({ name: 'Kid', template: { kind: 'human', build: 'kid', height: 1.2, top: '#f2c14e', hairStyle: 'bun' }, parts: [{ name: 'Backpack', kind: 'box', pos: [0, 0.78, -0.1], size: [0.22, 0.28, 0.1], color: '#d64545' }] }));
+const run = (...a) => execFileSync('node', ['scripts/studio.mjs', ...a], { encoding: 'utf8', env: { ...process.env, URL: process.env.URL || 'http://localhost:5199/' } });
+console.log('# make');
+const out = run('make', spec, '--out', dir);
+console.log(out.split('\n').map((l) => '   ' + l).join('\n'));
+for (const f of ['kid.sheet.png', 'kid.front.png', 'kid.face.png', 'kid.glb', 'kid.project.json']) ok(fs.existsSync(path.join(dir, f)) && fs.statSync(path.join(dir, f)).size > 500, `${f} was written`);
+ok(/glTF validator: 0 errors/.test(out), 'the GLB validates');
+ok(/expressions: Blink, Smile, Surprised/.test(out), 'the expressions are in the file');
+ok(!/ERROR/.test(out), 'the check has no errors');
+const png = fs.readFileSync(path.join(dir, 'kid.sheet.png'));
+ok(png.readUInt32BE(16) > 1500 && png.readUInt32BE(20) > 400, `the contact sheet is ${png.readUInt32BE(16)} x ${png.readUInt32BE(20)}`);
+console.log('# check fails on a bad character');
+fs.writeFileSync(path.join(dir, 'bad.json'), JSON.stringify({ name: 'Bad', parts: [{ name: 'A', kind: 'box', pos: [0, 0.5, 0], size: [0.4, 1, 0.4], color: '#888' }, { name: 'Floater', kind: 'box', pos: [3, 3, 0], size: [0.2, 0.2, 0.2], color: '#f00' }] }));
+let bad = '';
+let code = 0;
+try { bad = run('check', path.join(dir, 'bad.json')); } catch (e) { code = e.status; bad = e.stdout; }
+ok(code === 1 && /floating/.test(bad), 'check exits with 1 and names the floating part');
+console.log('# render an animation frame and an expression');
+const r = run('render', spec, '--views', 'front', '--anim', 'Walk@0.25', '--expr', 'Smile=1', '--out', dir);
+ok(/render:/.test(r) && fs.existsSync(path.join(dir, 'kid.front.png')), 'render with --anim and --expr works');
+process.exit(failed ? 1 : 0);

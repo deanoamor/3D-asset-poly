@@ -7,6 +7,7 @@ import { mountLayers } from './ui/layers';
 import { mountSkeleton } from './ui/skeleton';
 import { mountAnimation } from './ui/animation';
 import { mountMorphs } from './ui/morphs';
+import { installStudio } from './studio';
 import { mountProps } from './ui/props';
 import { mountToolbar } from './ui/toolbar';
 import { mountPolyCounter } from './ui/polycounter';
@@ -63,6 +64,7 @@ async function boot(): Promise<void> {
 
   // Debug / test hook
   (window as unknown as { __app: unknown }).__app = { store, vp };
+  installStudio(store, vp);
 
   window.addEventListener('keydown', (e) => {
     if (isTyping(e)) return;
