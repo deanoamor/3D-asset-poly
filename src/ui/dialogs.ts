@@ -278,7 +278,7 @@ export function openExportDialog(store: Store): void {
           const kb = (n: number) => (n < 1024 * 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${(n / 1048576).toFixed(2)} MB`);
           const warn = [res.blob.size > 5 * 1048576 && 'Large for a web game: consider fewer shapes.', res.drawCalls > 100 && 'Many draw calls: merge parts or use fewer materials.'].filter(Boolean).join(' ');
           fileStats.className = `fstats${warn ? ' warn' : ''}`;
-          fileStats.textContent = `File ${kb(res.blob.size)}${gz ? ` (≈ ${kb(gz)} gzipped on a web server)` : ''} · ${res.drawCalls} draw ${res.drawCalls === 1 ? 'call' : 'calls'} · ${res.materials} ${res.materials === 1 ? 'material' : 'materials'}. ${warn}`;
+          fileStats.textContent = `File ${kb(res.blob.size)}${gz ? ` (≈ ${kb(gz)} gzipped on a web server)` : ''} · ${res.drawCalls} draw ${res.drawCalls === 1 ? 'call' : 'calls'} · ${res.materials} ${res.materials === 1 ? 'material' : 'materials'}${res.morphs.length ? ` · ${res.morphs.length} morph ${res.morphs.length === 1 ? 'target' : 'targets'} (${res.morphs.join(', ')})` : ''}. ${warn}`;
         }
         const v = await verifyExport(res, exportCollision ? preset.collision?.nodeSuffix : undefined);
         if (mine !== token) return;

@@ -86,6 +86,13 @@ export interface AnimClip {
   ease?: 'linear' | 'smooth' | 'in' | 'out';
 }
 
+/** An expression (morph target): the new position / turn / size of some parts. Weight 0 = as modelled, 1 = fully this expression. */
+export interface Morph {
+  id: string;
+  name: string;
+  parts: Record<string, { position?: Vec3; rotation?: Vec3; size?: Vec3 }>;
+}
+
 /** A small picture stored in the project, used by shapes (`SceneObject.tex`). */
 export interface Picture {
   id: string;
@@ -110,6 +117,8 @@ export interface Doc {
   anims?: AnimClip[];
   /** Pictures that shapes can wear. */
   pictures?: Picture[];
+  /** Expressions that parts can blend into (exported as glTF morph targets). */
+  morphs?: Morph[];
 }
 
 export const SHAPE_LABELS: Record<ShapeType, string> = {

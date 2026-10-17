@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import * as THREE from 'three';
 import { layoutAtlas, planarUV } from '../src/core/uvmap';
 import { buildGeometry } from '../src/core/shapes';
 import { DEFAULT_SEGMENTS } from '../src/core/types';

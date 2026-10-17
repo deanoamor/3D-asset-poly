@@ -173,7 +173,17 @@ Press **Pose** in the Skeleton section, click a joint and turn it with the rings
 - **Roughness, Metal, Glow** (Properties → Surface) go into the GLB as a real PBR material (`roughness`, `metallic`, `emissive`).
 - The export dialog shows the **file size** (and its gzip size), **draw calls** (meshes) and **materials**, with a warning when the file is large.
 - **Compress for the web (meshopt):** tick it in the Export dialog (GLB / package) to pack the file with EXT_meshopt_compression. A soldier with a walk animation goes from about 550 KB to about 170 KB. three.js, Babylon.js, PlayCanvas, Blender 4+ and model-viewer read it; Unity, Godot and Unreal need a plugin, so leave it off for them.
-- Not done yet: texture atlas / UV, morph targets, Draco/KTX2.
+- Not done yet: Draco/KTX2.
+
+## Pictures and the texture atlas
+- **Picture** (Properties, for a shape or a group): put a ready-made picture (Face, Stripes, Checker, Star badge) or your own image on a shape. The picture is projected onto each side (no UV editing needed); *Front only* puts it just on the +Z side and the other sides keep the colour. Images are shrunk to 128 px and saved in the project.
+- **One texture atlas** (Export dialog): packs every colour and picture into a single image, so the whole model, even a skinned character, uses ONE material and one draw call. In an atlas the hand-painted *Color variation* becomes a flat colour.
+- Pictures are stored per project, travel in Saves and `.3pi` bags, and are forgotten when no shape wears them.
+
+## Expressions (morph targets)
+- **Expressions** (left panel): *New expression*, then move, turn or resize parts (a wider mouth, closed eyelids). *Done* saves only what changed and puts the model back. Each expression has a slider to preview it, and *Edit* / *Delete*.
+- GLB / glTF export writes them as **morph targets** with their names (`mesh.morphTargetDictionary` in three.js). A character with a skeleton keeps ONE skinned mesh that carries all of them; separate parts get a target on the mesh of each part that moves. They survive meshopt compression.
+- Not done yet: keyframing expressions inside an animation clip (drive them from game code for now).
 
 ## Skin weights
 - **Weights** (button in the Skeleton header) colours the character by how strongly the picked joint pulls each point: red = fully, blue = not at all.

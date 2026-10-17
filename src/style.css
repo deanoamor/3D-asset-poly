@@ -409,3 +409,11 @@ kbd { font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; backgroun
 .picthumb { width: 40px; height: 40px; border-radius: 6px; border: 1px solid var(--line); image-rendering: pixelated; object-fit: cover; flex: none; }
 .picrow .fnote { margin: 0; }
 #pic-upload, #pic-remove, #pic-builtin { width: 100%; margin-bottom: 6px; }
+.morphs { border-top: 1px solid var(--line); padding-bottom: 10px; flex: none; }
+.morphs.hidden { display: none; }
+.morphs .fnote, .morph-draft, .morph-row, .morphs > .jactions { margin-left: 12px; margin-right: 12px; }
+.morph-row { display: grid; gap: 2px; margin-bottom: 8px; }
+.morph-top { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+.morph-w { width: 100%; margin: 0; }
+.morph-draft { display: grid; gap: 8px; background: #fff7e6; border: 1px solid #f0d9a8; border-radius: 8px; padding: 8px; }
+.morph-draft .fnote { margin: 0; }

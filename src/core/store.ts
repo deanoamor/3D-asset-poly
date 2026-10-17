@@ -4,6 +4,7 @@ import {
   SHAPE_LABELS,
   type Doc,
   type Picture,
+  type Morph,
   type AnimClip,
   type Joint,
   type EnginePreset,
@@ -73,7 +74,7 @@ export interface UiState {
   weights?: boolean;
 }
 
-export type StoreEvent = 'anim' | 'rig' | 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn';
+export type StoreEvent = 'anim' | 'rig' | 'doc' | 'selection' | 'tool' | 'history' | 'reset' | 'edit' | 'learn' | 'morph';
 
 export interface EditState {
   id: string;
@@ -155,6 +156,8 @@ export class Store {
     this.redoStack = history?.redo.slice(-HISTORY_CAP) ?? [];
     this.edit = null;
     this.shrinkSession = null;
+    this.morphW = {};
+    this.morphDraft = null;
     this.selection = [];
     this.selectedJoint = null;
     this.animId = null;
@@ -170,9 +173,154 @@ export class Store {
     const owners = this.ownerMatrices();
     fn(this.doc);
     this.followOwners(owners);
+    this.pruneMorphs();
     this.pruneSelection();
     this.emit('doc');
     if (commit) this.commit();
+  }
+
+  /** Expressions forget parts that no longer exist; an expression with no parts left goes away. */
+  private pruneMorphs(): void {
+    const d = this.doc;
+    if (!d.morphs) return;
+    const live = new Set(d.objects.map((o) => o.id));
+    d.morphs = d.morphs
+      .map((m) => ({ ...m, parts: Object.fromEntries(Object.entries(m.parts).filter(([id]) => live.has(id))) }))
+      .filter((m) => Object.keys(m.parts).length);
+    if (!d.morphs.length) delete d.morphs;
+  }
+
+  // ----- expressions (morph targets) -----
+
+  /** Preview weights 0..1 by expression id (not saved). */
+  morphW: Record<string, number> = {};
+  /** An expression being made: the transforms of every part when it began, so they can be put back. */
+  morphDraft: { id: string; name: string; isNew: boolean; base: Record<string, { position: Vec3; rotation: Vec3; size: Vec3 }> } | null = null;
+
+  /** The object with the previewed expressions blended into its position / rotation / size. */
+  morphedObject(o: SceneObject): SceneObject {
+    const ms = this.doc.morphs;
+    if (!ms?.length) return o;
+    let out: SceneObject | null = null;
+    for (const m of ms) {
+      const w = this.morphW[m.id] ?? 0;
+      const t = m.parts[o.id];
+      if (!w || !t) continue;
+      out ??= { ...o, position: [...o.position], rotation: [...o.rotation], size: [...o.size] } as SceneObject;
+      for (const k of ['position', 'rotation', 'size'] as const) {
+        const target = t[k];
+        if (target) for (let i = 0; i < 3; i++) out[k][i] += w * (target[i] - o[k][i]);
+      }
+    }
+    return out ?? o;
+  }
+
+  /** A copy of the document with the previewed expressions applied (or the document itself when none is). */
+  morphedDoc(): Doc {
+    if (!this.doc.morphs?.length || !Object.values(this.morphW).some((w) => w)) return this.doc;
+    return { ...this.doc, objects: this.doc.objects.map((o) => this.morphedObject(o)) };
+  }
+
+  setMorphWeight(id: string, w: number): void {
+    this.morphW = { ...this.morphW, [id]: Math.max(0, Math.min(1, w)) };
+    this.emit('morph');
+  }
+
+  private snapshotTransforms(): NonNullable<Store['morphDraft']>['base'] {
+    return Object.fromEntries(this.doc.objects.map((o) => [o.id, { position: [...o.position] as Vec3, rotation: [...o.rotation] as Vec3, size: [...o.size] as Vec3 }]));
+  }
+
+  /** Begin a new expression: move, turn or resize parts, then call finishMorph. */
+  startMorph(name = 'Expression'): void {
+    if (this.morphDraft) return;
+    this.morphW = {};
+    this.morphDraft = { id: `m${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, name, isNew: true, base: this.snapshotTransforms() };
+    this.emit('morph');
+  }
+
+  /** Change an existing expression: its parts are shown as they are in it, ready to move again. */
+  editMorph(id: string): void {
+    const m = this.doc.morphs?.find((x) => x.id === id);
+    if (!m || this.morphDraft) return;
+    this.morphW = {};
+    this.morphDraft = { id, name: m.name, isNew: false, base: this.snapshotTransforms() };
+    this.mutate((d) => {
+      for (const o of d.objects) {
+        const t = m.parts[o.id];
+        if (t?.position) o.position = [...t.position];
+        if (t?.rotation) o.rotation = [...t.rotation];
+        if (t?.size) o.size = [...t.size];
+      }
+    }, false);
+    this.emit('morph');
+  }
+
+  private restoreTransforms(base: NonNullable<Store['morphDraft']>['base']): void {
+    this.mutate((d) => {
+      for (const o of d.objects) {
+        const b = base[o.id];
+        if (!b) continue;
+        o.position = [...b.position];
+        o.rotation = [...b.rotation];
+        o.size = [...b.size];
+      }
+    }, false);
+  }
+
+  /** Save what changed since startMorph / editMorph as the expression, and put every part back. Returns false when nothing changed. */
+  finishMorph(name?: string): boolean {
+    const dr = this.morphDraft;
+    if (!dr) return false;
+    const parts: Morph['parts'] = {};
+    const diff = (a: Vec3, b: Vec3) => a.some((v, i) => Math.abs(v - b[i]) > 1e-4);
+    const r = (v: Vec3) => v.map((x) => Math.round(x * 1000) / 1000) as Vec3;
+    for (const o of this.doc.objects) {
+      const b = dr.base[o.id];
+      if (!b) continue;
+      const p: Morph['parts'][string] = {};
+      if (diff(o.position, b.position)) p.position = r(o.position);
+      if (diff(o.rotation, b.rotation)) p.rotation = r(o.rotation);
+      if (diff(o.size, b.size)) p.size = r(o.size);
+      if (Object.keys(p).length) parts[o.id] = p;
+    }
+    this.restoreTransforms(dr.base);
+    this.morphDraft = null;
+    if (!Object.keys(parts).length) {
+      this.commit();
+      this.emit('morph');
+      return false;
+    }
+    this.mutate((d) => {
+      const m: Morph = { id: dr.id, name: (name ?? dr.name).trim() || dr.name, parts };
+      d.morphs = [...(d.morphs ?? []).filter((x) => x.id !== dr.id), m];
+    });
+    this.emit('morph');
+    return true;
+  }
+
+  cancelMorph(): void {
+    const dr = this.morphDraft;
+    if (!dr) return;
+    this.restoreTransforms(dr.base);
+    this.morphDraft = null;
+    this.commit();
+    this.emit('morph');
+  }
+
+  renameMorph(id: string, name: string): void {
+    this.mutate((d) => {
+      const m = d.morphs?.find((x) => x.id === id);
+      if (m && name.trim()) m.name = name.trim();
+    });
+  }
+
+  removeMorph(id: string): void {
+    this.mutate((d) => {
+      d.morphs = (d.morphs ?? []).filter((x) => x.id !== id);
+      if (!d.morphs.length) delete d.morphs;
+    });
+    delete this.morphW[id];
+    this.emit('morph');
   }
 
   /** Where each rigged character (the group that owns joints) stands right now. */

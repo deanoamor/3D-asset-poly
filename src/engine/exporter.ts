@@ -1,4 +1,5 @@
 import { ensureImages } from './textures';
+import { addMorphTargets } from './morphExport';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { Doc } from '../core/types';
@@ -27,6 +28,8 @@ export interface ExportOptions {
   compress?: boolean;
   /** Put every colour and picture into one texture, so the model needs a single material. */
   atlas?: boolean;
+  /** Export the expressions as morph targets (default). */
+  morphs?: boolean;
 }
 
 export interface ExportResult {
@@ -41,6 +44,8 @@ export interface ExportResult {
   /** Meshes (≈ draw calls) and distinct materials in the exported model. */
   drawCalls: number;
   materials: number;
+  /** Names of the morph targets in the file. */
+  morphs: string[];
 }
 
 function bakeBaseColors(content: THREE.Object3D): void {
@@ -56,7 +61,7 @@ function bakeBaseColors(content: THREE.Object3D): void {
 }
 
 /** Wrap everything in a root whose origin is the bottom center of the model, scaled for the preset. */
-export function prepareExport(doc: Doc, collision = false, atlas = false): { root: THREE.Group; size: THREE.Vector3 } {
+export function prepareExport(doc: Doc, collision = false, atlas = false, fixedOffset?: THREE.Vector3): { root: THREE.Group; size: THREE.Vector3; offset: THREE.Vector3 } {
   const preset = PRESETS[doc.enginePreset];
   const content = buildExportScene(doc, doc.name, { atlas });
   bakeBaseColors(content);
@@ -67,7 +72,8 @@ export function prepareExport(doc: Doc, collision = false, atlas = false): { roo
   const root = new THREE.Group();
   root.name = doc.name;
   // pivot: bottom center
-  content.position.set(-center.x, -box.min.y, -center.z);
+  const offset = fixedOffset ? fixedOffset.clone() : new THREE.Vector3(-center.x, -box.min.y, -center.z);
+  content.position.copy(offset);
   content.name = 'Model';
   root.add(content);
   if (collision && preset.collision) {
@@ -79,7 +85,7 @@ export function prepareExport(doc: Doc, collision = false, atlas = false): { roo
   root.scale.setScalar(preset.scale);
   root.updateMatrixWorld(true);
   settleSkins(root);
-  return { root, size: size.multiplyScalar(preset.scale) };
+  return { root, size: size.multiplyScalar(preset.scale), offset };
 }
 
 function triangleTotal(root: THREE.Object3D, skip: (n: THREE.Object3D) => boolean): number {
@@ -106,7 +112,10 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
   const withAnims = opts.animations !== false && opts.skeleton !== false && !!doc.anims?.length && !!doc.rig?.length;
   const exportDoc = docForExport(doc, opts.skeleton, withAnims ? false : opts.pose);
   await ensureImages(exportDoc); // pictures must be decoded before they can go into the file
-  const { root, size } = prepareExport(exportDoc, collision, !!opts.atlas && opts.format !== 'obj');
+  const useAtlas = !!opts.atlas && opts.format !== 'obj';
+  const { root, size, offset } = prepareExport(exportDoc, collision, useAtlas);
+  const skipHull = (m: THREE.Mesh) => !!(collision && preset.collision && m.name.endsWith(preset.collision.nodeSuffix));
+  const morphNames = opts.format !== 'obj' && opts.morphs !== false ? addMorphTargets(root, exportDoc, (d) => prepareExport(d, collision, useAtlas, offset).root, skipHull) : [];
   const triangles = triangleTotal(root, (o) => collision && !!preset.collision && o.name.endsWith(preset.collision.nodeSuffix));
   let drawCalls = 0;
   const matSet = new Set<THREE.Material>();
@@ -144,16 +153,16 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
 
   if (opts.format === 'glb') {
     const data = await glb();
-    return { blob: new Blob([data], { type: 'model/gltf-binary' }), filename: `${name}.glb`, size, triangles, drawCalls, materials, model: { kind: 'glb', data }, contents: [`${name}.glb`] };
+    return { blob: new Blob([data], { type: 'model/gltf-binary' }), filename: `${name}.glb`, size, triangles, drawCalls, materials, morphs: morphNames, model: { kind: 'glb', data }, contents: [`${name}.glb`] };
   }
   if (opts.format === 'gltf') {
     const json = JSON.stringify(await parse(false));
-    return { blob: new Blob([json], { type: 'model/gltf+json' }), filename: `${name}.gltf`, size, triangles, drawCalls, materials, model: { kind: 'gltf', data: json }, contents: [`${name}.gltf`] };
+    return { blob: new Blob([json], { type: 'model/gltf+json' }), filename: `${name}.gltf`, size, triangles, drawCalls, materials, morphs: morphNames, model: { kind: 'gltf', data: json }, contents: [`${name}.gltf`] };
   }
   if (opts.format === 'obj') {
     const { obj, mtl } = writeObj(root, doc.name);
     const entries = [{ name: `${name}.obj`, data: obj }, { name: `${name}.mtl`, data: mtl }];
-    return { blob: new Blob([zipFiles(entries)], { type: 'application/zip' }), filename: `${name}_obj.zip`, size, triangles, drawCalls, materials, model: { kind: 'obj', data: obj }, contents: entries.map((e) => e.name) };
+    return { blob: new Blob([zipFiles(entries)], { type: 'application/zip' }), filename: `${name}_obj.zip`, size, triangles, drawCalls, materials, morphs: morphNames, model: { kind: 'obj', data: obj }, contents: entries.map((e) => e.name) };
   }
   // package: model + import guide (Unity also gets OBJ so it works without a plugin)
   const data = await glb();
@@ -171,6 +180,7 @@ export async function exportFiles(doc: Doc, opts: ExportOptions): Promise<Export
     triangles,
     drawCalls,
     materials,
+    morphs: morphNames,
     model: { kind: 'glb', data },
     contents: entries.map((e) => e.name),
   };

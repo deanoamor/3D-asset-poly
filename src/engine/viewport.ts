@@ -170,8 +170,8 @@ export class Viewport {
     });
 
     store.subscribe((e) => {
-      if (e === 'doc' || e === 'reset' || e === 'learn') this.sync();
-      if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool' || e === 'history' || e === 'anim') this.syncRig();
+      if (e === 'doc' || e === 'reset' || e === 'learn' || e === 'morph') this.sync();
+      if (e === 'rig' || e === 'doc' || e === 'reset' || e === 'tool' || e === 'history' || e === 'anim' || e === 'morph') this.syncRig();
       if (e === 'doc' || e === 'selection' || e === 'reset' || e === 'tool' || e === 'edit' || e === 'history') this.syncPivot();
       if (e === 'selection' || e === 'reset') this.onSelection();
       if (e === 'tool') this.onToolChange();
@@ -384,7 +384,7 @@ export class Viewport {
       this.requestRender();
       return;
     }
-    const doc = this.store.doc;
+    const doc = this.store.morphedDoc();
     const sig = JSON.stringify([doc.objects, doc.rig, this.store.ui.preview, !!this.store.ui.weights, this.imgVer, doc.pictures?.map((p) => p.id)]);
     if (!this.poseRoot || sig !== this.poseSig) {
       this.disposePose();
@@ -567,7 +567,7 @@ export class Viewport {
         this.refreshOutlines();
       }
       node.name = o.name;
-      applyTransform(node, o);
+      applyTransform(node, this.store.morphedObject(o));
       // three.js hides children of hidden parents on its own
       node.visible = o.visible && !this.store.learnHidden?.has(o.id);
       const parentNode = o.parent ? this.nodes.get(o.parent) ?? this.model : this.model;

@@ -6,6 +6,7 @@ import { h } from './ui/dom';
 import { mountLayers } from './ui/layers';
 import { mountSkeleton } from './ui/skeleton';
 import { mountAnimation } from './ui/animation';
+import { mountMorphs } from './ui/morphs';
 import { mountProps } from './ui/props';
 import { mountToolbar } from './ui/toolbar';
 import { mountPolyCounter } from './ui/polycounter';
@@ -38,6 +39,7 @@ async function boot(): Promise<void> {
   const bar = mountTopbar(topbar, store, vp, { editTour: () => startEditTour(), assets: () => openAssetLibrary(store, vp, learnPlayer), saves: () => openSavesDialog(store, vp) });
   mountLayers(layers, store);
   mountSkeleton(layers, store);
+  mountMorphs(layers, store);
   mountAnimation(app, store);
   mountProps(props, store);
   mountToolbar(stage, store, vp);
