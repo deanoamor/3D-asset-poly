@@ -68,3 +68,12 @@ A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanis
 - Pose with `armAngle` + `elbowBend` (hands forward) + `legSpread`. Hands: palm box + 4 finger boxes + thumb, rotated forward-down, read as a claw.
 - Glowing eyes: a dark pocket blob with a smaller `mat: { glow: 1 }` blob in front reads as light in a dark gap. Keep the glow shape small, or it looks like a cartoon hexagon.
 - Faceted style = no `smooth`, few segments (6–7). Keep it consistent: one smooth head on a faceted body looks pasted.
+
+## 14. Places and scenes (Island example)
+- A scene is the same spec without a template (`"rig": "none"`): `examples/island.gen.py` builds a 170-part diorama (island, cabin on a deck, stairs, pines, rocks, pond) from loops and helpers. Check it with `check`; ignore the character-only hints (one-sided, height).
+- **Gable roof:** a `sweep` with `sides: 3`, `phase: 90` and two rings along the ridge is a solid triangular prism with the ridge up. `r = [span / 1.732, rise / 1.5]`, centre at `y0 + rise / 3`. No gable fillers needed.
+- **Stairs:** make each step a solid block from the ground up to its tread (not a thin slab), so steps touch each other and the ground (nothing floats) and read as a real staircase.
+- **Trees:** 3–4 stacked cones with alternating greens, wider than you think (width ≈ half the height), and a few in a lighter yellow-green.
+- **Rocks in water:** lift them so they sit in the water, not below the floor; keep the lowest point at y = 0 with one `LIFT` for the whole scene.
+- **Framing:** `render --focus "Cliff|Sand|Cabin|Pine"` frames only those parts, so the sea disc does not shrink the subject; `--views angle:-30:42` is a typical isometric diorama view (azimuth, elevation).
+- Honest limit: the reference's soft lighting, water depth gradient and tiny details (lanterns, ripples) are not modelled; the layout, colours and building are.

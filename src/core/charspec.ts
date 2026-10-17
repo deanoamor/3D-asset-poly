@@ -27,6 +27,8 @@ export interface CharPartSpec {
   taper?: number;
   rings?: { p: Vec3; r: number | [number, number] }[];
   sides?: number;
+  /** sweep: turn the cross-section (degrees). A 3-sided sweep with phase 90 is a gable roof: a triangular prism with its ridge up. */
+  phase?: number;
   start?: 'flat' | 'dome' | 'none';
   end?: 'flat' | 'dome' | 'none';
   center?: Vec3;
@@ -90,7 +92,7 @@ function partFromSpec(s: CharPartSpec, warnings: string[]): AssetPart | null {
       return null;
     }
     const rings: Ring[] = s.rings.map((r) => ({ p: r.p, r: r.r }));
-    part = toPart(0, s.name, sweep(rings, { sides: s.sides ?? 7, start: s.start, end: s.end }), s.color, common);
+    part = toPart(0, s.name, sweep(rings, { sides: s.sides ?? 7, start: s.start, end: s.end, phase: s.phase === undefined ? undefined : (s.phase * Math.PI) / 180 }), s.color, common);
   } else if (kind === 'band') {
     if (!s.center || !s.axis || s.radius === undefined) {
       warnings.push(`“${s.name}”: a band needs center, axis and radius.`);

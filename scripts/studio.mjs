@@ -5,7 +5,7 @@
 //   node scripts/studio.mjs make   spec.json [--out dir]          build + check + render + export (start here)
 //   node scripts/studio.mjs check  spec.json [--height 1.8] [--max-tris 3000] [--separate REGEX]
 //   node scripts/studio.mjs render spec.json [--views front,3q,side,back,face,top] [--size 520]
-//                                            [--ref reference.png] [--anim Walk@0.25] [--expr Smile=1,Blink=0.5] [--out dir]
+//                                            [--ref reference.png] [--focus REGEX] [--anim Walk@0.25] [--expr Smile=1,Blink=0.5] [--out dir]
 //   node scripts/studio.mjs export spec.json [--format glb|gltf] [--atlas] [--compress] [--out file.glb]
 //   node scripts/studio.mjs info   spec.json                       joints and part positions, to place gear on the body
 //   node scripts/studio.mjs build  spec.json [--out project.json]  write the project (can be opened in the editor)
@@ -72,7 +72,7 @@ const doRender = async (dir) => {
   const [name, t] = String(flag('anim', '')).split('@');
   const expr = Object.fromEntries(String(flag('expr', '')).split(',').filter(Boolean).map((p) => { const [k, v] = p.split('='); return [k, v === undefined ? 1 : +v]; }));
   const ref = flag('ref') ? `data:image/png;base64,${fs.readFileSync(String(flag('ref'))).toString('base64')}` : undefined;
-  const res = await page.evaluate((o) => window.__studio.render(o), { ...(ref ? { ref } : {}), views: String(flag('views', 'front,3q,side,back')).split(','), size: +flag('size', 520), ...(name ? { anim: { name, t: +(t ?? 0) } } : {}), expr });
+  const res = await page.evaluate((o) => window.__studio.render(o), { ...(ref ? { ref } : {}), ...(flag('focus') ? { focus: String(flag('focus')) } : {}), views: String(flag('views', 'front,3q,side,back')).split(','), size: +flag('size', 520), ...(name ? { anim: { name, t: +(t ?? 0) } } : {}), expr });
   for (const im of res.images) fs.writeFileSync(path.join(dir, `${stem}.${im.view}.png`), b64(im.png));
   fs.writeFileSync(path.join(dir, `${stem}.sheet.png`), b64(res.sheet));
   console.log(`# render: ${path.join(dir, `${stem}.sheet.png`)} (${res.images.map((i) => i.view).join(', ')})`);

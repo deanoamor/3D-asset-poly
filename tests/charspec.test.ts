@@ -140,3 +140,16 @@ describe('bands and elbow bend', () => {
     expect(checkCharacter(b).issues.filter((i) => i.level === 'error' || i.code === 'joint-hole')).toEqual([]);
   });
 });
+
+describe('gable roof from a 3-sided sweep', () => {
+  it('phase 90 puts the ridge up: the prism is taller than the rise and sits on its base', () => {
+    const { doc } = buildCharacter({ name: 'Hut', rig: 'none', parts: [
+      { name: 'Roof', kind: 'sweep', rings: [{ p: [-1, 1, 0], r: [0.866, 0.4] }, { p: [1, 1, 0], r: [0.866, 0.4] }], sides: 3, phase: 90, start: 'flat', end: 'flat', color: '#c9703a' },
+    ] });
+    const st = new Store(doc);
+    const b = st.worldBounds([doc.objects.find((o) => o.name === 'Roof')!.id]);
+    expect(b.max.y - b.min.y).toBeCloseTo(0.6, 2); // rise = 1.5 * r1
+    expect(b.max.z - b.min.z).toBeCloseTo(1.5, 1); // span = 1.732 * r0
+    expect(b.max.y).toBeCloseTo(1.4, 2); // apex above the ring centre
+  });
+});

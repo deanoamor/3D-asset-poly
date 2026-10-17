@@ -14,6 +14,8 @@ export interface RenderOptions {
   anim?: { name: string; t: number };
   /** Expression weights by name (0..1). */
   expr?: Record<string, number>;
+  /** Frame only the parts whose name matches this regular expression (e.g. the island, not the whole sea). */
+  focus?: string;
   /** A reference picture (data URL) shown first on the contact sheet, to compare against. */
   ref?: string;
   /** Show the pose that is stored in the project. */
@@ -82,7 +84,9 @@ export function installStudio(store: Store, vp: Viewport): void {
       }
       store.emit('morph');
       await settle();
-      const images = views.map((v) => ({ view: v, png: vp.renderView(v, v === 'face' ? size : Math.round(size * 0.8), size) }));
+      const only = o.focus ? store.doc.objects.filter((x) => x.kind === 'shape' && new RegExp(o.focus!).test(x.name)).map((x) => x.id) : undefined;
+      const wide = o.focus ? size : Math.round(size * 0.8);
+      const images = views.map((v) => ({ view: v, png: vp.renderView(v, v === 'face' ? size : wide, size, 1.08, only) }));
       // one contact sheet with every view side by side, labelled
       const load = (src: string) => new Promise<HTMLImageElement>((res) => { const i = new Image(); i.onload = () => res(i); i.src = src; });
       const imgs = await Promise.all(images.map((i) => load(i.png)));

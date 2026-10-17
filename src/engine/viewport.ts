@@ -1090,7 +1090,7 @@ export class Viewport {
    * Render the model from a named angle into a PNG of exactly w x h, without moving the editor's own camera.
    * Angles: front, back, side (the character's Left), side-right, 3q (front, from the Left), 3q-back, top, face (a close-up of the head).
    */
-  renderView(view: string, w: number, h: number, fit = 1.08): string {
+  renderView(view: string, w: number, h: number, fit = 1.08, only?: string[]): string {
     const dirs: Record<string, [number, number, number]> = {
       front: [0, 0.06, 1],
       back: [0, 0.06, -1],
@@ -1100,7 +1100,7 @@ export class Viewport {
       '3q-back': [-0.75, 0.32, -1],
       top: [0.0001, 1, 0.0001],
     };
-    let box = this.store.worldBounds();
+    let box = this.store.worldBounds(only?.length ? only : undefined);
     let d = dirs[view] ?? dirs.front;
     // "angle:25" or "angle:-30:12": turn around the character (degrees from the front, + toward the character's Left), optional height angle
     const am = /^angle:(-?\d+(?:\.\d+)?)(?::(-?\d+(?:\.\d+)?))?$/.exec(view);
