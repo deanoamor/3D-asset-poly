@@ -49,8 +49,12 @@ export function checkCharacter(doc: Doc, opts: CheckOptions = {}): CheckReport {
   }
   // the height
   if (opts.height && size.y) {
-    const k = size.y / opts.height;
-    if (Math.abs(k - 1) > 0.06) add('warn', 'height', `The character is ${r2(size.y)} m tall, but ${r2(opts.height)} m was intended (${Math.round(k * 100)}%).`);
+    // hats, crests and held props do not count: measure the body up to the top of the head when there is a skeleton
+    const top = (doc.rig ?? []).find((j) => j.name === 'Head Top');
+    const body = top ? top.pos[1] - Math.min(0, all.min.y) : size.y;
+    const k = body / opts.height;
+    if (Math.abs(k - 1) > 0.06) add('warn', 'height', `The character is ${r2(body)} m tall${top ? ' (feet to the top of the head)' : ''}, but ${r2(opts.height)} m was intended (${Math.round(k * 100)}%).`);
+    if (top && size.y > body * 1.35) add('info', 'tall-gear', `With gear the whole figure is ${r2(size.y)} m (body ${r2(body)} m): hats and props make it taller than the body.`);
   }
   // the budget
   if (opts.maxTris && tris > opts.maxTris) add('error', 'budget', `${tris} triangles is over the budget of ${opts.maxTris}.`);
@@ -76,8 +80,9 @@ export function checkCharacter(doc: Doc, opts: CheckOptions = {}): CheckReport {
   const byName = new Map(items.map((it) => [it.name, it.box]));
   const lone: string[] = [];
   const off: string[] = [];
+  const oneHanded = /^(Scabbard|Sword|Shield|Staff|Satchel|Quiver|Holster)/;
   for (const [name, box] of byName) {
-    if (!/\bLeft\b/.test(name)) continue;
+    if (!/\bLeft\b/.test(name) || oneHanded.test(name)) continue;
     const twin = byName.get(name.replace(/\bLeft\b/, 'Right'));
     if (!twin) {
       lone.push(name);
@@ -90,7 +95,7 @@ export function checkCharacter(doc: Doc, opts: CheckOptions = {}): CheckReport {
     const mid = 0; // the character is centred on x = 0
     if (Math.abs(a.x + b.x - 2 * mid) > 0.03 || Math.abs(a.y - b.y) > 0.03 || Math.abs(a.z - b.z) > 0.03 || Math.abs(sa.y - sb.y) > 0.04 * Math.max(sa.y, 0.1)) off.push(name.replace(/\bLeft\b/, '').trim());
   }
-  for (const [name] of byName) if (/\bRight\b/.test(name) && !byName.has(name.replace(/\bRight\b/, 'Left'))) lone.push(name);
+  for (const [name] of byName) if (/\bRight\b/.test(name) && !oneHanded.test(name) && !byName.has(name.replace(/\bRight\b/, 'Left'))) lone.push(name);
   if (lone.length) add('warn', 'one-sided', `No matching twin for: ${lone.join(', ')}.`);
   if (off.length) add('info', 'asymmetric', `Left and Right differ (fine for a pose, a mistake otherwise): ${off.join(', ')}.`);
 

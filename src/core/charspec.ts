@@ -4,7 +4,8 @@ import { Store, emptyDoc } from './store';
 import type { AssetGroup, AssetPart } from './assets';
 import { blob, sweep, toPart, type Ring } from './library/organic';
 import { humanSpec, jointsFromSpec, type BodyJoints } from './library/rigs';
-import { humanoid, humanJoints, type HumanParams } from './library/humanoid';
+import { humanoid, humanJoints, type BodyContext, type HumanParams } from './library/humanoid';
+import { gearParts, GEAR_TYPES, type GearSpec } from './library/gear';
 
 /**
  * A character written as data. Coordinates are in metres: the character stands on y = 0 and faces +Z; "Left" is +X and
@@ -56,6 +57,8 @@ export interface CharSpec {
   parts?: CharPartSpec[];
   /** Names of template parts to leave out. */
   remove?: string[];
+  /** Ready-made gear fitted to the template body: cape, backpack, belt, sword, shield, staff, witch-hat, cap, helmet, scarf. */
+  gear?: GearSpec[];
   groups?: AssetGroup[];
   /** 'human' (default with a human template): the person skeleton fitted to the body. 'none': no skeleton. */
   rig?: 'human' | 'none';
@@ -130,18 +133,26 @@ export function buildCharacter(spec: CharSpec, hooks: { picture?: (id: string, s
   const warnings: string[] = [];
   let parts: AssetPart[] = [];
   let joints: BodyJoints | undefined;
+  let ctx: BodyContext | undefined;
   let expressions: MorphSpec[] = [];
   const template = spec.template;
   if (template) {
     const built = humanoid(template);
     parts = built.parts;
     joints = built.joints;
+    ctx = built.ctx;
     expressions = built.expressions.map((e) => ({ name: e.name, parts: Object.fromEntries(Object.entries(e.parts).map(([k, v]) => [k, { ...(v.pos ? { pos: v.pos } : {}), ...(v.size ? { size: v.size } : {}) }])) }));
     const gone = new Set(spec.remove ?? []);
     parts = parts.filter((p) => !gone.has(p.name));
     for (const n of gone) if (!built.parts.some((p) => p.name === n)) warnings.push(`remove: no template part called “${n}”.`);
   }
-  const extra = expandSpecParts(spec.parts ?? []);
+  const gearSpecs: CharPartSpec[] = [];
+  for (const g of spec.gear ?? []) {
+    if (!ctx) warnings.push(`gear “${g.type}” needs a human template.`);
+    else if (!GEAR_TYPES.includes(g.type)) warnings.push(`unknown gear “${g.type}” (try: ${GEAR_TYPES.join(', ')}).`);
+    else gearSpecs.push(...gearParts(g, ctx));
+  }
+  const extra = expandSpecParts([...gearSpecs, ...(spec.parts ?? [])]);
   const pictureOf = new Map<string, NonNullable<CharPartSpec['picture']>>();
   const specOf = new Map<string, CharPartSpec>();
   for (const s of extra) {

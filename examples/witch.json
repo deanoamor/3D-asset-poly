@@ -1,0 +1,81 @@
+{
+ "name": "Witch",
+ "template": {
+  "kind": "human",
+  "build": "stylized",
+  "height": 1.65,
+  "weight": "slim",
+  "skin": "#f0c9a8",
+  "hair": "#2b1b3a",
+  "hairStyle": "long",
+  "top": "#4b2e83",
+  "bottom": "#4b2e83",
+  "shoes": "#1f1630",
+  "sleeves": "long",
+  "legs": "long"
+ },
+ "parts": [
+  {
+   "name": "Dress Skirt",
+   "kind": "sweep",
+   "rings": [
+    {
+     "p": [
+      0,
+      0.95,
+      0
+     ],
+     "r": [
+      0.2,
+      0.14
+     ]
+    },
+    {
+     "p": [
+      0,
+      0.6,
+      0
+     ],
+     "r": [
+      0.3,
+      0.22
+     ]
+    },
+    {
+     "p": [
+      0,
+      0.18,
+      0
+     ],
+     "r": [
+      0.4,
+      0.3
+     ]
+    }
+   ],
+   "sides": 10,
+   "start": "none",
+   "end": "none",
+   "color": "#4b2e83",
+   "smooth": true
+  }
+ ],
+ "gear": [
+  {
+   "type": "witch-hat",
+   "color": "#2a1a4a",
+   "color2": "#f2c14e"
+  },
+  {
+   "type": "belt",
+   "color": "#f2c14e",
+   "color2": "#4b2e83"
+  },
+  {
+   "type": "staff",
+   "color": "#7a5230",
+   "color2": "#c9a06a",
+   "side": "right"
+  }
+ ]
+}

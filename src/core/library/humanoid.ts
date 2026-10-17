@@ -78,9 +78,24 @@ export function humanJoints(p: HumanParams = {}): BodyJoints {
   };
 }
 
+/** Where things are on a built body, so gear (hats, capes, weapons) can be fitted to it. */
+export interface BodyContext {
+  H: number;
+  J: BodyJoints;
+  headCenter: Vec3;
+  headRadii: Vec3;
+  /** Half-width of the shoulders and half-depth of the torso. */
+  shoulder: number;
+  torsoDepth: number;
+  hipRx: number;
+  /** The middle of each fist. */
+  hand: { left: Vec3; right: Vec3 };
+}
+
 export interface HumanBuild {
   parts: AssetPart[];
   joints: BodyJoints;
+  ctx: BodyContext;
   /** Expressions by part name: the new pos / size of the parts they change (absolute, as built). */
   expressions: { name: string; parts: Record<string, { pos?: Vec3; size?: Vec3 }> }[];
 }
@@ -214,5 +229,11 @@ export function humanoid(p: HumanParams = {}): HumanBuild {
     }
   }
   void HUMAN;
-  return { parts, joints: J, expressions };
+  const fist = (s: 1 | -1): Vec3 => {
+    const wr = s === 1 ? J.wrist : mirror(J.wrist);
+    const fi = s === 1 ? J.fingers : mirror(J.fingers);
+    return r3(lerp(wr, fi, 0.55));
+  };
+  const ctx: BodyContext = { H, J, headCenter: hc, headRadii: hr, shoulder: sh, torsoDepth: rz, hipRx, hand: { left: fist(1), right: fist(-1) } };
+  return { parts, joints: J, ctx, expressions };
 }

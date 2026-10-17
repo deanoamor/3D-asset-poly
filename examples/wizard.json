@@ -1,0 +1,10 @@
+{
+  "name": "Wizard",
+  "template": { "kind": "human", "build": "stylized", "height": 1.75, "skin": "#f0c9a8", "hair": "#d9d9d9", "hairStyle": "long", "top": "#2c5aa0", "bottom": "#2c5aa0", "shoes": "#3b2a1c", "sleeves": "long", "legs": "long" },
+  "gear": [
+    { "type": "witch-hat", "color": "#2c5aa0", "color2": "#f2c14e" },
+    { "type": "staff", "color": "#7a5230", "color2": "#7fd6ff" },
+    { "type": "belt", "color": "#f2c14e", "color2": "#c0392b" },
+    { "type": "cape", "color": "#1d3f73" }
+  ]
+}

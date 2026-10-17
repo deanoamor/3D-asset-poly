@@ -88,3 +88,26 @@ describe('character check', () => {
     expect(codes).toContain('one-sided');
   });
 });
+
+describe('gear', () => {
+  const types = ['cape', 'backpack', 'belt', 'sword', 'shield', 'staff', 'witch-hat', 'cap', 'helmet', 'scarf'] as const;
+  for (const type of types) {
+    it(`${type} fits every build: touches the body, no errors`, () => {
+      for (const build of ['stylized', 'realistic', 'heroic', 'chibi', 'kid'] as const) {
+        const { doc, warnings } = buildCharacter({ name: 'G', template: { kind: 'human', build, hairStyle: type === 'cap' || type === 'helmet' || type === 'witch-hat' ? 'none' : 'short' }, gear: [{ type }] });
+        expect(warnings).toEqual([]);
+        const r = checkCharacter(doc, {});
+        expect(r.issues.filter((i) => i.level === 'error'), `${type} on ${build}: ${JSON.stringify(r.issues)}`).toEqual([]);
+        expect(doc.objects.length).toBeGreaterThan(buildCharacter({ name: 'G', template: { kind: 'human', build } }).doc.objects.length - 5);
+      }
+    });
+  }
+  it('unknown gear and gear without a template are reported', () => {
+    expect(buildCharacter({ name: 'X', template: { kind: 'human' }, gear: [{ type: 'laser' as never }] }).warnings[0]).toMatch(/unknown gear/);
+    expect(buildCharacter({ name: 'X', parts: [], gear: [{ type: 'cape' }] }).warnings[0]).toMatch(/needs a human template/);
+  });
+  it('the checked height ignores hats', () => {
+    const { doc } = buildCharacter({ name: 'H', template: { kind: 'human', height: 1.8 }, gear: [{ type: 'witch-hat' }] });
+    expect(checkCharacter(doc, { height: 1.8 }).issues.some((i) => i.code === 'height')).toBe(false);
+  });
+});

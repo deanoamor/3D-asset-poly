@@ -25,6 +25,18 @@ node scripts/studio.mjs export my-hero.json --atlas --compress --out hero.glb
 - Keep the figure one connected thing: parts must touch or overlap their neighbours (the check reports floating parts).
 - Overlap a little at joints (elbows, knees, neck) so nothing tears when it bends.
 
+## Gear (start here for hats, capes, weapons)
+`gear` adds ready-made items already fitted to the template body: `cape, backpack, belt, sword, shield, staff, witch-hat, cap, helmet, scarf`.
+```json
+"gear": [ { "type": "helmet", "color": "#9aa4b0", "color2": "#c0392b" }, { "type": "cape", "color": "#a93226" }, { "type": "sword" }, { "type": "shield", "side": "right" } ]
+```
+`color` is the main colour, `color2` the trim. `side` picks left or right for sword / shield / staff. Gear becomes normal parts (named `Cape`, `Helmet`, `Sword Guard Left`…),
+so a later part with the same name replaces it. With a hat or helmet use `"hairStyle": "none"` (or keep the hair for a witch hat).
+See `examples/` (knight2, witch, scout, wizard) and **`docs/CHARACTER_LESSONS.md`**: read it before the first round.
+
+## Placing your own parts: `info`
+`node scripts/studio.mjs info my-hero.json` lists every joint and every part's centre | size. Place and size extra parts from those numbers.
+
 ## The spec
 ```json
 {

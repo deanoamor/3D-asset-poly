@@ -1,0 +1,11 @@
+{
+  "name": "Knight",
+  "template": { "kind": "human", "build": "heroic", "height": 1.85, "skin": "#e0ac84", "top": "#8f98a3", "bottom": "#6b7480", "shoes": "#3a3f47", "sleeves": "long", "hairStyle": "none" },
+  "gear": [
+    { "type": "helmet", "color": "#9aa4b0", "color2": "#c0392b" },
+    { "type": "cape", "color": "#a93226" },
+    { "type": "belt", "color": "#5a3a22" },
+    { "type": "sword", "color": "#5a3a22" },
+    { "type": "shield", "color": "#a93226", "color2": "#f2c14e", "side": "right" }
+  ]
+}

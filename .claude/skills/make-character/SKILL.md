@@ -5,9 +5,9 @@ description: Make a good low-poly game character (or prop) with Poly Studio: wri
 
 # Make a character with Poly Studio
 
-Read `docs/CHARACTER_GUIDE.md` first (spec format, conventions, proportions, common mistakes), then work in a loop:
+Read `docs/CHARACTER_GUIDE.md` (spec format, conventions, proportions, gear) and `docs/CHARACTER_LESSONS.md` (mistakes already made and fixed: scale of details, armour fit, eye line, hats, held items) first, then work in a loop:
 
-1. Write the spec (`my-character.json`). Start from `template: { "kind": "human", ... }` for people.
+1. Write the spec (`my-character.json`). Start from `template: { "kind": "human", ... }` and `gear: [...]` (cape, helmet, sword, staff, hats…) for people; run `node scripts/studio.mjs info` to place custom parts from real joint and part positions. Look at `examples/*.json`.
 2. Run `node scripts/studio.mjs make my-character.json --out out/` (starts the dev server by itself).
 3. **Open `out/my-character.sheet.png` with the Read tool and really look at it** (front, 3q, side, back, face). Read the check output too.
 4. Fix everything that looks off or is reported, edit the spec, run `make` again. Do at least two rounds; do not stop at the first render.

@@ -1,3 +1,4 @@
+import { Vector3 } from 'three';
 import type { Store } from './core/store';
 import type { Viewport } from './engine/viewport';
 import { buildCharacter, type CharSpec } from './core/charspec';
@@ -40,6 +41,21 @@ export function installStudio(store: Store, vp: Viewport): void {
       await settle();
     },
     doc: () => JSON.parse(JSON.stringify(store.doc)) as Doc,
+    /** Where things are: every joint and the centre / size of every part, to place gear on the body. */
+    anchors: () => {
+      const r = (n: number) => Math.round(n * 1000) / 1000;
+      const joints = Object.fromEntries((store.doc.rig ?? []).map((j) => [j.name, j.pos.map(r)]));
+      const parts: Record<string, { center: number[]; size: number[] }> = {};
+      for (const o of store.doc.objects) {
+        if (o.kind !== 'shape') continue;
+        const b = store.worldBounds([o.id]);
+        const c = b.getCenter(new Vector3());
+        const s = b.getSize(new Vector3());
+        parts[o.name] = { center: [r(c.x), r(c.y), r(c.z)], size: [r(s.x), r(s.y), r(s.z)] };
+      }
+      const all = store.worldBounds().getSize(new Vector3());
+      return { height: r(all.y), joints, parts };
+    },
     check: (opts: CheckOptions & { separate?: string } = {}) => checkCharacter(store.doc, { ...opts, separate: opts.separate ? new RegExp(opts.separate) : undefined }),
     render: async (o: RenderOptions = {}) => {
       const size = o.size ?? 520;

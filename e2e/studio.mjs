@@ -19,6 +19,11 @@ ok(/expressions: Blink, Smile, Surprised/.test(out), 'the expressions are in the
 ok(!/ERROR/.test(out), 'the check has no errors');
 const png = fs.readFileSync(path.join(dir, 'kid.sheet.png'));
 ok(png.readUInt32BE(16) > 1500 && png.readUInt32BE(20) > 400, `the contact sheet is ${png.readUInt32BE(16)} x ${png.readUInt32BE(20)}`);
+console.log('# the example characters');
+for (const n of ['knight2', 'witch', 'scout', 'wizard']) {
+  const o = run('check', `examples/${n}.json`);
+  ok(!/ERROR/.test(o), `${n}: the check has no errors`);
+}
 console.log('# check fails on a bad character');
 fs.writeFileSync(path.join(dir, 'bad.json'), JSON.stringify({ name: 'Bad', parts: [{ name: 'A', kind: 'box', pos: [0, 0.5, 0], size: [0.4, 1, 0.4], color: '#888' }, { name: 'Floater', kind: 'box', pos: [3, 3, 0], size: [0.2, 0.2, 0.2], color: '#f00' }] }));
 let bad = '';

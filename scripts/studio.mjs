@@ -7,6 +7,7 @@
 //   node scripts/studio.mjs render spec.json [--views front,3q,side,back,face,top] [--size 520]
 //                                            [--anim Walk@0.25] [--expr Smile=1,Blink=0.5] [--out dir]
 //   node scripts/studio.mjs export spec.json [--format glb|gltf] [--atlas] [--compress] [--out file.glb]
+//   node scripts/studio.mjs info   spec.json                       joints and part positions, to place gear on the body
 //   node scripts/studio.mjs build  spec.json [--out project.json]  write the project (can be opened in the editor)
 //
 // spec.json is a character spec (see src/core/charspec.ts) or a saved project (has "objects").
@@ -20,7 +21,7 @@ const cmd = argv[0];
 const file = argv[1];
 const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i < 0 ? d : (argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true); };
 if (!cmd || !file) {
-  console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 14).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
+  console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 15).map((l) => l.replace(/^\/\/ ?/, '')).join('\n'));
   process.exit(cmd ? 1 : 0);
 }
 const URL_ = process.env.URL || 'http://localhost:5199/';
@@ -90,7 +91,13 @@ const doExport = async (target) => {
 
 let ok = true;
 if (cmd === 'check') ok = await doCheck();
-else if (cmd === 'render') await doRender(outDir('studio-out'));
+else if (cmd === 'info') {
+  const a = await page.evaluate(() => window.__studio.anchors());
+  console.log(`# height ${a.height} m\n# joints (x,y,z)`);
+  for (const [k, v] of Object.entries(a.joints)) console.log(`  ${k.padEnd(14)} ${v.join(', ')}`);
+  console.log('# parts (center | size)');
+  for (const [k, v] of Object.entries(a.parts)) console.log(`  ${k.padEnd(18)} ${v.center.join(', ')} | ${v.size.join(', ')}`);
+} else if (cmd === 'render') await doRender(outDir('studio-out'));
 else if (cmd === 'export') await doExport(String(flag('out', `${stem}.${flag('format', 'glb')}`)));
 else if (cmd === 'build') {
   const doc = await page.evaluate(() => window.__studio.doc());

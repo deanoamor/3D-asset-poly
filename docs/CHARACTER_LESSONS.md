@@ -1,0 +1,54 @@
+# Lessons from real iterations
+
+Characters made with `scripts/studio.mjs` (see `examples/`): Knight (3 specs, 4 rounds), Witch, Scout, Wizard.
+Each lesson is something that looked wrong in a render and how it was fixed. Read this before the first round.
+
+## 1. Know the scale before placing anything
+The head of a 1.8 m character is only ~0.2 m wide: an eye is 0.05 m, a nose 0.025 m. In round 1 of the Knight a visor
+"0.17 m wide" became sunglasses, and a nose guard "0.09 m tall" covered the mouth. **Run `info` first** (it prints every joint and
+every part's centre and size) and size details as a fraction of the head (`hr`), not as round numbers.
+
+## 2. Armour and clothes must be sized from the body they cover
+With `weight: heavy` the torso grew wider than a hand-made breastplate and the body poked through it as grey diamonds.
+Either keep `weight: normal` and widen the armour, or read the torso size from `info` and add 3–5 % margin.
+A cover layer should be a few cm bigger than the layer under it, never equal (that z-fights) and never smaller.
+
+## 3. Nothing may cross the eye line
+A bar, visor or helmet rim at brow height reads as sunglasses or a blindfold. Either cover the whole face, or keep the face open
+and put the rim **above the brows**. Cheek guards and nose guards must be tiny (a cm or two) or they look like blinders.
+
+## 4. Hats and helmets: keep the blob above the brows and behind the face
+A hat blob that reaches below ear height pokes grey / black triangles through the cheeks. Centre it above the head centre and a few
+cm back; its lowest point should be at the brow line. Use `gear: helmet / cap / witch-hat`; they already respect this.
+
+## 5. Held and worn items come from anchors, not guesses
+A broom placed "next to the hand" floated beside the character. Use `gear: staff` (it passes through the fist) or read the hand
+position with `info`. A sword on a hanging arm looks wrong: put it in a scabbard at the hip (`gear: sword`).
+
+## 6. Capes are thin sweeps
+A cape is a sweep of 3–4 rings with a very thin depth (about 0.02 × height), starting at the shoulders and a little behind the torso, 6 sides.
+Start it at neck height or a triangle of body shows above it from behind.
+
+## 7. The checker measures the body, not the hat
+Hats and crests used to trigger "height" warnings. The check now measures feet to the top of the head. Gear does make the figure taller;
+that is reported as info.
+
+## 8. What the checker cannot see
+It does not see that a visor looks like sunglasses, that a colour is ugly, or that a silhouette is boring.
+Always read the contact sheet, and always the **face close-up**: most mistakes are there.
+
+## 9. Workflow that worked
+1. Template + `gear` for the first render (2 minutes, already presentable).
+2. `info` to place the few custom parts (insignia, a unique hat, an unusual prop).
+3. One change per theme per round (head gear, then body, then props), re-render, compare to the previous sheet.
+4. Silhouette test: look at front and side only, squint: can you name the character? If not, exaggerate one feature (hat size, shoulder width, cape length).
+5. Palette: 4–8 colours, one accent (gold trim on the knight, a yellow scarf on the scout). Greys alone look dead; add one warm or saturated colour.
+
+## 10. Still weak (known limits)
+- Hands are simple blobs; fingers are not modelled.
+- Legs and arms are tubes: bulk (calf, thigh) comes from extra sweep parts.
+- Skirts and robes are rigid sweeps (no cloth), so they do not swing when animated.
+- Only the human template exists; animals and monsters must be built from parts without an automatic rig.
+
+## 11. Layer order on the torso
+A skirt or robe that starts at the hips swallows the belt (Witch: the sash vanished). Start the skirt just under the belt, or make the belt ring a few cm larger than the skirt's top ring.
