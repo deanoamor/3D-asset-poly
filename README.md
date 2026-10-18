@@ -49,7 +49,7 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Asset library (use directly, or learn from it)
 
-The **Assets** button (top bar) opens nine ready-made assets, lit with a warm backdrop and a soft shadow:
+The **Assets** button (top bar) opens ten ready-made assets, lit with a warm backdrop and a soft shadow:
 
 | Asset | Parts | Triangles | What it shows off |
 |---|---|---|---|
@@ -62,6 +62,7 @@ The **Assets** button (top bar) opens nine ready-made assets, lit with a warm ba
 | **Pink Anime Girl** | ~95 | ~3,000 | a stylised bust-friendly character: big layered violet eyes, spiky pink hair built from tapered strips, black bows, a navy top, wide white sleeves and a skeleton |
 | **Red Ribbon Girl** | ~55 | ~700 | a hard-edged low-poly girl modelled from a reference picture: every flat colour patch is one thick plate, so from the picture's own viewpoint (front, from above) it matches point by point |
 | **Nurse** | ~110 | ~2,600 | the same hard-edged low-poly style as the Red Ribbon Girl, as a real 3D figure that stands on the ground: slim faceted limbs, white dress with blue panels, twin tails, a cap with a cross and the same flat face planes in new colours |
+| **School Girl** | ~100 | ~9,000 | a smooth stylised girl in a sailor uniform (T-pose): big amber eyes, auburn hair with two buns in blue cuffs and a braid that turns into a long tail, pleated blue skirt, knee socks and loafers |
 
 **Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
 gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test
@@ -185,3 +186,4 @@ With a skeleton, **Animation** (under Skeleton) makes clips of poses that play o
 `node e2e/anime.mjs` renders the Pink Anime Girl as a bust on a dark navy backdrop to `e2e/out/anime/anime.png`.
 `node e2e/ribbon.mjs` renders the Red Ribbon Girl from the reference picture's viewpoint (near-orthographic, front view from above) to `e2e/out/ribbon/ribbon.png`. The patch outlines live in `src/core/library/ribbonData.ts`.
 `node e2e/nurse.mjs` renders the Nurse from several angles (`AZS=0,35,90,180`) to `e2e/out/nurse/`.
+`node e2e/school.mjs` renders the School Girl from the reference picture's angle (`AZS=34`) to `e2e/out/school/`.
