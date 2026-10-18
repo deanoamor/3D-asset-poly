@@ -4,6 +4,7 @@ import type { Vec3 } from '../types';
 import { applyStyle } from './kit';
 import { blob, headBlob, onSurface, plate, ribbon, sweep, toPart, vadd, type Ring } from './organic';
 import { humanSpec, type BodyJoints } from './rigs';
+import { decal, oval } from './decal';
 
 /**
  * A stylised school girl in a sailor uniform, T-pose: a big round head with large amber eyes, auburn hair with two
@@ -33,7 +34,7 @@ const IRIS = '#e8922b';
 const IRIS_D = '#a8541a';
 const IRIS_L = '#ffc867';
 const PUPIL = '#2b140c';
-const LASH = '#2a1a16';
+const LASH_C = '#24150f';
 
 const parts: AssetPart[] = [];
 const add = (...p: AssetPart[]) => parts.push(...p);
@@ -100,7 +101,6 @@ for (let i = 0; i < head.v.length / 3; i++) {
     head.v[i * 3] = HC[0] + (head.v[i * 3] - HC[0]) * k;
   }
 }
-const on = (dx: number, dy: number, lift: number): Vec3 => onSurface(head, HC, [dx, dy, 1], lift).p;
 
 // ---- 0 legs, socks and shoes ----
 for (const s of sides) {
@@ -160,26 +160,44 @@ add(toPart(2, 'Neck', sweep([R([0, 1.06, 0.002], 0.034), R([0, 1.16, 0.006], 0.0
 
 // ---- 3 head and face ----
 add(toPart(3, 'Head', head, SKIN));
+// anime face: flat shapes pressed onto the head like stickers, layered from the skin outward
+type P2 = [number, number];
+const EYE_WHITE: P2[] = [[-0.2, -0.02], [-0.15, 0.17], [0, 0.235], [0.15, 0.2], [0.22, 0.05], [0.17, -0.17], [0, -0.235], [-0.14, -0.18]];
+const LASH: P2[] = [[-0.215, -0.005], [-0.17, 0.215], [0, 0.295], [0.17, 0.26], [0.27, 0.13], [0.345, 0.175], [0.25, 0.035], [0.15, 0.2], [0, 0.235], [-0.15, 0.17]];
+const LOWER_LASH: P2[] = [[0.03, -0.24], [0.16, -0.18], [0.215, -0.09], [0.195, -0.09], [0.145, -0.165], [0.025, -0.215]];
+const BROW: P2[] = [[-0.17, 0.53], [0, 0.59], [0.19, 0.55], [0.19, 0.572], [0, 0.612], [-0.17, 0.552]];
+const IRIS_C: P2 = [-0.025, -0.02];
+const E = 1.22; // eye scale
+const sc = (pts: P2[]): P2[] => pts.map(([x, y]) => [x * E, y * E]);
+const half = (pts: P2[], above: boolean, cut: number): P2[] => {
+  const keep = pts.filter(([, y]) => (above ? y >= cut : y <= cut));
+  return keep.length >= 3 ? keep : pts;
+};
 for (const s of sides) {
   const n = nameOf(s);
-  const at = (dx: number, dy: number, lift: number) => on(s * (0.6 + dx), -0.2 + dy, lift);
-  add(toPart(3, `Eye White ${n}`, blob(at(0, 0, -0.012), [0.039, 0.049, 0.02], 14), '#ffffff'));
-  add(toPart(3, `Iris ${n}`, blob(at(-0.06, -0.02, 0.003), [0.032, 0.043, 0.015], 14), IRIS));
-  add(toPart(3, `Iris Dark ${n}`, blob(at(-0.06, 0.13, 0.008), [0.03, 0.016, 0.01], 12), IRIS_D));
-  add(toPart(3, `Iris Glow ${n}`, blob(at(-0.06, -0.2, 0.009), [0.021, 0.013, 0.009], 12), IRIS_L));
-  add(toPart(3, `Pupil ${n}`, blob(at(-0.06, -0.03, 0.011), [0.012, 0.019, 0.008], 12), PUPIL));
-  add(toPart(3, `Eye Highlight ${n}`, blob(at(0.0, 0.08, 0.016), [0.012, 0.014, 0.005], 10), '#ffffff'));
-  add(toPart(3, `Eye Sparkle ${n}`, blob(at(-0.1, -0.12, 0.016), [0.005, 0.005, 0.004], 6), '#ffffff'));
-  const lash = [[-0.27, 0.04], [-0.21, 0.17], [-0.12, 0.26], [0, 0.3], [0.12, 0.28], [0.22, 0.2], [0.31, 0.08], [0.38, -0.04]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.6 + dx), -0.2 + dy, 1] as Vec3 }));
-  add(toPart(3, `Upper Lash ${n}`, ribbon(head, lash, [0.012, 0.006], 0.011, { sides: 6, taper: 0.55 }), LASH));
-  const lower = [[-0.18, -0.33], [0, -0.39], [0.19, -0.31]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.6 + dx), -0.2 + dy, 1] as Vec3 }));
-  add(toPart(3, `Lower Lash ${n}`, ribbon(head, lower, [0.004, 0.003], 0.004, { sides: 4, taper: 0.5 }), '#8a5a48'));
-  add(toPart(3, `Cheek ${n}`, blob(on(s * 0.7, -0.58, -0.007), [0.024, 0.012, 0.009], 8), BLUSH));
+  const c: P2 = [s * 0.58, -0.25];
+  const d = (name: string, pts: P2[], lift: number, color: string) => add(toPart(3, `${name} ${n}`, decal(head, HC, c, pts, lift, 0.002, s), color));
+  d('Eye White', sc(EYE_WHITE), 0.001, '#ffffff');
+  const iris = sc(oval(IRIS_C[0], IRIS_C[1], 0.135, 0.2, 18));
+  d('Iris', iris, 0.0032, IRIS);
+  d('Iris Dark', half(iris, true, 0.05 * E), 0.0054, IRIS_D);
+  d('Iris Glow', half(sc(oval(IRIS_C[0], IRIS_C[1] - 0.02, 0.1, 0.16, 16)), false, -0.1 * E), 0.0054, IRIS_L);
+  d('Pupil', sc(oval(IRIS_C[0], IRIS_C[1] + 0.01, 0.055, 0.1, 12)), 0.0076, PUPIL);
+  d('Eye Highlight', sc(oval(IRIS_C[0] + 0.05, IRIS_C[1] + 0.09, 0.045, 0.05, 10)), 0.0098, '#ffffff');
+  d('Eye Sparkle', sc(oval(IRIS_C[0] - 0.06, IRIS_C[1] - 0.11, 0.022, 0.022, 8)), 0.0098, '#ffffff');
+  d('Upper Lash', sc(LASH), 0.0098, LASH_C);
+  d('Lower Lash', sc(LOWER_LASH), 0.004, '#7a4638');
+  d('Eyebrow', BROW, 0.003, HAIR);
+  add(toPart(3, `Blush ${n}`, decal(head, HC, [s * 0.64, -0.64], oval(0, 0, 0.14, 0.06, 14), 0.0012, 0.0015, s), BLUSH));
+  for (let k = 0; k < 3; k++) {
+    const x = -0.06 + k * 0.06;
+    add(toPart(3, `Blush Line ${n} ${k + 1}`, decal(head, HC, [s * 0.64, -0.64], [[x - 0.012, -0.03], [x + 0.008, 0.03], [x + 0.022, 0.03], [x + 0.002, -0.03]], 0.0028, 0.0012, s), '#e98a86'));
+  }
   add(toPart(3, `Ear ${n}`, blob(onSurface(head, HC, [s, -0.1, -0.1], -0.012).p, [0.02, 0.034, 0.026], 8), SKIN));
 }
-add(toPart(3, 'Nose', blob(on(0, -0.42, 0.0), [0.006, 0.005, 0.005], 6), '#efbca2'));
-add(toPart(3, 'Mouth', blob(on(0.02, -0.62, 0.0), [0.012, 0.007, 0.006], 8), '#c9665e'));
-add(toPart(3, 'Lower Lip', blob(on(0.02, -0.66, -0.002), [0.01, 0.006, 0.006], 8), '#e58e84'));
+add(toPart(3, 'Nose', decal(head, HC, [0.03, -0.42], [[-0.018, 0.02], [0.022, -0.035], [-0.02, -0.025]], 0.002, 0.002), SKIN_D));
+add(toPart(3, 'Mouth', decal(head, HC, [0, -0.66], [[-0.1, 0.01], [-0.05, -0.03], [0, -0.04], [0.05, -0.03], [0.1, 0.01], [0.095, 0.025], [0.05, -0.008], [0, -0.016], [-0.05, -0.008], [-0.095, 0.025]], 0.002, 0.002), '#b6514c'));
+add(toPart(3, 'Mouth Inside', decal(head, HC, [0, -0.68], oval(0, 0, 0.04, 0.022, 10), 0.0012, 0.0016), '#e57c76'));
 
 // ---- 4 hair, buns and the long tail ----
 const H = (v: Vec3): Vec3 => [HC[0] + v[0], HC[1] + v[1], HC[2] + v[2]];
@@ -195,9 +213,9 @@ const front = (x: number, y: number, lift: number): Vec3 => {
   const q = 1 - (x / rx) ** 2 - ((y - HC[1]) / ry) ** 2;
   return [x, y, HC[2] + rz * Math.sqrt(Math.max(0.02, q)) + lift];
 };
-const BANGS: [number, number, string][] = [[-0.125, 0.05, HAIR], [-0.092, 0.038, HAIR_L], [-0.058, 0.03, HAIR], [-0.022, 0.026, HAIR], [0.014, 0.028, HAIR_L], [0.05, 0.032, HAIR], [0.086, 0.04, HAIR], [0.118, 0.052, HAIR_D]];
+const BANGS: [number, number, string][] = [[-0.128, 0.0, HAIR], [-0.096, 0.014, HAIR], [-0.062, 0.02, HAIR_L], [-0.026, 0.016, HAIR], [0.01, 0.018, HAIR], [0.046, 0.022, HAIR_L], [0.082, 0.016, HAIR], [0.116, 0.002, HAIR_D]];
 BANGS.forEach(([x, tip, c], i) => {
-  const path = [R(front(x * 0.75, HC[1] + 0.14, 0.016), [0.026, 0.01]), R(front(x * 0.9, HC[1] + 0.1, 0.015), [0.026, 0.01]), R(front(x * 0.97, HC[1] + (0.1 + tip) / 2, 0.013), [0.022, 0.009]), R(front(x, HC[1] + tip, 0.012), [0.008, 0.005])];
+  const path = [R(front(x * 0.75, HC[1] + 0.14, 0.016), [0.03, 0.01]), R(front(x * 0.9, HC[1] + 0.1, 0.015), [0.03, 0.01]), R(front(x * 0.97, HC[1] + (0.1 + tip) / 2, 0.013), [0.022, 0.009]), R(front(x, HC[1] + tip, 0.012), [0.008, 0.005])];
   add(toPart(4, `Bang ${i + 1}`, sweep(path, { sides: 8, end: 'dome' }), c));
 });
 for (const s of sides) {
@@ -243,7 +261,7 @@ for (let i = 0; i < parts.length; i++) {
 
 applyStyle(parts, [
   [/^(Skirt|Skirt Lining)$/, { paint: 0.25 }],
-  [/^(Eye White|Iris|Pupil|Eye Highlight|Eye Sparkle|Upper Lash|Lower Lash|Eyebrow|Mouth|Lower Lip|Nose|Cheek)/, { smooth: true }],
+  [/^(Eye White|Iris|Pupil|Eye Highlight|Eye Sparkle|Upper Lash|Lower Lash|Eyebrow|Mouth|Nose|Blush)/, { smooth: true }],
   [/^(Head|Neck|Ear|Leg|Arm|Hand|Thumb|Hips)/, { smooth: true, paint: 0.2 }],
   [/^(Hair|Bang|Side Lock|Bun|Braid|Tail)/, { smooth: true, paint: 0.35 }],
   [/^(Sailor Top|Top Hem|Shoulder|Sleeve|Sock|Shoe|Sole|Waistband|Tie|Collar)/, { smooth: true, paint: 0.15 }],
