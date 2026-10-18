@@ -5,8 +5,8 @@ import { consistentWinding, isClosed, signedVolume } from '../src/core/mesh';
 import { worldMatrix } from '../src/core/docmath';
 
 describe('asset library', () => {
-  it('has the eight assets', () => {
-    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon']);
+  it('has the nine assets', () => {
+    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon', 'nurse']);
   });
 
   for (const def of ASSETS) {
@@ -89,7 +89,7 @@ describe('asset library', () => {
     for (const def of ASSETS) {
       const parts = instantiateAsset(def).parts;
       // a hard-edged low-poly character is made of a few big flat shapes on purpose
-      expect(parts.length).toBeGreaterThanOrEqual(def.id === 'ribbon' ? 40 : 75);
+      expect(parts.length).toBeGreaterThanOrEqual(def.id === 'ribbon' || def.id === 'nurse' ? 40 : 75);
       expect(parts.filter((p) => p.mesh).length).toBeGreaterThanOrEqual(2); // reshaped with Edit shape
     }
     const soldier = instantiateAsset(ASSETS.find((a) => a.id === 'soldier')!).parts.map((p) => p.name);

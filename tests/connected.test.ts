@@ -16,6 +16,7 @@ const SEPARATE: Record<string, RegExp> = {
   island: /^$/,
   anime: /^$/,
   ribbon: /^$/,
+  nurse: /^$/,
 };
 
 function boxesOf(id: string) {

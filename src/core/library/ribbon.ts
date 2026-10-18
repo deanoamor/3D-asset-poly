@@ -61,7 +61,7 @@ function triangulate(pts: [number, number][]): { ring: number[]; tris: number[][
 }
 
 /** A flat plate over a (possibly concave) outline in picture pixels, standing between depths z - t and z. */
-function plate(pts: number[], z: number, t: number): PolyMesh {
+export function plate(pts: number[], z: number, t: number): PolyMesh {
   const p2: [number, number][] = [];
   for (let i = 0; i < pts.length; i += 2) {
     const q: [number, number] = [pts[i], pts[i + 1]];
