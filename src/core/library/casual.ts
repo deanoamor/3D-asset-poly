@@ -182,7 +182,7 @@ for (const s of sides) {
 }
 sticker('Nose', '#efb89c', [[-0.03, -0.54], [0.04, -0.54], [0.0, -0.6]], 0.002);
 sticker('Mouth', '#d98378', [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0.855], [-0.1, -0.83]], 0.0022);
-for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.146, 1.2, -0.005], [0.028, 0.058, 0.05], 0.01), '#f6cdb0');
+for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.147, 1.18, -0.008], [0.028, 0.058, 0.05], 0.01), '#f6cdb0');
 
 // ---- 4 blocky hair and the hairband ----
 /** A ring of the hair cap whose lower edge is high at the front (above the brows) and low at the back. */
@@ -193,21 +193,24 @@ const capRing = (yFront: number, yBack: number, rx: number, rz: number, cz: numb
     return [Math.sin(a) * rx, yBack + (yFront - yBack) * front, cz + Math.cos(a) * rz] as Vec3;
   });
 const capMesh = hull([...ringH(1.4, 0.1, 0.092, -0.01), ...ringH(1.375, 0.158, 0.145, -0.008), ...capRing(1.33, 1.3, 0.182, 0.158, -0.008), ...capRing(1.3, 1.14, 0.18, 0.155, -0.012)]);
-add(4, 'Hair Cap', capMesh, '#55505a');
-add(4, 'Hair Crown Light', hull([...ringH(1.405, 0.104, 0.095, -0.01), ...ringH(1.385, 0.155, 0.142, -0.008), ...ringH(1.36, 0.17, 0.152, -0.008)]), '#8f878c');
-add(4, 'Hair Back', hull([...ringH(1.27, 0.18, 0.12, -0.05), ...ringH(1.15, 0.17, 0.115, -0.065), ...ringH(1.05, 0.13, 0.09, -0.075)]), '#36323c');
-// big swept fringe shards over the forehead, and the locks beside the face
-// the fringe: three broad locks sweeping from the right of the parting to the left, with a straight lower edge just above the brows
-add(4, 'Fringe Left', hull([[0.15, 1.38, 0.05], [0.0, 1.385, 0.07], [0.15, 1.3, 0.1], [0.0, 1.305, 0.125], [0.14, 1.265, 0.112], [0.045, 1.268, 0.13]]), '#3a3640');
-add(4, 'Fringe Middle', hull([[0.0, 1.385, 0.07], [-0.1, 1.385, 0.06], [0.0, 1.305, 0.125], [-0.1, 1.31, 0.115], [0.02, 1.266, 0.13], [-0.09, 1.275, 0.12]]), '#55505a');
-add(4, 'Fringe Right', hull([[-0.1, 1.385, 0.06], [-0.16, 1.37, 0.03], [-0.1, 1.31, 0.115], [-0.16, 1.3, 0.07], [-0.095, 1.275, 0.12], [-0.17, 1.24, 0.07]]), '#3a3640');
+add(4, 'Hair Cap', capMesh, '#5d5862');
+add(4, 'Hair Crown Light', hull([...ringH(1.408, 0.106, 0.097, -0.01), ...ringH(1.39, 0.158, 0.146, -0.008), ...ringH(1.365, 0.172, 0.155, -0.008)]), '#948c91');
+// a darker second layer and a darkest third layer underneath, like the stepped planes of the picture
+add(4, 'Hair Under', hull([...capRing(1.3, 1.24, 0.19, 0.165, -0.012), ...capRing(1.3, 1.12, 0.188, 0.162, -0.02)]), '#403b46');
+add(4, 'Hair Back', hull([...ringH(1.26, 0.172, 0.108, -0.075), ...ringH(1.14, 0.152, 0.098, -0.1), ...ringH(1.03, 0.12, 0.08, -0.105)]), '#2f2b36');
+// the fringe: broad swept locks with a straight lower edge just above the brows, in two layers
+add(4, 'Fringe Left', hull([[0.15, 1.39, 0.06], [0.0, 1.395, 0.085], [0.15, 1.31, 0.11], [0.0, 1.315, 0.135], [0.14, 1.275, 0.12], [0.05, 1.278, 0.14]]), '#5d5862');
+add(4, 'Fringe Middle', hull([[0.0, 1.395, 0.085], [-0.1, 1.39, 0.07], [0.0, 1.315, 0.135], [-0.1, 1.32, 0.125], [0.02, 1.272, 0.14], [-0.09, 1.282, 0.13]]), '#6a646f');
+add(4, 'Fringe Right', hull([[-0.1, 1.39, 0.07], [-0.165, 1.37, 0.03], [-0.1, 1.32, 0.125], [-0.165, 1.3, 0.07], [-0.095, 1.282, 0.13], [-0.17, 1.255, 0.07]]), '#46414d');
 for (const s of sides) {
   const n = nameOf(s);
-  add(4, `Side Hair ${n}`, hull([M(s, [0.15, 1.3, 0.06]), M(s, [0.185, 1.3, -0.04]), M(s, [0.16, 1.3, -0.11]), M(s, [0.145, 1.13, 0.05]), M(s, [0.18, 1.14, -0.04]), M(s, [0.15, 1.1, -0.1])]), '#36323c');
-  add(4, `Side Spike ${n}`, hull([M(s, [0.15, 1.16, 0.07]), M(s, [0.185, 1.16, -0.01]), M(s, [0.16, 1.11, 0.06]), M(s, [0.22, 1.06, 0.03])]), '#2d2a33');
-  add(4, `Side Spike Low ${n}`, hull([M(s, [0.11, 1.11, 0.08]), M(s, [0.15, 1.11, 0.03]), M(s, [0.13, 1.07, 0.07]), M(s, [0.14, 1.0, 0.06])]), '#2d2a33');
-  add(4, `Back Spike ${n}`, hull([M(s, [0.08, 1.1, -0.11]), M(s, [0.14, 1.1, -0.08]), M(s, [0.1, 1.05, -0.12]), M(s, [0.11, 0.99, -0.1])]), '#2d2a33');
+  // the side lock hangs in front of the ear and ends in a point that curls outward
+  add(4, `Side Lock ${n}`, hull([M(s, [0.14, 1.3, 0.1]), M(s, [0.175, 1.3, 0.03]), M(s, [0.14, 1.3, 0.04]), M(s, [0.13, 1.14, 0.09]), M(s, [0.17, 1.15, 0.035]), M(s, [0.13, 1.12, 0.045])]), '#3a3640');
+  add(4, `Side Lock Tip ${n}`, hull([M(s, [0.15, 1.15, 0.075]), M(s, [0.19, 1.15, -0.01]), M(s, [0.16, 1.1, 0.07]), M(s, [0.235, 1.03, 0.045])]), '#2a2730');
+  add(4, `Side Lock Tip Low ${n}`, hull([M(s, [0.12, 1.1, 0.085]), M(s, [0.165, 1.1, 0.03]), M(s, [0.135, 1.06, 0.08]), M(s, [0.15, 0.98, 0.07])]), '#2a2730');
 }
+// points of hair at the nape
+[-0.07, 0, 0.07].forEach((x, i) => add(4, `Nape Point ${i + 1}`, hull([[x - 0.045, 1.1, -0.1], [x + 0.045, 1.1, -0.1], [x - 0.04, 1.06, -0.13], [x + 0.04, 1.06, -0.13], [x, 0.97, -0.115]]), i === 1 ? '#2a2730' : '#34303b'));
 // the hairband arches over the top from one ear to the other, lying on the cap
 const bandPts: Vec3[] = [];
 for (let k = 0; k <= 10; k++) {
