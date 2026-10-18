@@ -149,9 +149,9 @@ for (const s of sides) {
 // every side: only the front shows a face, the back and sides show hair.
 const HC: Vec3 = [0, 1.2, 0];
 const ringH = (y: number, rx: number, rz: number, cz = 0): Vec3[] => ringPts([0, y, cz], [0, 1, 0], rx, rz, 12, Math.PI / 12);
-const head = hull([...ringH(1.095, 0.075, 0.062, 0.03), ...ringH(1.13, 0.125, 0.1, 0.015), ...ringH(1.18, 0.15, 0.125, 0.005), ...ringH(1.25, 0.156, 0.13), ...ringH(1.31, 0.136, 0.118), ...ringH(1.35, 0.09, 0.085)]);
+const head = hull([...ringH(1.115, 0.1, 0.085, 0.02), ...ringH(1.145, 0.14, 0.115, 0.01), ...ringH(1.19, 0.162, 0.132, 0), ...ringH(1.25, 0.168, 0.138), ...ringH(1.31, 0.15, 0.125), ...ringH(1.355, 0.1, 0.09)]);
 add(3, 'Head', head, '#f6d9ab');
-add(3, 'Neck', tubeHull([0, 1.0, 0], [0, 1.12, 0.005], 0.052, 0.048, 8, 0), '#e4ac86');
+add(3, 'Neck', tubeHull([0, 1.0, 0], [0, 1.13, 0.005], 0.052, 0.048, 8, 0), '#e4ac86');
 type P2 = [number, number];
 const hit = (px: number, py: number) => {
   const h = onSurface(head, HC, [px, py, 1], 0);
@@ -180,9 +180,9 @@ for (const s of sides) {
   sticker(`Eyebrow ${n}`, '#3b2218', mirrorX(BROW, s), 0.0022);
   sticker(`Blush ${n}`, '#f2b49c', plain([[0.52, -0.58], [0.74, -0.56], [0.8, -0.63], [0.66, -0.68], [0.52, -0.65]], s), 0.0012);
 }
-sticker('Nose', '#e6a98a', [[-0.03, -0.5], [0.04, -0.5], [0.0, -0.56]], 0.002);
-sticker('Mouth', '#c46f62', [[-0.12, -0.74], [0.12, -0.74], [0.1, -0.79], [0, -0.815], [-0.1, -0.79]], 0.0022);
-for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.157, 1.2, -0.005], [0.028, 0.06, 0.05], 0.01), '#eab597');
+sticker('Nose', '#e6a98a', [[-0.03, -0.48], [0.04, -0.48], [0.0, -0.54]], 0.002);
+sticker('Mouth', '#c46f62', [[-0.12, -0.7], [0.12, -0.7], [0.1, -0.75], [0, -0.775], [-0.1, -0.75]], 0.0022);
+for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.168, 1.205, -0.005], [0.028, 0.06, 0.05], 0.01), '#eab597');
 
 // ---- 4 blocky hair and the hairband ----
 /** A ring of the hair cap whose lower edge is high at the front (above the brows) and low at the back. */
