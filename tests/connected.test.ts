@@ -19,6 +19,7 @@ const SEPARATE: Record<string, RegExp> = {
   nurse: /^$/,
   school: /^$/,
   casual: /^$/,
+  gamenurse: /^$/,
 };
 
 function boxesOf(id: string) {
