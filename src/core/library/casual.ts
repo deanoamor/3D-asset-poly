@@ -1,10 +1,13 @@
 import type { AssetDef, AssetPart } from '../assets';
-import type { PolyMesh } from '../mesh';
+import { signedVolume, type PolyMesh } from '../mesh';
 import type { Vec3 } from '../types';
-import { decal, oval } from './decal';
+import { earClip } from './decal';
+import { HAIR_BASE, HAIR_PATCHES } from './casualHair';
 import { applyStyle } from './kit';
-import { hull, ringPts, slab, tubeHull } from './lowpoly';
-import { onSurface, toPart } from './organic';
+import { hull, slab, tubeHull } from './lowpoly';
+import { toPart, vadd, vcross, vmul, vnorm, vsub } from './organic';
+
+const vdot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 import { humanSpec, type BodyJoints } from './rigs';
 
 /**
@@ -17,9 +20,6 @@ import { humanSpec, type BodyJoints } from './rigs';
 const SKIN = '#f7d3b0';
 const SKIN_D = '#e6a986';
 const HAIR = '#3a3640';
-const HAIR_M = '#6c666f';
-const HAIR_L = '#a29aa0';
-const BAND = '#dcd8d0';
 const WHITE = '#f2f1ea';
 const WHITE_D = '#d8d6cb';
 const YELLOW = '#f0cc68';
@@ -86,7 +86,7 @@ const J: BodyJoints = {
   neck: [0, 0.98, 0],
   head: [0, 1.03, 0],
   headTop: [0, 1.42, 0],
-  shoulder: [0.132, 0.95, 0],
+  shoulder: [0.132, 1.0, 0],
   elbow: [0.18, 0.73, -0.005],
   wrist: [0.205, 0.55, 0.012],
   fingers: [0.215, 0.46, 0.022],
@@ -115,8 +115,8 @@ for (const s of sides) {
 }
 
 // ---- 1 T-shirt, tube top, belt and checked shorts ----
-add(1, 'Shirt', tbox(0, 0, 0.84, 0.975, [0.226, 0.140], [0.262, 0.140], 0.025), WHITE);
-add(1, 'Collar', tubeHull([0, 0.965, 0.0], [0, 0.985, 0.0], [0.07, 0.055], [0.064, 0.05], 8, 0), WHITE_D);
+add(1, 'Shirt', tbox(0, 0, 0.84, 1.03, [0.226, 0.140], [0.262, 0.140], 0.025), WHITE);
+add(1, 'Collar', tubeHull([0, 1.02, 0.0], [0, 1.045, 0.0], [0.07, 0.055], [0.064, 0.05], 8, 0), WHITE_D);
 add(1, 'Tube Top', tbox(0, 0.002, 0.66, 0.895, [0.215, 0.140], [0.242, 0.153], 0.028), YELLOW);
 add(1, 'Tube Top Band', tbox(0, 0.002, 0.845, 0.9, [0.246, 0.158], [0.249, 0.160], 0.028), YELLOW_L);
 add(1, 'Tube Top Shade', tbox(0, 0.002, 0.66, 0.72, [0.218, 0.144], [0.221, 0.146], 0.028), YELLOW_D);
@@ -140,87 +140,98 @@ for (const s of sides) {
   const el = M(s, J.elbow);
   const wr = M(s, J.wrist);
   const fi = M(s, J.fingers);
-  add(2, `Sleeve ${n}`, tubeHull([s * 0.112, 0.958, 0], lerp(sh, el, 0.35), 0.06, 0.056, 6, 0), WHITE);
+  add(2, `Sleeve ${n}`, tubeHull([s * 0.112, 1.012, 0], lerp(sh, el, 0.35), 0.06, 0.056, 6, 0), WHITE);
   add(2, `Sleeve Hem ${n}`, tubeHull(lerp(sh, el, 0.33), lerp(sh, el, 0.38), 0.057, 0.056, 6, 0), WHITE_D);
   add(2, `Upper Arm ${n}`, tubeHull(lerp(sh, el, 0.3), el, 0.033, 0.029, 6, 0), SKIN);
   add(2, `Forearm ${n}`, tubeHull(el, wr, 0.029, 0.025, 6, 0), SKIN);
   add(2, `Hand ${n}`, tbox(wr[0], wr[2] + 0.005, fi[1] - 0.015, wr[1], [0.036, 0.058], [0.032, 0.05], 0.01), SKIN);
   add(2, `Thumb ${n}`, tubeHull([wr[0] - s * 0.004, wr[1] - 0.02, wr[2] + 0.025], [wr[0] - s * 0.006, wr[1] - 0.06, wr[2] + 0.04], 0.011, 0.009, 5, 0), SKIN_D);
 }
-add(2, 'Neck', tubeHull([0, 0.96, 0], [0, 1.06, 0.005], 0.046, 0.044, 6, 0), SKIN);
 
 // ---- 3 head and face ----
-const HC: Vec3 = [0, 1.18, 0.0];
-const head = hull([
-  ...ringPts([0, 1.055, 0.035], [0, 1, 0], 0.08, 0.06, 8, Math.PI / 8),
-  ...ringPts([0, 1.09, 0.02], [0, 1, 0], 0.13, 0.105, 8, Math.PI / 8),
-  ...ringPts([0, 1.15, 0.005], [0, 1, 0], 0.158, 0.13, 8, Math.PI / 8),
-  ...ringPts([0, 1.23, 0.0], [0, 1, 0], 0.162, 0.135, 8, Math.PI / 8),
-  ...ringPts([0, 1.31, 0.0], [0, 1, 0], 0.13, 0.115, 8, Math.PI / 8),
-]);
-add(3, 'Head', head, SKIN);
-type P2 = [number, number];
-const EYE: P2[] = [[-0.18, 0.02], [-0.13, 0.18], [0, 0.22], [0.14, 0.19], [0.2, 0.04], [0.16, -0.15], [0.04, -0.23], [-0.1, -0.2], [-0.17, -0.1]];
-const LID: P2[] = [[-0.19, 0.04], [-0.135, 0.205], [0, 0.255], [0.155, 0.22], [0.24, 0.07], [0.205, 0.05], [0.14, 0.18], [0, 0.21], [-0.13, 0.17], [-0.175, 0.03]];
-const BROW: P2[] = [[-0.15, 0.3], [0.03, 0.335], [0.18, 0.37], [0.17, 0.44], [0.02, 0.41], [-0.14, 0.375]];
-for (const s of sides) {
-  const n = nameOf(s);
-  const c: P2 = [s * 0.46, -0.08];
-  const K = 1.75;
-  const d = (name: string, pts: P2[], lift: number, color: string) => add(3, `${name} ${n}`, decal(head, HC, c, pts.map(([x, y]) => [x * K, y * K] as P2), lift, 0.002, s), color);
-  d('Eye White', EYE, 0.001, '#fbfaf6');
-  d('Iris', oval(-0.0, -0.01, 0.15, 0.215, 18), 0.0032, '#b86f37');
-  d('Iris Dark', oval(0.0, 0.06, 0.145, 0.14, 16).filter(([, y]) => y >= 0.05), 0.0054, '#5a2e1a');
-  d('Pupil', oval(0.0, 0.01, 0.06, 0.1, 12), 0.0076, '#2a140c');
-  d('Iris Glow', oval(0.0, -0.13, 0.09, 0.05, 12), 0.0076, '#e3a35c');
-  d('Eye Highlight', oval(0.06, 0.05, 0.035, 0.04, 10), 0.0098, '#ffffff');
-  d('Eye Lid', LID, 0.0098, '#2b2228');
-  // brows slope down toward the nose
-  d('Eyebrow', BROW, 0.003, '#2f2a2e');
-  add(3, `Blush ${n}`, decal(head, HC, [s * 0.55, -0.42], oval(0, 0, 0.13, 0.06, 12), 0.0012, 0.0015, s), '#f2b9a2');
-  add(3, `Ear ${n}`, cbox([s * 0.152, 1.16, -0.01], [0.03, 0.06, 0.045], 0.01), SKIN_D);
+// The head is a thick plate in the plane facing the reference camera, and every plane of the face, eye, brow, nose and
+// mouth is a thin plate just in front of it, all traced from the reference picture (pixel coordinates).
+const REF = { az: 36, el: 15, fov: 24, vis: 1.6, tx: -0.13, ty: 0.77, w: 453, h: 544 };
+function refRay(px: number, py: number): { o: Vec3; d: Vec3; fwd: Vec3 } {
+  const a = (REF.az * Math.PI) / 180;
+  const e = (REF.el * Math.PI) / 180;
+  const dist = REF.vis / (2 * Math.tan((REF.fov * Math.PI) / 360));
+  const target: Vec3 = [REF.tx, REF.ty, 0];
+  const o: Vec3 = [target[0] + dist * Math.cos(e) * Math.sin(a), target[1] + dist * Math.sin(e), target[2] + dist * Math.cos(e) * Math.cos(a)];
+  const fwd = vnorm(vsub(target, o));
+  const right = vnorm(vcross(fwd, [0, 1, 0]));
+  const up = vcross(right, fwd);
+  const th = Math.tan((REF.fov * Math.PI) / 360);
+  const nx = (px / REF.w) * 2 - 1;
+  const ny = 1 - (py / REF.h) * 2;
+  return { o, d: vnorm(vadd(vadd(fwd, vmul(right, nx * th * (REF.w / REF.h))), vmul(up, ny * th))), fwd };
 }
-add(3, 'Nose', decal(head, HC, [0.02, -0.36], [[-0.02, 0.03], [0.025, -0.04], [-0.02, -0.03]], 0.002, 0.002), SKIN_D);
-add(3, 'Mouth', decal(head, HC, [0.01, -0.58], [[-0.06, 0.0], [0.06, 0.0], [0.055, 0.02], [-0.055, 0.02]], 0.002, 0.002), '#c47766');
+const HEAD_C: Vec3 = [0, 1.2, 0];
+/** A plate over an outline in reference pixels, between two depths measured along the camera's view direction. */
+function rayPlate(flat: number[], front: number, back: number): PolyMesh {
+  const outline: [number, number][] = [];
+  for (let i = 0; i < flat.length; i += 2) {
+    const q: [number, number] = [flat[i], flat[i + 1]];
+    const last = outline[outline.length - 1];
+    if (!last || Math.hypot(last[0] - q[0], last[1] - q[1]) > 0.05) outline.push(q);
+  }
+  if (outline.length > 1 && Math.hypot(outline[0][0] - outline[outline.length - 1][0], outline[0][1] - outline[outline.length - 1][1]) <= 0.05) outline.pop();
+  const { tris, order } = earClip(outline);
+  const n = outline.length;
+  const cam = refRay(250, 130);
+  const depthC = vdot(vsub(HEAD_C, cam.o), cam.fwd);
+  const v: number[] = [];
+  const at = (q: [number, number], depth: number): Vec3 => {
+    const r = refRay(q[0], q[1]);
+    return vadd(r.o, vmul(r.d, (depthC + depth) / vdot(r.d, r.fwd)));
+  };
+  for (const q of outline) v.push(...at(q, front));
+  for (const q of outline) v.push(...at(q, back));
+  const f: number[][] = tris.map((t) => [...t]);
+  for (const t of tris) f.push([t[2] + n, t[1] + n, t[0] + n]);
+  for (let i = 0; i < n; i++) {
+    const a = order[i];
+    const b = order[(i + 1) % n];
+    f.push([b, a, a + n, b + n]);
+  }
+  const m: PolyMesh = { v, f };
+  if (signedVolume(m) < 0) m.f = m.f.map((q) => [...q].reverse());
+  return m;
+}
+const FACE_OUTLINE = [218.0, 86.0, 219.8, 118.5, 221.5, 119.5, 220.7, 127.5, 222.3, 141.3, 224.5, 141.5, 223.7, 145.7, 225.8, 145.8, 225.0, 150.0, 228.3, 153.7, 228.0, 157.8, 232.2, 167.2, 246.0, 175.0, 263.2, 175.0, 278.3, 169.8, 293.2, 159.8, 298.8, 149.3, 296.3, 144.5, 294.8, 136.8, 292.8, 135.3, 293.0, 131.0, 284.3, 108.7, 280.2, 104.2, 276.8, 103.7, 277.3, 101.8, 279.2, 101.7, 279.0, 100.0, 275.0, 98.5, 273.0, 99.8, 273.7, 103.8, 267.8, 103.2, 267.3, 100.2, 264.7, 97.3, 260.7, 97.7, 256.7, 93.8, 251.5, 94.3, 247.2, 89.2, 243.7, 90.3, 236.0, 86.0];
+add(3, 'Head', rayPlate(FACE_OUTLINE, -0.12, 0.1), '#f6d9ab');
+add(3, 'Neck', rayPlate([252, 160, 270, 166, 286, 160, 291, 176, 293, 194, 250, 194], -0.03, 0.1), '#cb8672');
+const FACE: [string, string, number[]][] = [
+  ['Right Plane', '#f4cf9f', [262, 104, 283, 108, 286, 125, 288, 142, 282, 158, 272, 168, 262, 172, 262, 140]],
+  ['Dark Plane', '#b06d64', [283, 108, 291, 125, 299, 150, 293, 160, 284, 152, 286, 138, 286, 122]],
+  ['Darker Plane', '#9a5a58', [284, 152, 293, 160, 285, 166, 278, 170, 280, 158]],
+  ['Chin Left', '#eaba97', [226, 158, 246, 162, 262, 165, 263, 175, 246, 175, 232, 167]],
+  ['Chin Right', '#ebab88', [262, 160, 278, 168, 263, 175]],
+  ['Rose Plane', '#c5836b', [243, 90, 262, 96, 277, 103, 270, 106, 255, 102]],
+  ['Brow Shade Left', '#db8e75', [224, 108, 238, 110, 240, 114, 226, 116]],
+  ['Brow Shade Right', '#c68169', [258, 107, 282, 108, 285, 113, 262, 112]],
+  ['Eye White Left', '#f1d9c1', [222, 121, 228, 114, 238, 113, 241, 122, 241, 133, 235, 136, 227, 135, 222, 128]],
+  ['Eye White Right', '#e4d3c0', [258, 124, 262, 117, 270, 114, 280, 115, 285, 121, 285, 129, 279, 134.5, 270, 136, 262, 133]],
+  ['Iris Left', '#4b2119', [224, 123, 229, 115, 237, 115, 240, 123, 240, 131, 235, 133.5, 228, 133, 225, 129]],
+  ['Iris Right', '#3d1f14', [259, 121, 265, 115, 275, 114.5, 283, 120, 284, 127, 280, 131, 272, 132.5, 264, 131, 261, 127.5]],
+  ['Iris Glow Left', '#e8963c', [227, 130.5, 233, 128.5, 239.5, 130, 238, 133.5, 233, 135.2, 229, 134]],
+  ['Iris Glow Right', '#dc8532', [265, 129.5, 272, 127.8, 280, 129, 278.5, 132.5, 272, 134.6, 266.5, 133]],
+  ['Lid Left', '#2b1a17', [222, 122, 225.5, 115.5, 232, 113, 239, 114.2, 241, 119.5, 238.5, 116.5, 232, 115, 227, 117.5, 224, 123]],
+  ['Lid Right', '#2b1a17', [258, 124, 262, 117, 271, 113.5, 281, 114.2, 286, 119.5, 283.5, 118, 279.5, 115.8, 271, 115.5, 264, 119.5, 260.5, 125]],
+  ['Brow Left', '#3f241c', [220, 101, 226, 102, 232, 105, 236, 108, 235, 110, 229, 107, 223, 105, 220, 104]],
+  ['Brow Right', '#43291f', [252, 108, 258, 105, 266, 103, 275, 103, 281, 106, 275, 106, 266, 107, 258, 109, 253, 110.5]],
+  ['Nose', '#f0bc92', [240, 145, 246, 145, 244, 148, 240, 147]],
+  ['Mouth', '#e9b98b', [246, 154, 259, 154, 259, 156, 246, 156]],
+];
+FACE.forEach(([name, color, pts], i) => add(3, `Face ${name}`, rayPlate(pts, -0.12 - 0.0012 * (i + 1) - 0.002, -0.12 - 0.0012 * i), color));
 
-// ---- 4 blocky hair and the hairband ----
-/** A ring of the hair cap whose height drops from `yFront` at the face to `yBack` at the back of the head. */
-const capRing = (yFront: number, yBack: number, rx: number, rz: number, cz: number): Vec3[] =>
-  Array.from({ length: 12 }, (_, i) => {
-    const a = (i / 12) * Math.PI * 2 + Math.PI / 12;
-    const front = (Math.cos(a) + 1) / 2; // 1 at +z, 0 at -z
-    return [Math.sin(a) * rx, yBack + (yFront - yBack) * front, cz + Math.cos(a) * rz] as Vec3;
-  });
-const capMesh = hull([
-  ...ringPts([0, 1.42, -0.03], [0, 1, 0], 0.14, 0.13, 8, Math.PI / 8),
-  ...ringPts([0, 1.38, -0.02], [0, 1, 0], 0.225, 0.2, 8, Math.PI / 8),
-  ...capRing(1.33, 1.3, 0.25, 0.212, -0.03),
-  ...capRing(1.295, 1.17, 0.245, 0.2, -0.04),
-]);
-add(4, 'Hair Top', capMesh, HAIR_M);
-add(4, 'Hair Crown Light', hull([...ringPts([0, 1.428, -0.03], [0, 1, 0], 0.146, 0.136, 8, Math.PI / 8), ...ringPts([0, 1.4, -0.025], [0, 1, 0], 0.215, 0.193, 8, Math.PI / 8)]), HAIR_L);
-add(4, 'Hair Back', hull([[-0.235, 1.26, -0.02], [0.235, 1.26, -0.02], [0, 1.26, -0.24], [-0.2, 1.0, -0.06], [0.2, 1.0, -0.06], [0, 0.99, -0.18], [-0.17, 1.12, -0.18], [0.17, 1.12, -0.18]]), HAIR);
-for (const s of sides) {
-  const n = nameOf(s);
-  // on her left the hair falls behind the ear, so the ear shows; on her right it covers the side of the face
-  const zf = s === 1 ? -0.03 : 0.1;
-  add(4, `Side Hair ${n}`, hull([M(s, [0.2, 1.26, zf]), M(s, [0.245, 1.26, -0.02]), M(s, [0.2, 1.26, -0.12]), M(s, [0.17, 1.08, zf - 0.01]), M(s, [0.23, 1.1, -0.04]), M(s, [0.19, 1.05, -0.1])]), HAIR);
-  add(4, `Side Spike Upper ${n}`, hull([M(s, [0.2, 1.16, 0.07]), M(s, [0.235, 1.16, -0.03]), M(s, [0.215, 1.1, 0.06]), M(s, [0.29, 1.06, 0.02])]), HAIR);
-  add(4, `Side Spike Lower ${n}`, hull([M(s, [0.15, 1.08, 0.1]), M(s, [0.2, 1.08, 0.04]), M(s, [0.17, 1.03, 0.09]), M(s, [0.19, 0.96, 0.08])]), HAIR);
-}
-// the swept fringe: one big lock from the crown down across the left of the forehead, and a small one on the right
-add(4, 'Fringe Sweep', hull([[0.02, 1.39, 0.12], [0.13, 1.37, 0.12], [0.0, 1.37, 0.17], [0.12, 1.35, 0.16], [-0.08, 1.31, 0.17], [-0.165, 1.24, 0.13], [-0.17, 1.3, 0.11], [-0.03, 1.335, 0.176]]), HAIR_M);
-add(4, 'Fringe Right', hull([[0.08, 1.36, 0.16], [0.17, 1.34, 0.13], [0.1, 1.32, 0.165], [0.17, 1.28, 0.13], [0.145, 1.245, 0.14]]), HAIR);
-// the hairband arches over the top, from one ear to the other, lying on the hair
-const bandPts: Vec3[] = [];
-for (let k = 0; k <= 10; k++) {
-  const a = -1.45 + (2.9 * k) / 10;
-  bandPts.push(onSurface(capMesh, [0, 1.32, -0.02], [Math.sin(a), Math.cos(a) * 0.9, 0.12], 0.008).p);
-}
-bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.026, 0.01], [0.026, 0.01], 4, Math.PI / 4), BAND));
+// ---- 4 hair, built from the reference picture ----
+// Every flat colour patch of the hair is a thick plate in the plane facing the reference camera, so from that view
+// each patch sits on the same pixel as in the picture; the plates run back through the head to give the hair depth.
+add(4, 'Hair Base', rayPlate(HAIR_BASE, -0.02, 0.13), HAIR);
+HAIR_PATCHES.forEach((h, i) => add(4, `Hair Patch ${i + 1}`, rayPlate(h.pts, -0.045 - i * 0.0006, 0.13), h.color));
 
 applyStyle(parts, [
-  [/^(Eye|Iris|Pupil|Eyebrow|Nose|Mouth)/, {}],
   [/^(Head|Neck|Ear|Thigh|Shin|Upper Arm|Forearm|Hand|Thumb)/, { paint: 0.35 }],
   [/^(Hair|Side|Fringe)/, { paint: 0.3 }],
   [/^(Shirt|Collar|Sleeve|Tube|Belt|Shorts|Sock|Sneaker|Sole)/, { paint: 0.3 }],

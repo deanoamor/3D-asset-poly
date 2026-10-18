@@ -10,7 +10,7 @@ import { onSurface } from './organic';
 
 type P2 = [number, number];
 
-function earClip(pts: P2[]): { tris: number[][]; order: number[] } {
+export function earClip(pts: P2[]): { tris: number[][]; order: number[] } {
   const n = pts.length;
   let area = 0;
   for (let i = 0; i < n; i++) area += pts[i][0] * pts[(i + 1) % n][1] - pts[(i + 1) % n][0] * pts[i][1];
@@ -49,19 +49,27 @@ export const oval = (cx: number, cy: number, rx: number, ry: number, n = 14): P2
  */
 export function decal(m: PolyMesh, from: Vec3, center: P2, pts: P2[], lift: number, thick = 0.002, mirror: 1 | -1 = 1): PolyMesh {
   const raw: P2[] = pts.map(([u, v]) => [center[0] + mirror * u, center[1] + v]);
-  // add points along long edges so the sticker bends with the surface instead of cutting through it
+  return decalBy(m, raw, ([u, w]) => onSurface(m, from, [u, w, 1], 0), lift, thick, 0.03);
+}
+
+/**
+ * A sticker whose outline points are turned into surface points by `hitAt` (a ray from any camera). Edges longer than
+ * `maxEdge` (in the units of `pts`) get extra points so the sticker bends with the surface.
+ */
+export function decalBy(m: PolyMesh, pts: P2[], hitAt: (p: P2) => { p: Vec3; n: Vec3 }, lift: number, thick = 0.002, maxEdge = 0.03): PolyMesh {
   const outline: P2[] = [];
-  raw.forEach((a, i) => {
-    const b = raw[(i + 1) % raw.length];
-    const steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.03));
+  pts.forEach((a, i) => {
+    const b = pts[(i + 1) % pts.length];
+    const steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / maxEdge));
     for (let k = 0; k < steps; k++) outline.push([a[0] + ((b[0] - a[0]) * k) / steps, a[1] + ((b[1] - a[1]) * k) / steps]);
   });
+  void m;
   const { tris, order } = earClip(outline);
   const n = outline.length;
   const v: number[] = [];
   const back: number[] = [];
-  for (const [u, w] of outline) {
-    const h = onSurface(m, from, [u, w, 1], 0);
+  for (const q of outline) {
+    const h = hitAt(q);
     v.push(h.p[0] + h.n[0] * (lift + thick), h.p[1] + h.n[1] * (lift + thick), h.p[2] + h.n[2] * (lift + thick));
     back.push(h.p[0] + h.n[0] * lift, h.p[1] + h.n[1] * lift, h.p[2] + h.n[2] * lift);
   }
