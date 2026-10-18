@@ -185,33 +185,46 @@ sticker('Mouth', '#d98378', [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0
 for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.147, 1.15, -0.008], [0.028, 0.058, 0.05], 0.01), '#f6cdb0');
 
 // ---- 4 soft, voluminous hair and the hairband ----
-// A smooth bob: a round crown, a fuller back, curved bang strands that taper to points, locks framing the face, a
-// soft shine and flicked ends. Strands are thin flat tubes, so they stay low-poly but flow instead of looking cut.
+// A layered bob: a round crown and a full back, two layers of bang strands fanning from a side parting, two locks on
+// each side of the face, layered back strands that curl at the ends, soft shine streaks, a hairband and a small bow.
 const R = (p: Vec3, r: number | [number, number]): Ring => ({ p, r });
-const HAIR_A = '#3f3b47';
+const HAIR_A = '#403c48';
 const HAIR_B = '#2c2931';
-const HAIR_C = '#57525f';
-const HAIR_SHINE = '#a39cab';
+const HAIR_C = '#5a5563';
+const HAIR_D = '#34313b';
+const HAIR_SHINE = '#aaa3b2';
+/** A thin tapered strand through points [x, y, z, across, deep]. */
+const strand = (name: string, pts: [number, number, number, number, number][], color: string) =>
+  add(4, name, sweep(pts.map(([x, y, z, a, d]) => R([x, y, z], [a, d])), { sides: 6, end: 'dome' }), color);
 const crownMesh = blob([0, 1.285, -0.03], [0.168, 0.14, 0.158], 16);
 add(4, 'Hair Crown', crownMesh, HAIR_A);
-add(4, 'Hair Back', blob([0, 1.145, -0.07], [0.168, 0.15, 0.128], 14), HAIR_B);
-// a soft shine across the crown
-add(4, 'Hair Shine', ribbon(crownMesh, [{ from: [0, 1.285, -0.03], dir: [0.55, 0.75, 0.9] }, { from: [0, 1.285, -0.03], dir: [0.4, 1.0, 0.45] }, { from: [0, 1.285, -0.03], dir: [0.3, 1.0, -0.05] }, { from: [0, 1.285, -0.03], dir: [0.3, 0.8, -0.6] }], [0.026, 0.008], 0.002, { sides: 5, taper: 0.5 }), HAIR_SHINE);
-// bangs: curved strands that start at the crown and sweep across the forehead to the left, ending in soft points above the brows
-const BANGS: [number, number, number, string][] = [[0.11, 0.1, 1.29, HAIR_C], [0.07, 0.06, 1.275, HAIR_A], [0.03, 0.02, 1.272, HAIR_C], [-0.01, -0.02, 1.274, HAIR_A], [-0.05, -0.06, 1.282, HAIR_C], [-0.09, -0.1, 1.295, HAIR_A]];
-BANGS.forEach(([x0, xt, yt, c], i) => {
-  const path: Ring[] = [R([x0 * 0.8, 1.405, 0.0], [0.03, 0.02]), R([x0 * 0.95, 1.37, 0.085], [0.03, 0.015]), R([(x0 + xt) / 2, (1.37 + yt) / 2 + 0.005, 0.127], [0.026, 0.012]), R([xt, yt, 0.132], [0.006, 0.005])];
-  add(4, `Bang ${i + 1}`, sweep(path, { sides: 6, end: 'dome' }), c);
-});
+add(4, 'Hair Crown Light', blob([0.01, 1.33, -0.02], [0.12, 0.09, 0.115], 12), HAIR_C);
+add(4, 'Hair Back', blob([0, 1.15, -0.07], [0.168, 0.15, 0.128], 14), HAIR_B);
+// two soft shine streaks across the crown
+for (const [i, d] of [[0.5, 0.95], [-0.15, 0.7]].entries()) {
+  add(4, `Hair Shine ${i + 1}`, ribbon(crownMesh, [{ from: [0, 1.285, -0.03], dir: [d[0], 0.7, 0.9] }, { from: [0, 1.285, -0.03], dir: [d[0] * 0.8, 1.0, 0.45] }, { from: [0, 1.285, -0.03], dir: [d[0] * 0.7, 1.0, -0.05] }, { from: [0, 1.285, -0.03], dir: [d[0] * 0.7, 0.8, -0.6] }], [0.02, 0.007], 0.002, { sides: 5, taper: 0.5 }), HAIR_SHINE);
+}
+// the side parting is at x = 0.07; strands to the left of it sweep long, to the right they fall short
+const fan = (name: string, x0: number, xt: number, yt: number, color: string, long: boolean) =>
+  strand(name, [[x0 * 0.7 + 0.03, 1.415, 0.0, 0.03, 0.02], [x0 * 0.95 + 0.02, 1.375, 0.085, 0.032, 0.015], [(x0 + xt) / 2, (1.375 + yt) / 2 + 0.004, 0.125 + (long ? 0.004 : 0), 0.027, 0.012], [xt, yt, 0.133, 0.006, 0.005]], color);
+// back layer: two longer, darker strands under the fringe
+[[-0.1, -0.125, 1.262], [0.07, 0.06, 1.265]].forEach(([x0, xt, yt], i) => fan(`Bang Back ${i + 1}`, x0, xt, yt, HAIR_D, true));
+// front layer: four broad strands that sweep to the left
+[[-0.09, -0.115, 1.288], [-0.035, -0.06, 1.278], [0.02, -0.005, 1.274], [0.075, 0.065, 1.284]].forEach(([x0, xt, yt], i) => fan(`Bang ${i + 1}`, x0, xt, yt, i % 2 ? HAIR_A : HAIR_C, false));
 for (const s of sides) {
   const n = nameOf(s);
-  // the lock in front of the ear: from the crown, down the cheek, curling in at the jaw
-  const lock: Ring[] = [R(M(s, [0.125, 1.32, 0.05]), [0.04, 0.025]), R(M(s, [0.15, 1.24, 0.1]), [0.036, 0.02]), R(M(s, [0.152, 1.17, 0.113]), [0.03, 0.017]), R(M(s, [0.14, 1.12, 0.12]), [0.02, 0.012]), R(M(s, [0.115, 1.085, 0.118]), [0.006, 0.006])];
-  add(4, `Face Lock ${n}`, sweep(lock, { sides: 6, end: 'dome' }), HAIR_C);
-  // the end of the bob behind the ear flicks outward
-  const tail: Ring[] = [R(M(s, [0.125, 1.11, -0.06]), [0.05, 0.03]), R(M(s, [0.14, 1.04, -0.085]), [0.045, 0.026]), R(M(s, [0.162, 0.98, -0.085]), [0.022, 0.014]), R(M(s, [0.185, 0.95, -0.07]), [0.006, 0.006])];
-  add(4, `Bob End ${n}`, sweep(tail, { sides: 6, end: 'dome' }), HAIR_B);
+  // the long lock in front of the ear: from the crown, down the cheek, curling in at the jaw
+  strand(`Face Lock ${n}`, [[s * 0.125, 1.32, 0.05, 0.04, 0.025], [s * 0.15, 1.24, 0.1, 0.036, 0.02], [s * 0.152, 1.17, 0.113, 0.03, 0.017], [s * 0.14, 1.12, 0.12, 0.02, 0.012], [s * 0.115, 1.085, 0.118, 0.006, 0.006]], HAIR_C);
+  // a thinner wisp beside it
+  strand(`Face Wisp ${n}`, [[s * 0.108, 1.3, 0.085, 0.022, 0.012], [s * 0.128, 1.24, 0.118, 0.02, 0.01], [s * 0.126, 1.17, 0.128, 0.015, 0.008], [s * 0.112, 1.12, 0.128, 0.005, 0.005]], HAIR_A);
+  // layered back strands that curl outward at the ends
+  strand(`Bob End ${n}`, [[s * 0.125, 1.11, -0.06, 0.05, 0.03], [s * 0.14, 1.04, -0.085, 0.045, 0.026], [s * 0.162, 0.98, -0.085, 0.022, 0.014], [s * 0.185, 0.95, -0.07, 0.006, 0.006]], HAIR_B);
 }
+// a small bow clip lying on the hair, to her right of the parting
+const bowAt: Vec3 = [-0.095, 1.372, 0.092];
+add(4, 'Hair Bow Knot', blob(bowAt, [0.014, 0.014, 0.012], 6), '#c8504f');
+add(4, 'Hair Bow Loop Out', sweep([R(bowAt, [0.012, 0.008]), R([bowAt[0] - 0.026, bowAt[1] + 0.012, bowAt[2] - 0.004], [0.028, 0.01]), R([bowAt[0] - 0.05, bowAt[1] + 0.022, bowAt[2] - 0.012], [0.006, 0.005])], { sides: 5, end: 'dome' }), '#d9605e');
+add(4, 'Hair Bow Loop In', sweep([R(bowAt, [0.012, 0.008]), R([bowAt[0] + 0.026, bowAt[1] + 0.012, bowAt[2] - 0.004], [0.028, 0.01]), R([bowAt[0] + 0.05, bowAt[1] + 0.022, bowAt[2] - 0.012], [0.006, 0.005])], { sides: 5, end: 'dome' }), '#b8403f');
 // the hairband arches over the top from one ear to the other, lying on the cap
 const bandPts: Vec3[] = [];
 for (let k = 0; k <= 10; k++) {
@@ -223,7 +236,7 @@ bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, b
 applyStyle(parts, [
   [/^(Head|Neck|Ear)/, { smooth: true }],
   [/^(Thigh|Shin|Upper Arm|Forearm|Hand|Thumb)/, { paint: 0.12 }],
-  [/^(Hair|Bang|Face Lock|Bob End|Crown Tuft)/, { smooth: true, paint: 0.4 }],
+  [/^(Hair|Bang|Face |Bob )/, { smooth: true, paint: 0.4 }],
   [/^(Shirt|Collar|Sleeve|Tube|Belt|Shorts|Sock|Sneaker|Sole)/, { paint: 0.3 }],
 ]);
 
