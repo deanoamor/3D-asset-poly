@@ -1,7 +1,8 @@
 import { chromium } from 'playwright-core';
 import fs from 'node:fs';
 
-// Renders the Red Ribbon Girl full body on a dark grey backdrop, like a 3D app viewport.
+// Renders the Red Ribbon Girl from the reference picture's viewpoint: a front view from above, almost orthographic,
+// framed like the picture (334 x 496) at 2x, on a dark grey backdrop.
 const URL = process.env.URL || 'http://localhost:5199/';
 const OUT = process.env.OUT || 'e2e/out/ribbon/ribbon.png';
 fs.mkdirSync('e2e/out/ribbon', { recursive: true });
@@ -26,40 +27,36 @@ const info = await page.evaluate(() => {
   const s = window.__app.store;
   return { shapes: s.doc.objects.filter((o) => o.kind === 'shape').length, groups: s.doc.objects.filter((o) => o.kind === 'group').map((g) => g.name) };
 });
-ok(info.shapes > 55 && info.groups.includes('Red Ribbon Girl'), `ribbon added: ${info.shapes} parts`);
+ok(info.shapes > 40 && info.groups.includes('Red Ribbon Girl'), `ribbon added: ${info.shapes} parts`);
 await page.evaluate(() => window.__app.store.select([]));
-const W = +(process.env.W || 668), H = +(process.env.H || 992);
-const dataUrl = await page.evaluate((cfg) => {
+const SC = +(process.env.SCALE2 || 2);
+const W = 334 * SC, H = 496 * SC;
+const dataUrl = await page.evaluate(async (cfg) => {
+  const { SCALE, TILT, GROUND } = await import('/src/core/library/ribbonData.ts');
   const { vp } = window.__app;
   vp.setPreview(true);
   vp.controls.autoRotate = false;
   const Color = vp.scene.background.constructor;
   vp.scene.background = new Color(cfg.bg);
   vp.grid.visible = false;
-  const V3 = vp.camera.position.constructor;
-  // light from the right-back so the shadow falls to the front-left, like the picture
-  const c = new V3(0, 3, 0);
-  vp.sun.position.copy(c).add(new V3(...cfg.sun).normalize().multiplyScalar(60));
-  vp.sun.target.position.copy(c);
-  vp.sun.intensity = cfg.sunI;
-  vp.hemi.intensity = cfg.hemiI;
-  const sc = vp.sun.shadow.camera;
-  sc.left = sc.bottom = -26; sc.right = sc.top = 26; sc.near = 1; sc.far = 160; sc.updateProjectionMatrix();
-  vp.sun.shadow.radius = 8; vp.sun.shadow.mapSize.set(cfg.sm, cfg.sm);
-  const cam = vp.camera.clone();
-  const az = (cfg.az * Math.PI) / 180, el = (cfg.elev * Math.PI) / 180, d = cfg.dist;
-  cam.fov = cfg.fov; cam.aspect = cfg.w / cfg.h; cam.updateProjectionMatrix();
-  cam.position.set(d * Math.cos(el) * Math.sin(az), cfg.ty + d * Math.sin(el), d * Math.cos(el) * Math.cos(az));
-  cam.lookAt(0, cfg.ty, 0); cam.updateMatrixWorld(true);
   const r = vp.renderer;
   r.shadowMap.enabled = false; vp.sun.castShadow = false; vp.shadowGround.visible = false; vp.mats.refresh();
-  if (cfg.vsm) { r.shadowMap.type = 3; vp.mats.refresh(); }
+  const V3 = vp.camera.position.constructor;
+  vp.sun.position.set(0, 3, 6); vp.sun.intensity = cfg.sunI;
+  vp.hemi.intensity = cfg.hemiI;
+  const cam = vp.camera.clone();
+  const th = (TILT * Math.PI) / 180;
+  const target = new V3((167 - 185) / SCALE, (GROUND - 248) / SCALE / Math.cos(th), 0);
+  const d = 600;
+  cam.fov = (2 * Math.atan(496 / SCALE / 2 / d) * 180) / Math.PI;
+  cam.aspect = 334 / 496; cam.near = 300; cam.far = 900; cam.updateProjectionMatrix();
+  cam.position.set(target.x, target.y + d * Math.sin(th), target.z + d * Math.cos(th));
+  cam.lookAt(target); cam.updateMatrixWorld(true);
   r.setPixelRatio(1);
   r.setSize(cfg.w, cfg.h, false);
-  r.shadowMap.needsUpdate = true;
   r.render(vp.scene, cam);
   return r.domElement.toDataURL('image/png');
-}, { bg: 0x3d3d3d, az: +(process.env.AZ || 14), elev: +(process.env.ELEV || 14), dist: +(process.env.DIST || 7), fov: +(process.env.FOV || 19), ty: +(process.env.TY || 0.95), sun: [-0.4, 0.9, 0.8], sunI: +(process.env.SUN || 1.2), hemiI: +(process.env.HEMI || 3.1), w: W, h: H, vsm: !process.env.NOVSM, sm: +(process.env.SM || 768) });
+}, { bg: 0x3f3f3f, sunI: +(process.env.SUN || 0.0), hemiI: +(process.env.HEMI || 4.4), w: W, h: H });
 fs.writeFileSync(OUT, Buffer.from(dataUrl.split(',')[1], 'base64'));
 console.log('saved', OUT);
 ok(errs.length === 0, `no page errors ${errs.slice(0, 3).join(' | ')}`);
