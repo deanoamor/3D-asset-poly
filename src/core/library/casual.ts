@@ -188,11 +188,11 @@ for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.147, 1.15, -0.008]
 // A layered bob: a round crown and a full back, two layers of bang strands fanning from a side parting, two locks on
 // each side of the face, layered back strands that curl at the ends, soft shine streaks, a hairband and a small bow.
 const R = (p: Vec3, r: number | [number, number]): Ring => ({ p, r });
-const HAIR_A = '#403c48';
-const HAIR_B = '#2c2931';
-const HAIR_C = '#5a5563';
-const HAIR_D = '#34313b';
-const HAIR_SHINE = '#aaa3b2';
+const HAIR_A = '#4a4249';
+const HAIR_B = '#332d33';
+const HAIR_C = '#665d64';
+const HAIR_D = '#3c363c';
+const HAIR_SHINE = '#b8ada3';
 /** A thin tapered strand through points [x, y, z, across, deep]. */
 const strand = (name: string, pts: [number, number, number, number, number][], color: string) =>
   add(4, name, sweep(pts.map(([x, y, z, a, d]) => R([x, y, z], [a, d])), { sides: 6, end: 'dome' }), color);
@@ -227,11 +227,11 @@ add(4, 'Hair Bow Loop Out', sweep([R(bowAt, [0.012, 0.008]), R([bowAt[0] - 0.026
 add(4, 'Hair Bow Loop In', sweep([R(bowAt, [0.012, 0.008]), R([bowAt[0] + 0.026, bowAt[1] + 0.012, bowAt[2] - 0.004], [0.028, 0.01]), R([bowAt[0] + 0.05, bowAt[1] + 0.022, bowAt[2] - 0.012], [0.006, 0.005])], { sides: 5, end: 'dome' }), '#b8403f');
 // the hairband arches over the top from one ear to the other, lying on the cap
 const bandPts: Vec3[] = [];
-for (let k = 0; k <= 10; k++) {
-  const a = -1.1 + (2.2 * k) / 10;
-  bandPts.push(onSurface(crownMesh, [0, 1.285, -0.03], [Math.sin(a), Math.cos(a) * 0.95, 0.1], 0.013).p);
+for (let k = 0; k <= 12; k++) {
+  const a = -1.22 + (2.44 * k) / 12;
+  bandPts.push(onSurface(crownMesh, [0, 1.285, -0.03], [Math.sin(a), Math.cos(a) * 0.95, 0.1], 0.004).p);
 }
-bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.034, 0.014], [0.034, 0.014], 4, Math.PI / 4), '#e8e2d4'));
+bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.04, 0.012], [0.04, 0.012], 4, Math.PI / 4), '#ece6d8'));
 
 applyStyle(parts, [
   [/^(Head|Neck|Ear)/, { smooth: true }],
