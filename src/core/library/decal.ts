@@ -48,7 +48,14 @@ export const oval = (cx: number, cy: number, rx: number, ry: number, n = 14): P2
  * face. `lift` raises it off the surface (stack layers with growing lifts) and `thick` is its thickness.
  */
 export function decal(m: PolyMesh, from: Vec3, center: P2, pts: P2[], lift: number, thick = 0.002, mirror: 1 | -1 = 1): PolyMesh {
-  const outline: P2[] = pts.map(([u, v]) => [center[0] + mirror * u, center[1] + v]);
+  const raw: P2[] = pts.map(([u, v]) => [center[0] + mirror * u, center[1] + v]);
+  // add points along long edges so the sticker bends with the surface instead of cutting through it
+  const outline: P2[] = [];
+  raw.forEach((a, i) => {
+    const b = raw[(i + 1) % raw.length];
+    const steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.03));
+    for (let k = 0; k < steps; k++) outline.push([a[0] + ((b[0] - a[0]) * k) / steps, a[1] + ((b[1] - a[1]) * k) / steps]);
+  });
   const { tris, order } = earClip(outline);
   const n = outline.length;
   const v: number[] = [];

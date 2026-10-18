@@ -14,6 +14,7 @@ import { ANIME } from './library/anime';
 import { RIBBON } from './library/ribbon';
 import { NURSE } from './library/nurse';
 import { SCHOOL } from './library/school';
+import { CASUAL } from './library/casual';
 
 /**
  * Ready-made props that double as lessons. Every part belongs to a build step, so the Learn view can add them one
@@ -56,7 +57,7 @@ export interface AssetStep {
 }
 
 export interface AssetDef {
-  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school';
+  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school' | 'casual';
   name: string;
   tagline: string;
   level: 'Easy' | 'Medium' | 'Detailed';
@@ -73,7 +74,7 @@ export interface AssetDef {
   parts: AssetPart[];
 }
 
-export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL];
+export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL, CASUAL];
 
 export function assetById(id: string): AssetDef | undefined {
   return ASSETS.find((a) => a.id === id);
