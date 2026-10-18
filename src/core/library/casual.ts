@@ -4,7 +4,7 @@ import type { Vec3 } from '../types';
 import { earClip } from './decal';
 import { HAIR_BASE, HAIR_PATCHES } from './casualHair';
 import { applyStyle } from './kit';
-import { hull, slab, tubeHull } from './lowpoly';
+import { hull, ringPts, slab, tubeHull } from './lowpoly';
 import { toPart, vadd, vcross, vmul, vnorm, vsub } from './organic';
 
 const vdot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -228,6 +228,13 @@ FACE.forEach(([name, color, pts], i) => add(3, `Face ${name}`, rayPlate(pts, -0.
 // ---- 4 hair, built from the reference picture ----
 // Every flat colour patch of the hair is a thick plate in the plane facing the reference camera, so from that view
 // each patch sits on the same pixel as in the picture; the plates run back through the head to give the hair depth.
+// real volume for the other views: a skull inside the face plates, hair behind and around it, and a grey top
+const ring = (y: number, rx: number, rz: number, cz = 0): Vec3[] => ringPts([0, y, cz], [0, 1, 0], rx, rz, 12, Math.PI / 12);
+// the back volume sits behind the face plates as seen from the reference camera: slide it away along that view
+const BACK: Vec3 = [-0.05, 0, -0.08];
+const backRing = (y: number, rx: number, rz: number, cz = 0): Vec3[] => ring(y, rx, rz, cz).map((p) => [p[0] + BACK[0], p[1], p[2] + BACK[2]] as Vec3);
+add(3, 'Skull', hull([...ring(1.1, 0.06, 0.05, 0.03), ...ring(1.16, 0.1, 0.085, 0.01), ...ring(1.24, 0.11, 0.1), ...ring(1.3, 0.1, 0.09)]), '#f6d9ab');
+add(4, 'Hair Back Mass', hull([...backRing(1.0, 0.09, 0.06, -0.06), ...backRing(1.12, 0.17, 0.14, -0.03), ...backRing(1.24, 0.2, 0.16, -0.01), ...backRing(1.33, 0.19, 0.15, 0), ...backRing(1.39, 0.12, 0.1, 0)]), '#37333d');
 add(4, 'Hair Base', rayPlate(HAIR_BASE, -0.02, 0.13), HAIR);
 HAIR_PATCHES.forEach((h, i) => add(4, `Hair Patch ${i + 1}`, rayPlate(h.pts, -0.045 - i * 0.0006, 0.13), h.color));
 
