@@ -182,42 +182,39 @@ for (const s of sides) {
 }
 sticker('Nose', '#efb89c', [[-0.03, -0.54], [0.04, -0.54], [0.0, -0.6]], 0.002);
 sticker('Mouth', '#d98378', [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0.855], [-0.1, -0.83]], 0.0022);
-for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.147, 1.18, -0.008], [0.028, 0.058, 0.05], 0.01), '#f6cdb0');
+for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.147, 1.15, -0.008], [0.028, 0.058, 0.05], 0.01), '#f6cdb0');
 
-// ---- 4 blocky hair and the hairband ----
-/** A ring of the hair cap whose lower edge is high at the front (above the brows) and low at the back. */
-const capRing = (yFront: number, yBack: number, rx: number, rz: number, cz: number): Vec3[] =>
-  Array.from({ length: 12 }, (_, i) => {
-    const a = (i / 12) * Math.PI * 2 + Math.PI / 12;
-    const front = (Math.cos(a) + 1) / 2; // 1 at +z, 0 at -z
+// ---- 4 chunky hair and the hairband ----
+// A few big eight-sided masses with flat faces: a light top, a purple-grey middle, dark layers under it, a swept fringe
+// and chunky pointed tips at the jaw and the nape.
+const oct = (y: number, rx: number, rz: number, cz = 0): Vec3[] => ringPts([0, y, cz], [0, 1, 0], rx, rz, 8, Math.PI / 8);
+/** An eight-sided ring whose height is `yFront` at the face and `yBack` at the back of the head. */
+const octCap = (yFront: number, yBack: number, rx: number, rz: number, cz: number): Vec3[] =>
+  Array.from({ length: 8 }, (_, i) => {
+    const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+    const front = (Math.cos(a) + 1) / 2;
     return [Math.sin(a) * rx, yBack + (yFront - yBack) * front, cz + Math.cos(a) * rz] as Vec3;
   });
-const capMesh = hull([...ringH(1.4, 0.1, 0.092, -0.01), ...ringH(1.375, 0.158, 0.145, -0.008), ...capRing(1.33, 1.3, 0.182, 0.158, -0.008), ...capRing(1.3, 1.14, 0.18, 0.155, -0.012)]);
-add(4, 'Hair Cap', capMesh, '#5d5862');
-add(4, 'Hair Crown Light', hull([...ringH(1.408, 0.106, 0.097, -0.01), ...ringH(1.39, 0.158, 0.146, -0.008), ...ringH(1.365, 0.172, 0.155, -0.008)]), '#948c91');
-// a darker second layer and a darkest third layer underneath, like the stepped planes of the picture
-add(4, 'Hair Under', hull([...capRing(1.3, 1.24, 0.19, 0.165, -0.012), ...capRing(1.3, 1.12, 0.188, 0.162, -0.02)]), '#403b46');
-add(4, 'Hair Back', hull([...ringH(1.26, 0.172, 0.108, -0.075), ...ringH(1.14, 0.152, 0.098, -0.1), ...ringH(1.03, 0.12, 0.08, -0.105)]), '#2f2b36');
-// the fringe: broad swept locks with a straight lower edge just above the brows, in two layers
-add(4, 'Fringe Left', hull([[0.15, 1.39, 0.06], [0.0, 1.395, 0.085], [0.15, 1.31, 0.11], [0.0, 1.315, 0.135], [0.14, 1.275, 0.12], [0.05, 1.278, 0.14]]), '#5d5862');
-add(4, 'Fringe Middle', hull([[0.0, 1.395, 0.085], [-0.1, 1.39, 0.07], [0.0, 1.315, 0.135], [-0.1, 1.32, 0.125], [0.02, 1.272, 0.14], [-0.09, 1.282, 0.13]]), '#6a646f');
-add(4, 'Fringe Right', hull([[-0.1, 1.39, 0.07], [-0.165, 1.37, 0.03], [-0.1, 1.32, 0.125], [-0.165, 1.3, 0.07], [-0.095, 1.282, 0.13], [-0.17, 1.255, 0.07]]), '#46414d');
+const capMesh = hull([...oct(1.435, 0.125, 0.115, -0.01), ...oct(1.4, 0.2, 0.18, -0.01), ...octCap(1.325, 1.255, 0.215, 0.19, -0.01)]);
+add(4, 'Hair Top', hull([...oct(1.435, 0.125, 0.115, -0.01), ...oct(1.4, 0.2, 0.18, -0.01)]), '#a39b95');
+add(4, 'Hair Mid', hull([...oct(1.4, 0.2, 0.18, -0.01), ...octCap(1.325, 1.255, 0.215, 0.19, -0.01)]), '#6d6771');
+add(4, 'Hair Band Under', hull([...octCap(1.325, 1.255, 0.215, 0.19, -0.01), ...octCap(1.305, 1.14, 0.205, 0.182, -0.012)]), '#4a4551');
+add(4, 'Hair Dark Layer', hull([...octCap(1.305, 1.14, 0.205, 0.182, -0.012), ...octCap(1.3, 1.04, 0.19, 0.16, -0.025)]), '#2c2933');
+// the swept fringe: a broad slab across the forehead and one dark lock beside the face
+add(4, 'Fringe Slab', hull([[-0.15, 1.36, 0.07], [0.16, 1.37, 0.06], [0.17, 1.31, 0.125], [-0.16, 1.31, 0.115], [-0.09, 1.285, 0.15], [0.06, 1.298, 0.15]]), '#6d6771');
+add(4, 'Fringe Tip', hull([[-0.16, 1.33, 0.1], [-0.09, 1.3, 0.14], [-0.19, 1.24, 0.08], [-0.15, 1.27, 0.12]]), '#4a4551');
 for (const s of sides) {
   const n = nameOf(s);
-  // the side lock hangs in front of the ear and ends in a point that curls outward
-  add(4, `Side Lock ${n}`, hull([M(s, [0.14, 1.3, 0.1]), M(s, [0.175, 1.3, 0.03]), M(s, [0.14, 1.3, 0.04]), M(s, [0.13, 1.14, 0.09]), M(s, [0.17, 1.15, 0.035]), M(s, [0.13, 1.12, 0.045])]), '#3a3640');
-  add(4, `Side Lock Tip ${n}`, hull([M(s, [0.15, 1.15, 0.075]), M(s, [0.19, 1.15, -0.01]), M(s, [0.16, 1.1, 0.07]), M(s, [0.235, 1.03, 0.045])]), '#2a2730');
-  add(4, `Side Lock Tip Low ${n}`, hull([M(s, [0.12, 1.1, 0.085]), M(s, [0.165, 1.1, 0.03]), M(s, [0.135, 1.06, 0.08]), M(s, [0.15, 0.98, 0.07])]), '#2a2730');
+  add(4, `Side Lock ${n}`, hull([M(s, [0.14, 1.3, 0.1]), M(s, [0.185, 1.3, 0.03]), M(s, [0.14, 1.3, 0.035]), M(s, [0.135, 1.13, 0.1]), M(s, [0.185, 1.14, 0.03]), M(s, [0.14, 1.12, 0.04])]), '#35313c');
+  add(4, `Side Tip ${n}`, hull([M(s, [0.125, 1.14, 0.105]), M(s, [0.19, 1.14, 0.02]), M(s, [0.13, 1.14, 0.045]), M(s, [0.17, 1.03, 0.07])]), '#25222b');
 }
-// points of hair at the nape
-[-0.07, 0, 0.07].forEach((x, i) => add(4, `Nape Point ${i + 1}`, hull([[x - 0.045, 1.1, -0.1], [x + 0.045, 1.1, -0.1], [x - 0.04, 1.06, -0.13], [x + 0.04, 1.06, -0.13], [x, 0.97, -0.115]]), i === 1 ? '#2a2730' : '#34303b'));
 // the hairband arches over the top from one ear to the other, lying on the cap
 const bandPts: Vec3[] = [];
 for (let k = 0; k <= 10; k++) {
-  const a = -1.4 + (2.8 * k) / 10;
-  bandPts.push(onSurface(capMesh, [0, 1.28, -0.01], [Math.sin(a), Math.cos(a) * 0.95, 0.1], 0.006).p);
+  const a = -1.2 + (2.4 * k) / 10;
+  bandPts.push(onSurface(capMesh, [0, 1.3, -0.01], [Math.sin(a), Math.cos(a) * 0.95, 0.1], 0.006).p);
 }
-bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.028, 0.011], [0.028, 0.011], 4, Math.PI / 4), '#dcd8d0'));
+bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.034, 0.013], [0.034, 0.013], 4, Math.PI / 4), '#e3dfd3'));
 
 applyStyle(parts, [
   [/^(Head|Neck|Ear)/, { smooth: true }],
