@@ -51,7 +51,9 @@ describe('asset library', () => {
           if (!p.mesh) continue;
           expect(isClosed(p.mesh)).toBe(true);
           expect(consistentWinding(p.mesh)).toBe(true);
-          expect(signedVolume(p.mesh)).toBeGreaterThan(0);
+          // outline shells are turned inside out on purpose, so only their rim shows
+          if (/Outline$/.test(p.name)) expect(signedVolume(p.mesh)).toBeLessThan(0);
+          else expect(signedVolume(p.mesh)).toBeGreaterThan(0);
         }
       });
     });
