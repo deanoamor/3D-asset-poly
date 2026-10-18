@@ -195,26 +195,26 @@ const octCap = (yFront: number, yBack: number, rx: number, rz: number, cz: numbe
     const front = (Math.cos(a) + 1) / 2;
     return [Math.sin(a) * rx, yBack + (yFront - yBack) * front, cz + Math.cos(a) * rz] as Vec3;
   });
-const capMesh = hull([...oct(1.435, 0.125, 0.115, -0.01), ...oct(1.4, 0.2, 0.18, -0.01), ...octCap(1.325, 1.255, 0.215, 0.19, -0.01)]);
-add(4, 'Hair Top', hull([...oct(1.435, 0.125, 0.115, -0.01), ...oct(1.4, 0.2, 0.18, -0.01)]), '#a39b95');
-add(4, 'Hair Mid', hull([...oct(1.4, 0.2, 0.18, -0.01), ...octCap(1.325, 1.255, 0.215, 0.19, -0.01)]), '#6d6771');
-add(4, 'Hair Band Under', hull([...octCap(1.325, 1.255, 0.215, 0.19, -0.01), ...octCap(1.305, 1.14, 0.205, 0.182, -0.012)]), '#4a4551');
-add(4, 'Hair Dark Layer', hull([...octCap(1.305, 1.14, 0.205, 0.182, -0.012), ...octCap(1.3, 1.04, 0.19, 0.16, -0.025)]), '#2c2933');
+const capMesh = hull([...oct(1.405, 0.105, 0.098, -0.004), ...oct(1.375, 0.158, 0.142, -0.004), ...octCap(1.315, 1.2, 0.18, 0.158, -0.006)]);
+add(4, 'Hair Top', hull([...oct(1.405, 0.105, 0.098, -0.004), ...oct(1.375, 0.158, 0.142, -0.004)]), '#8a838b');
+add(4, 'Hair Mid', hull([...oct(1.375, 0.158, 0.142, -0.004), ...octCap(1.315, 1.2, 0.18, 0.158, -0.006)]), '#6d6771');
+add(4, 'Hair Band Under', hull([...octCap(1.315, 1.2, 0.18, 0.158, -0.006), ...octCap(1.302, 1.1, 0.176, 0.155, -0.01)]), '#4a4551');
+add(4, 'Hair Dark Layer', hull([...octCap(1.302, 1.1, 0.176, 0.155, -0.01), ...octCap(1.298, 1.0, 0.16, 0.14, -0.03)]), '#2c2933');
 // the swept fringe: a broad slab across the forehead and one dark lock beside the face
-add(4, 'Fringe Slab', hull([[-0.15, 1.36, 0.07], [0.16, 1.37, 0.06], [0.17, 1.31, 0.125], [-0.16, 1.31, 0.115], [-0.09, 1.285, 0.15], [0.06, 1.298, 0.15]]), '#6d6771');
-add(4, 'Fringe Tip', hull([[-0.16, 1.33, 0.1], [-0.09, 1.3, 0.14], [-0.19, 1.24, 0.08], [-0.15, 1.27, 0.12]]), '#4a4551');
+add(4, 'Fringe Slab', hull([[-0.14, 1.37, 0.06], [0.15, 1.375, 0.055], [0.155, 1.312, 0.12], [-0.15, 1.312, 0.112], [-0.085, 1.285, 0.14], [0.055, 1.298, 0.14]]), '#6d6771');
+add(4, 'Fringe Tip', hull([[-0.15, 1.33, 0.095], [-0.085, 1.3, 0.13], [-0.175, 1.245, 0.08], [-0.14, 1.27, 0.115]]), '#4a4551');
 for (const s of sides) {
   const n = nameOf(s);
-  add(4, `Side Lock ${n}`, hull([M(s, [0.14, 1.3, 0.1]), M(s, [0.185, 1.3, 0.03]), M(s, [0.14, 1.3, 0.035]), M(s, [0.135, 1.13, 0.1]), M(s, [0.185, 1.14, 0.03]), M(s, [0.14, 1.12, 0.04])]), '#35313c');
-  add(4, `Side Tip ${n}`, hull([M(s, [0.125, 1.14, 0.105]), M(s, [0.19, 1.14, 0.02]), M(s, [0.13, 1.14, 0.045]), M(s, [0.17, 1.03, 0.07])]), '#25222b');
+  add(4, `Side Lock ${n}`, hull([M(s, [0.13, 1.3, 0.1]), M(s, [0.165, 1.3, 0.03]), M(s, [0.13, 1.3, 0.035]), M(s, [0.125, 1.13, 0.095]), M(s, [0.165, 1.14, 0.03]), M(s, [0.13, 1.12, 0.04])]), '#35313c');
+  add(4, `Side Tip ${n}`, hull([M(s, [0.115, 1.14, 0.1]), M(s, [0.17, 1.14, 0.02]), M(s, [0.12, 1.14, 0.045]), M(s, [0.155, 1.04, 0.065])]), '#25222b');
 }
 // the hairband arches over the top from one ear to the other, lying on the cap
 const bandPts: Vec3[] = [];
 for (let k = 0; k <= 10; k++) {
-  const a = -1.2 + (2.4 * k) / 10;
+  const a = -1.1 + (2.2 * k) / 10;
   bandPts.push(onSurface(capMesh, [0, 1.3, -0.01], [Math.sin(a), Math.cos(a) * 0.95, 0.1], 0.006).p);
 }
-bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.034, 0.013], [0.034, 0.013], 4, Math.PI / 4), '#e3dfd3'));
+bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.034, 0.013], [0.034, 0.013], 4, Math.PI / 4), '#d9d4c8'));
 
 applyStyle(parts, [
   [/^(Head|Neck|Ear)/, { smooth: true }],
