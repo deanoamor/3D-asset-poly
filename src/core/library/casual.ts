@@ -4,7 +4,7 @@ import type { Vec3 } from '../types';
 import { decalBy } from './decal';
 import { applyStyle } from './kit';
 import { hull, ringPts, slab, tubeHull } from './lowpoly';
-import { onSurface, toPart } from './organic';
+import { blob, onSurface, ribbon, sweep, toPart, type Ring } from './organic';
 import { humanSpec, type BodyJoints } from './rigs';
 
 /**
@@ -184,42 +184,46 @@ sticker('Nose', '#efb89c', [[-0.03, -0.54], [0.04, -0.54], [0.0, -0.6]], 0.002);
 sticker('Mouth', '#d98378', [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0.855], [-0.1, -0.83]], 0.0022);
 for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.147, 1.15, -0.008], [0.028, 0.058, 0.05], 0.01), '#f6cdb0');
 
-// ---- 4 chunky hair and the hairband ----
-// A few big eight-sided masses with flat faces: a light top, a purple-grey middle, dark layers under it, a swept fringe
-// and chunky pointed tips at the jaw and the nape.
-const oct = (y: number, rx: number, rz: number, cz = 0): Vec3[] => ringPts([0, y, cz], [0, 1, 0], rx, rz, 8, Math.PI / 8);
-/** An eight-sided ring whose height is `yFront` at the face and `yBack` at the back of the head. */
-const octCap = (yFront: number, yBack: number, rx: number, rz: number, cz: number): Vec3[] =>
-  Array.from({ length: 8 }, (_, i) => {
-    const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-    const front = (Math.cos(a) + 1) / 2;
-    return [Math.sin(a) * rx, yBack + (yFront - yBack) * front, cz + Math.cos(a) * rz] as Vec3;
-  });
-const capMesh = hull([...oct(1.405, 0.105, 0.098, -0.004), ...oct(1.375, 0.158, 0.142, -0.004), ...octCap(1.315, 1.2, 0.18, 0.158, -0.006)]);
-add(4, 'Hair Top', hull([...oct(1.405, 0.105, 0.098, -0.004), ...oct(1.375, 0.158, 0.142, -0.004)]), '#8a838b');
-add(4, 'Hair Mid', hull([...oct(1.375, 0.158, 0.142, -0.004), ...octCap(1.315, 1.2, 0.18, 0.158, -0.006)]), '#6d6771');
-add(4, 'Hair Band Under', hull([...octCap(1.315, 1.2, 0.18, 0.158, -0.006), ...octCap(1.302, 1.1, 0.176, 0.155, -0.01)]), '#4a4551');
-add(4, 'Hair Dark Layer', hull([...octCap(1.302, 1.1, 0.176, 0.155, -0.01), ...octCap(1.298, 1.0, 0.16, 0.14, -0.03)]), '#2c2933');
-// the swept fringe: a broad slab across the forehead and one dark lock beside the face
-add(4, 'Fringe Slab', hull([[-0.14, 1.37, 0.06], [0.15, 1.375, 0.055], [0.155, 1.312, 0.12], [-0.15, 1.312, 0.112], [-0.085, 1.285, 0.14], [0.055, 1.298, 0.14]]), '#6d6771');
-add(4, 'Fringe Tip', hull([[-0.15, 1.33, 0.095], [-0.085, 1.3, 0.13], [-0.175, 1.245, 0.08], [-0.14, 1.27, 0.115]]), '#4a4551');
+// ---- 4 soft, voluminous hair and the hairband ----
+// A smooth bob: a round crown, a fuller back, curved bang strands that taper to points, locks framing the face, a
+// soft shine and flicked ends. Strands are thin flat tubes, so they stay low-poly but flow instead of looking cut.
+const R = (p: Vec3, r: number | [number, number]): Ring => ({ p, r });
+const HAIR_A = '#3f3b47';
+const HAIR_B = '#2c2931';
+const HAIR_C = '#57525f';
+const HAIR_SHINE = '#a39cab';
+const crownMesh = blob([0, 1.285, -0.03], [0.168, 0.14, 0.158], 16);
+add(4, 'Hair Crown', crownMesh, HAIR_A);
+add(4, 'Hair Back', blob([0, 1.145, -0.07], [0.168, 0.15, 0.128], 14), HAIR_B);
+// a soft shine across the crown
+add(4, 'Hair Shine', ribbon(crownMesh, [{ from: [0, 1.285, -0.03], dir: [0.55, 0.75, 0.9] }, { from: [0, 1.285, -0.03], dir: [0.4, 1.0, 0.45] }, { from: [0, 1.285, -0.03], dir: [0.3, 1.0, -0.05] }, { from: [0, 1.285, -0.03], dir: [0.3, 0.8, -0.6] }], [0.026, 0.008], 0.002, { sides: 5, taper: 0.5 }), HAIR_SHINE);
+// bangs: curved strands that start at the crown and sweep across the forehead to the left, ending in soft points above the brows
+const BANGS: [number, number, number, string][] = [[0.11, 0.1, 1.29, HAIR_C], [0.07, 0.06, 1.275, HAIR_A], [0.03, 0.02, 1.272, HAIR_C], [-0.01, -0.02, 1.274, HAIR_A], [-0.05, -0.06, 1.282, HAIR_C], [-0.09, -0.1, 1.295, HAIR_A]];
+BANGS.forEach(([x0, xt, yt, c], i) => {
+  const path: Ring[] = [R([x0 * 0.8, 1.405, 0.0], [0.03, 0.02]), R([x0 * 0.95, 1.37, 0.085], [0.03, 0.015]), R([(x0 + xt) / 2, (1.37 + yt) / 2 + 0.005, 0.127], [0.026, 0.012]), R([xt, yt, 0.132], [0.006, 0.005])];
+  add(4, `Bang ${i + 1}`, sweep(path, { sides: 6, end: 'dome' }), c);
+});
 for (const s of sides) {
   const n = nameOf(s);
-  add(4, `Side Lock ${n}`, hull([M(s, [0.13, 1.3, 0.1]), M(s, [0.165, 1.3, 0.03]), M(s, [0.13, 1.3, 0.035]), M(s, [0.125, 1.13, 0.095]), M(s, [0.165, 1.14, 0.03]), M(s, [0.13, 1.12, 0.04])]), '#35313c');
-  add(4, `Side Tip ${n}`, hull([M(s, [0.115, 1.14, 0.1]), M(s, [0.17, 1.14, 0.02]), M(s, [0.12, 1.14, 0.045]), M(s, [0.155, 1.04, 0.065])]), '#25222b');
+  // the lock in front of the ear: from the crown, down the cheek, curling in at the jaw
+  const lock: Ring[] = [R(M(s, [0.125, 1.32, 0.05]), [0.04, 0.025]), R(M(s, [0.15, 1.24, 0.1]), [0.036, 0.02]), R(M(s, [0.152, 1.17, 0.113]), [0.03, 0.017]), R(M(s, [0.14, 1.12, 0.12]), [0.02, 0.012]), R(M(s, [0.115, 1.085, 0.118]), [0.006, 0.006])];
+  add(4, `Face Lock ${n}`, sweep(lock, { sides: 6, end: 'dome' }), HAIR_C);
+  // the end of the bob behind the ear flicks outward
+  const tail: Ring[] = [R(M(s, [0.125, 1.11, -0.06]), [0.05, 0.03]), R(M(s, [0.14, 1.04, -0.085]), [0.045, 0.026]), R(M(s, [0.162, 0.98, -0.085]), [0.022, 0.014]), R(M(s, [0.185, 0.95, -0.07]), [0.006, 0.006])];
+  add(4, `Bob End ${n}`, sweep(tail, { sides: 6, end: 'dome' }), HAIR_B);
 }
 // the hairband arches over the top from one ear to the other, lying on the cap
 const bandPts: Vec3[] = [];
 for (let k = 0; k <= 10; k++) {
   const a = -1.1 + (2.2 * k) / 10;
-  bandPts.push(onSurface(capMesh, [0, 1.3, -0.01], [Math.sin(a), Math.cos(a) * 0.95, 0.1], 0.006).p);
+  bandPts.push(onSurface(crownMesh, [0, 1.285, -0.03], [Math.sin(a), Math.cos(a) * 0.95, 0.1], 0.013).p);
 }
-bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.034, 0.013], [0.034, 0.013], 4, Math.PI / 4), '#d9d4c8'));
+bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.034, 0.014], [0.034, 0.014], 4, Math.PI / 4), '#e8e2d4'));
 
 applyStyle(parts, [
   [/^(Head|Neck|Ear)/, { smooth: true }],
   [/^(Thigh|Shin|Upper Arm|Forearm|Hand|Thumb)/, { paint: 0.12 }],
-  [/^(Hair|Side|Fringe)/, { paint: 0.3 }],
+  [/^(Hair|Bang|Face Lock|Bob End|Crown Tuft)/, { smooth: true, paint: 0.4 }],
   [/^(Shirt|Collar|Sleeve|Tube|Belt|Shorts|Sock|Sneaker|Sole)/, { paint: 0.3 }],
 ]);
 
