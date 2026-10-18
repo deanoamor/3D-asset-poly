@@ -14,8 +14,8 @@ import { humanSpec, type BodyJoints } from './rigs';
  * Left is +X, Right is -X, and she faces +Z.
  */
 
-const SKIN = '#f7d3b0';
-const SKIN_D = '#e6a986';
+const SKIN = '#fbe0c0';
+const SKIN_D = '#eeb994';
 const WHITE = '#f2f1ea';
 const WHITE_D = '#d8d6cb';
 const YELLOW = '#f0cc68';
@@ -150,8 +150,8 @@ for (const s of sides) {
 const HC: Vec3 = [0, 1.2, 0];
 const ringH = (y: number, rx: number, rz: number, cz = 0): Vec3[] => ringPts([0, y, cz], [0, 1, 0], rx, rz, 12, Math.PI / 12);
 const head = hull([...ringH(1.075, 0.07, 0.06, 0.02), ...ringH(1.105, 0.112, 0.092, 0.012), ...ringH(1.15, 0.134, 0.115, 0.005), ...ringH(1.21, 0.142, 0.125), ...ringH(1.28, 0.132, 0.118), ...ringH(1.33, 0.1, 0.092), ...ringH(1.358, 0.06, 0.06)]);
-add(3, 'Head', head, '#f6d9ab');
-add(3, 'Neck', tubeHull([0, 1.0, 0], [0, 1.13, 0.005], 0.052, 0.048, 8, 0), '#e4ac86');
+add(3, 'Head', head, '#fde3c3');
+add(3, 'Neck', tubeHull([0, 1.0, 0], [0, 1.13, 0.005], 0.052, 0.048, 8, 0), '#f2c4a0');
 type P2 = [number, number];
 const hit = (px: number, py: number) => {
   const h = onSurface(head, HC, [px, py, 1], 0);
@@ -178,11 +178,11 @@ for (const s of sides) {
   sticker(`Eye Highlight ${n}`, '#ffffff', mirrorX([[0.318, -0.045], [0.348, -0.05], [0.352, -0.085], [0.32, -0.085]], s), 0.0074);
   sticker(`Eye Lid ${n}`, '#2b1a17', mirrorX(LID, s), 0.0074);
   sticker(`Eyebrow ${n}`, '#3b2218', mirrorX(BROW, s), 0.0022);
-  sticker(`Blush ${n}`, '#f2b49c', plain([[0.5, -0.62], [0.72, -0.6], [0.78, -0.67], [0.64, -0.72], [0.5, -0.69]], s), 0.0012);
+  sticker(`Blush ${n}`, '#f7c4b0', plain([[0.5, -0.62], [0.72, -0.6], [0.78, -0.67], [0.64, -0.72], [0.5, -0.69]], s), 0.0012);
 }
-sticker('Nose', '#e6a98a', [[-0.03, -0.54], [0.04, -0.54], [0.0, -0.6]], 0.002);
-sticker('Mouth', '#c46f62', [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0.855], [-0.1, -0.83]], 0.0022);
-for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.146, 1.2, -0.005], [0.028, 0.058, 0.05], 0.01), '#eab597');
+sticker('Nose', '#efb89c', [[-0.03, -0.54], [0.04, -0.54], [0.0, -0.6]], 0.002);
+sticker('Mouth', '#d98378', [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0.855], [-0.1, -0.83]], 0.0022);
+for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.146, 1.2, -0.005], [0.028, 0.058, 0.05], 0.01), '#f6cdb0');
 
 // ---- 4 blocky hair and the hairband ----
 /** A ring of the hair cap whose lower edge is high at the front (above the brows) and low at the back. */
@@ -217,7 +217,8 @@ for (let k = 0; k <= 10; k++) {
 bandPts.slice(0, -1).forEach((p, i) => add(4, `Hairband ${i + 1}`, tubeHull(p, bandPts[i + 1], [0.028, 0.011], [0.028, 0.011], 4, Math.PI / 4), '#dcd8d0'));
 
 applyStyle(parts, [
-  [/^(Head|Neck|Ear|Thigh|Shin|Upper Arm|Forearm|Hand|Thumb)/, { paint: 0.35 }],
+  [/^(Head|Neck|Ear)/, { smooth: true }],
+  [/^(Thigh|Shin|Upper Arm|Forearm|Hand|Thumb)/, { paint: 0.12 }],
   [/^(Hair|Side|Fringe)/, { paint: 0.3 }],
   [/^(Shirt|Collar|Sleeve|Tube|Belt|Shorts|Sock|Sneaker|Sole)/, { paint: 0.3 }],
 ]);
