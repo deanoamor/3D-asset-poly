@@ -12,8 +12,8 @@ import { HUMAN, humanSpec } from './rigs';
  * and white boots. Everything is built from the same pieces as the other characters.
  */
 
-const SKIN = '#fff1f1';
-const SKIN_D = '#f6c9d2';
+const SKIN = '#fff7f8';
+const SKIN_D = '#f3c3d0';
 const BLUSH = '#ffc0cf';
 const HAIR = '#ff8fc7';
 const HAIR_L = '#ffb9dd';
@@ -62,14 +62,24 @@ function shell(m: PolyMesh, d: number): PolyMesh {
 }
 
 /** A part plus its outline: a slightly bigger inside-out copy that only shows as a coloured rim around the silhouette. */
-const lined = (step: number, name: string, m: PolyMesh, color: string, d = 0.011, oc = OUTLINE): AssetPart[] => [toPart(step, name, m, color), toPart(step, `${name} Outline`, shell(m, d), oc)];
+const lined = (step: number, name: string, m: PolyMesh, color: string, d = 0.011, oc = OUTLINE): AssetPart[] => [toPart(step, name, m, color), toPart(step, `${name} Outline`, shell(m, d), oc), ...(oc === OUTLINE ? [toPart(step, `${name} Glow Outline`, shell(m, d * 2.4), OUTLINE_P)] : [])];
 
 // ---- the body shapes first, so details can sit on their surface ----
 const torso = sweep([R([0, 0.88, 0], [0.165, 0.115]), R([0, 0.98, 0], [0.152, 0.108]), R([0, 1.1, 0.004], [0.16, 0.112]), R([0, 1.22, 0.008], [0.19, 0.122]), R([0, 1.32, 0.01], [0.235, 0.13]), R([0, 1.4, 0.012], [0.19, 0.11]), R([0, 1.44, 0.012], [0.07, 0.06])], { sides: 8, phase: Math.PI / 8 });
 const bandeau = sweep([R([0, 1.2, 0.008], [0.204, 0.134]), R([0, 1.27, 0.01], [0.226, 0.142]), R([0, 1.36, 0.012], [0.246, 0.139])], { sides: 8, phase: Math.PI / 8 });
 const K = 1.36; // a big head
 const HC: Vec3 = [0, 1.69, 0.014];
-const head = headBlob(HC, [0.18 * K, 0.2 * K, 0.19 * K], 12);
+const head = headBlob(HC, [0.195 * K, 0.2 * K, 0.19 * K], 12);
+// a pointed anime chin: pinch the lower face in and pull the bottom a little down
+for (let i = 0; i < head.v.length / 3; i++) {
+  const dy = (head.v[i * 3 + 1] - HC[1]) / (0.2 * K); // -1 chin ... +1 crown
+  if (dy < -0.2) {
+    const k = 1 + (dy + 0.2) * 0.32;
+    head.v[i * 3] = HC[0] + (head.v[i * 3] - HC[0]) * k;
+    head.v[i * 3 + 2] = HC[2] + (head.v[i * 3 + 2] - HC[2]) * (0.55 + 0.45 * k);
+    head.v[i * 3 + 1] -= 0.012 * (-dy - 0.2);
+  }
+}
 const on = (dx: number, dy: number, lift: number): Vec3 => onSurface(head, HC, [dx, dy, 1], lift).p;
 
 // ---- 0 boots and legs ----
@@ -131,20 +141,20 @@ add(toPart(2, 'Neck', sweep([R([0, 1.37, 0], [0.058, 0.054]), R([0, 1.5, 0.012],
 add(...lined(3, 'Head', head, SKIN, 0.011));
 for (const s of [1, -1] as const) {
   const side = s === 1 ? 'Left' : 'Right';
-  const at = (dx: number, dy: number, lift: number) => on(s * (0.46 + dx), -0.07 + dy, lift);
-  const white = blob(at(0, 0, -0.012), [0.06, 0.072, 0.024], 10);
+  const at = (dx: number, dy: number, lift: number) => on(s * (0.5 + dx), -0.1 + dy, lift);
+  const white = blob(at(0, 0, -0.012), [0.07, 0.072, 0.024], 10);
   add(toPart(3, `Eye White ${side}`, white, '#ffffff'));
-  add(toPart(3, `Iris ${side}`, blob(at(0, -0.02, 0.004), [0.055, 0.066, 0.02], 10), IRIS));
-  add(toPart(3, `Iris Dark ${side}`, blob(at(0, 0.12, 0.012), [0.052, 0.034, 0.015], 8), IRIS_D));
-  add(toPart(3, `Iris Glow ${side}`, blob(at(0, -0.24, 0.014), [0.042, 0.028, 0.012], 8), IRIS_L));
+  add(toPart(3, `Iris ${side}`, blob(at(0, -0.02, 0.004), [0.064, 0.067, 0.02], 10), IRIS));
+  add(toPart(3, `Iris Dark ${side}`, blob(at(0, 0.11, 0.012), [0.06, 0.034, 0.015], 8), IRIS_D));
+  add(toPart(3, `Iris Glow ${side}`, blob(at(0, -0.23, 0.014), [0.05, 0.028, 0.012], 8), IRIS_L));
   add(toPart(3, `Pupil ${side}`, blob(at(0.0, -0.03, 0.016), [0.018, 0.028, 0.012], 10), PUPIL));
   add(toPart(3, `Eye Highlight ${side}`, blob(at(-0.13, 0.15, 0.024), [0.02, 0.024, 0.008], 8), '#ffffff'));
   add(toPart(3, `Eye Sparkle ${side}`, blob(at(0.12, -0.12, 0.024), [0.011, 0.011, 0.006], 6), '#ffffff'));
-  const lash = [[-0.2, 0.08], [-0.14, 0.24], [0.0, 0.33], [0.14, 0.29], [0.26, 0.16], [0.36, 0.04], [0.42, -0.04]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.46 + dx), -0.07 + dy, 1] as Vec3 }));
+  const lash = [[-0.2, 0.08], [-0.14, 0.24], [0.0, 0.33], [0.14, 0.29], [0.26, 0.16], [0.36, 0.04], [0.42, -0.04]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.5 + dx), -0.1 + dy, 1] as Vec3 }));
   add(toPart(3, `Upper Lash ${side}`, ribbon(head, lash, [0.02, 0.011], 0.013, { sides: 4, taper: 0.45 }), LASH));
-  const lower = [[-0.14, -0.24], [0, -0.3], [0.16, -0.22]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.46 + dx), -0.07 + dy, 1] as Vec3 }));
+  const lower = [[-0.14, -0.24], [0, -0.3], [0.16, -0.22]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.5 + dx), -0.1 + dy, 1] as Vec3 }));
   add(toPart(3, `Lower Lash ${side}`, ribbon(head, lower, [0.006, 0.005], 0.006, { sides: 4, taper: 0.5 }), IRIS_D));
-  const brow = [[-0.2, 0.62], [-0.02, 0.66], [0.2, 0.6]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.46 + dx), -0.07 + dy, 1] as Vec3 }));
+  const brow = [[-0.2, 0.62], [-0.02, 0.66], [0.2, 0.6]].map(([dx, dy]) => ({ from: HC, dir: [s * (0.5 + dx), -0.1 + dy, 1] as Vec3 }));
   add(toPart(3, `Eyebrow ${side}`, ribbon(head, brow, [0.012, 0.007], 0.006, { sides: 4, taper: 0.5 }), BROW));
   add(toPart(3, `Cheek ${side}`, blob(on(s * 0.7, -0.33, -0.006), [0.04, 0.02, 0.012], 6), BLUSH));
 }
@@ -170,8 +180,10 @@ bangs.forEach(([dx, tip, c], i) => {
 });
 for (const s of [1, -1] as const) {
   const side = s === 1 ? 'Left' : 'Right';
-  add(...lined(4, `Side Lock ${side}`, sweep([R(H([s * 0.2, 0.1, 0.02]), [0.1, 0.08]), R(H([s * 0.3, -0.02, 0.05]), [0.1, 0.06]), R(H([s * 0.4, -0.13, 0.07]), [0.07, 0.04]), R(H([s * 0.5, -0.24, 0.08]), [0.012, 0.01])], { sides: 5, end: 'dome' }), HAIR, 0.011));
-  add(toPart(4, `Side Lock Light ${side}`, sweep([R(H([s * 0.225, 0.06, 0.08]), [0.034, 0.02]), R(H([s * 0.32, -0.04, 0.1]), [0.03, 0.018]), R(H([s * 0.4, -0.12, 0.11]), [0.016, 0.012])], { sides: 4, end: 'dome' }), HAIR_L));
+  const fl = [{ dx: 0.95, dy: 0.95 }, { dx: 1.12, dy: 0.3 }, { dx: 1.12, dy: -0.34 }].map((q) => ({ from: HC, dir: [s * q.dx, q.dy, 1] as Vec3 }));
+  add(toPart(4, `Face Lock ${side}`, ribbon(head, fl, [0.07, 0.026], 0.014, { sides: 5, taper: 0.9 }), HAIR_D));
+  add(...lined(4, `Side Lock ${side}`, sweep([R(H([s * 0.2, 0.1, 0.02]), [0.1, 0.08]), R(H([s * 0.3, 0.0, 0.05]), [0.12, 0.07]), R(H([s * 0.38, -0.09, 0.07]), [0.085, 0.045]), R(H([s * 0.44, -0.19, 0.08]), [0.012, 0.01])], { sides: 5, end: 'dome' }), HAIR, 0.011));
+  add(toPart(4, `Side Lock Light ${side}`, sweep([R(H([s * 0.225, 0.06, 0.08]), [0.034, 0.02]), R(H([s * 0.31, -0.02, 0.1]), [0.03, 0.018]), R(H([s * 0.37, -0.08, 0.11]), [0.016, 0.012])], { sides: 4, end: 'dome' }), HAIR_L));
   add(...lined(4, `Back Lock ${side}`, sweep([R(H([s * 0.2, 0.0, -0.17]), [0.1, 0.07]), R(H([s * 0.28, -0.14, -0.16]), [0.085, 0.06]), R(H([s * 0.3, -0.3, -0.14]), [0.012, 0.01])], { sides: 5, end: 'dome' }), HAIR_D, 0.01));
   add(...lined(4, `Hair Tuft ${side}`, sweep([R(H([s * 0.1, 0.2, -0.02]), [0.09, 0.06]), R(H([s * 0.15, 0.3, -0.03]), [0.05, 0.04]), R(H([s * 0.18, 0.37, -0.03]), [0.008, 0.008])], { sides: 4, end: 'dome' }), HAIR, 0.01));
   // black bow

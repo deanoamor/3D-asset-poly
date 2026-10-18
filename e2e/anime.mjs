@@ -59,7 +59,7 @@ const dataUrl = await page.evaluate((cfg) => {
   r.shadowMap.needsUpdate = true;
   r.render(vp.scene, cam);
   return r.domElement.toDataURL('image/png');
-}, { bg: 0x07022b, az: +(process.env.AZ || 8), elev: +(process.env.ELEV || 4), dist: +(process.env.DIST || 8), fov: +(process.env.FOV || 8.6), ty: +(process.env.TY || 1.5), sun: [0.35, 0.7, 1.0], sunI: +(process.env.SUN || 1.2), hemiI: +(process.env.HEMI || 2.6), w: W, h: H, vsm: !process.env.NOVSM, sm: +(process.env.SM || 768) });
+}, { bg: 0x07022b, az: +(process.env.AZ || 8), elev: +(process.env.ELEV || 4), dist: +(process.env.DIST || 8), fov: +(process.env.FOV || 8.6), ty: +(process.env.TY || 1.5), sun: [0.35, 0.7, 1.0], sunI: +(process.env.SUN || 1.2), hemiI: +(process.env.HEMI || 3.1), w: W, h: H, vsm: !process.env.NOVSM, sm: +(process.env.SM || 768) });
 fs.writeFileSync(OUT, Buffer.from(dataUrl.split(',')[1], 'base64'));
 console.log('saved', OUT);
 ok(errs.length === 0, `no page errors ${errs.slice(0, 3).join(' | ')}`);
