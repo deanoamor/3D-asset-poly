@@ -49,7 +49,7 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Asset library (use directly, or learn from it)
 
-The **Assets** button (top bar) opens six detailed, ready-made assets, lit with a warm backdrop and a soft shadow:
+The **Assets** button (top bar) opens seven detailed, ready-made assets, lit with a warm backdrop and a soft shadow:
 
 | Asset | Parts | Triangles | What it shows off |
 |---|---|---|---|
@@ -59,6 +59,7 @@ The **Assets** button (top bar) opens six detailed, ready-made assets, lit with 
 | **Football Player** | ~85 | ~2,600 | a standing pose holding a classic football (12 black pentagons), bent one-piece limbs, kit with number and stripes, spiky hair |
 | **Soldier** | ~100 | ~2,900 | black and gray tactical uniform: helmet with wrap-around visor and mask, headset, vest with pouches, backpack, belt, holster, knife, gold rank chevrons on the chest and sleeves |
 | **Forest Island** | ~190 | ~3,500 | a floating diorama laid out from a reference picture: river and waterfall, white rock mountain with a goat, pines, a leafy tree, a camp with a fire, a bear and a deer |
+| **Pink Anime Girl** | ~95 | ~3,000 | a stylised bust-friendly character: big layered violet eyes, spiky pink hair built from tapered strips, black bows, a navy top, wide white sleeves and a skeleton |
 
 **Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
 gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test
@@ -179,3 +180,4 @@ With a skeleton, **Animation** (under Skeleton) makes clips of poses that play o
 - Clips move joints only (rotation), so the body does not travel. Move a character in your game or 3D app while the Walk plays.
 
 `node e2e/island.mjs` renders the Forest Island in the picture's isometric framing to `e2e/out/island/island.png` (dev server on :5199).
+`node e2e/anime.mjs` renders the Pink Anime Girl as a bust on a dark navy backdrop to `e2e/out/anime/anime.png`.
