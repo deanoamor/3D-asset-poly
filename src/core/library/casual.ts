@@ -149,7 +149,7 @@ for (const s of sides) {
 // every side: only the front shows a face, the back and sides show hair.
 const HC: Vec3 = [0, 1.2, 0];
 const ringH = (y: number, rx: number, rz: number, cz = 0): Vec3[] => ringPts([0, y, cz], [0, 1, 0], rx, rz, 12, Math.PI / 12);
-const head = hull([...ringH(1.07, 0.055, 0.05, 0.03), ...ringH(1.11, 0.1, 0.085, 0.02), ...ringH(1.16, 0.135, 0.115, 0.005), ...ringH(1.23, 0.142, 0.125), ...ringH(1.3, 0.128, 0.115), ...ringH(1.345, 0.09, 0.085)]);
+const head = hull([...ringH(1.095, 0.075, 0.062, 0.03), ...ringH(1.13, 0.125, 0.1, 0.015), ...ringH(1.18, 0.15, 0.125, 0.005), ...ringH(1.25, 0.156, 0.13), ...ringH(1.31, 0.136, 0.118), ...ringH(1.35, 0.09, 0.085)]);
 add(3, 'Head', head, '#f6d9ab');
 add(3, 'Neck', tubeHull([0, 1.0, 0], [0, 1.12, 0.005], 0.052, 0.048, 8, 0), '#e4ac86');
 type P2 = [number, number];
@@ -159,8 +159,9 @@ const hit = (px: number, py: number) => {
 };
 const sticker = (name: string, color: string, pts: P2[], lift: number, thick = 0.0016) => add(3, name, decalBy(head, pts, ([u, w]) => hit(u, w), lift, thick, 0.03), color);
 // the eyes and brows are drawn at a small size; blow them up around the middle of the eye
-const BIG = 1.5;
-const mirrorX = (pts: P2[], s: 1 | -1): P2[] => pts.map(([x, y]) => [s * (0.29 + (x - 0.29) * BIG), -0.2 + (y + 0.15) * BIG] as P2);
+const BIG = 2.1;
+const BIGX = 2.8;
+const mirrorX = (pts: P2[], s: 1 | -1): P2[] => pts.map(([x, y]) => [s * (0.6 + (x - 0.29) * BIGX), -0.1 + (y + 0.15) * BIG] as P2);
 const plain = (pts: P2[], s: 1 | -1): P2[] => pts.map(([x, y]) => [s * x, y] as P2);
 // outlines for the left eye (x > 0), in ray units around the head centre; the right eye is the mirror image
 const EYE: P2[] = [[0.2, -0.04], [0.235, 0.0], [0.3, 0.04], [0.36, 0.0], [0.4, -0.08], [0.38, -0.2], [0.33, -0.27], [0.27, -0.29], [0.21, -0.25], [0.19, -0.15]];
@@ -177,11 +178,11 @@ for (const s of sides) {
   sticker(`Eye Highlight ${n}`, '#ffffff', mirrorX([[0.318, -0.045], [0.348, -0.05], [0.352, -0.085], [0.32, -0.085]], s), 0.0074);
   sticker(`Eye Lid ${n}`, '#2b1a17', mirrorX(LID, s), 0.0074);
   sticker(`Eyebrow ${n}`, '#3b2218', mirrorX(BROW, s), 0.0022);
-  sticker(`Blush ${n}`, '#f2b49c', plain([[0.26, -0.47], [0.38, -0.45], [0.42, -0.51], [0.34, -0.55], [0.26, -0.52]], s), 0.0012);
+  sticker(`Blush ${n}`, '#f2b49c', plain([[0.52, -0.58], [0.74, -0.56], [0.8, -0.63], [0.66, -0.68], [0.52, -0.65]], s), 0.0012);
 }
-sticker('Nose', '#e6a98a', [[-0.025, -0.42], [0.035, -0.42], [0.0, -0.47]], 0.002);
-sticker('Mouth', '#c46f62', [[-0.09, -0.62], [0.09, -0.62], [0.075, -0.665], [0, -0.685], [-0.075, -0.665]], 0.0022);
-for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.143, 1.2, -0.005], [0.028, 0.06, 0.05], 0.01), '#eab597');
+sticker('Nose', '#e6a98a', [[-0.03, -0.5], [0.04, -0.5], [0.0, -0.56]], 0.002);
+sticker('Mouth', '#c46f62', [[-0.12, -0.74], [0.12, -0.74], [0.1, -0.79], [0, -0.815], [-0.1, -0.79]], 0.0022);
+for (const s of sides) add(3, `Ear ${nameOf(s)}`, cbox([s * 0.157, 1.2, -0.005], [0.028, 0.06, 0.05], 0.01), '#eab597');
 
 // ---- 4 blocky hair and the hairband ----
 /** A ring of the hair cap whose lower edge is high at the front (above the brows) and low at the back. */
@@ -196,8 +197,8 @@ add(4, 'Hair Cap', capMesh, '#55505a');
 add(4, 'Hair Crown Light', hull([...ringH(1.43, 0.12, 0.108, -0.025), ...ringH(1.4, 0.195, 0.176, -0.02), ...ringH(1.37, 0.21, 0.185, -0.02)]), '#8f878c');
 add(4, 'Hair Back', hull([...ringH(1.29, 0.222, 0.13, -0.085), ...ringH(1.16, 0.2, 0.125, -0.1), ...ringH(1.04, 0.15, 0.1, -0.11)]), '#36323c');
 // big swept fringe shards over the forehead, and the locks beside the face
-const SHARDS: [number, number, number, string][] = [[0.11, 0.06, 1.285, '#3a3640'], [0.0, -0.02, 1.27, '#55505a'], [-0.1, -0.12, 1.265, '#3a3640']];
-SHARDS.forEach(([x0, xt, yt, c], i) => add(4, `Fringe ${i + 1}`, hull([[x0 - 0.08, 1.37, 0.1], [x0 + 0.08, 1.37, 0.1], [x0 - 0.075, 1.33, 0.14], [x0 + 0.075, 1.33, 0.14], [xt, yt, 0.135]]), c));
+const SHARDS: [number, number, number, string][] = [[-0.1, -0.11, 1.29, '#3a3640'], [-0.05, -0.055, 1.275, '#55505a'], [0, 0.0, 1.27, '#3a3640'], [0.05, 0.055, 1.275, '#55505a'], [0.1, 0.11, 1.29, '#3a3640']];
+SHARDS.forEach(([x0, xt, yt, c], i) => add(4, `Fringe ${i + 1}`, hull([[x0 - 0.03, 1.37, 0.09], [x0 + 0.03, 1.37, 0.09], [x0 - 0.028, 1.33, 0.14], [x0 + 0.028, 1.33, 0.14], [xt, yt, 0.135]]), c));
 for (const s of sides) {
   const n = nameOf(s);
   add(4, `Side Hair ${n}`, hull([M(s, [0.17, 1.3, 0.09]), M(s, [0.225, 1.3, -0.03]), M(s, [0.19, 1.3, -0.14]), M(s, [0.16, 1.12, 0.07]), M(s, [0.215, 1.14, -0.04]), M(s, [0.18, 1.08, -0.12])]), '#36323c');
