@@ -16,6 +16,7 @@ import { NURSE } from './library/nurse';
 import { SCHOOL } from './library/school';
 import { CASUAL } from './library/casual';
 import { GAMENURSE } from './library/gamenurse';
+import { SEIFUKU } from './library/seifuku';
 import { FIREFIGHTER } from './library/firefighter';
 
 /**
@@ -59,7 +60,7 @@ export interface AssetStep {
 }
 
 export interface AssetDef {
-  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school' | 'casual' | 'gamenurse' | 'firefighter';
+  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school' | 'casual' | 'gamenurse' | 'firefighter' | 'seifuku';
   name: string;
   tagline: string;
   level: 'Easy' | 'Medium' | 'Detailed';
@@ -76,7 +77,7 @@ export interface AssetDef {
   parts: AssetPart[];
 }
 
-export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL, CASUAL, GAMENURSE, FIREFIGHTER];
+export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL, CASUAL, GAMENURSE, FIREFIGHTER, SEIFUKU];
 
 export function assetById(id: string): AssetDef | undefined {
   return ASSETS.find((a) => a.id === id);

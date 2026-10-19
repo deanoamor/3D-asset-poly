@@ -5,8 +5,8 @@ import { consistentWinding, isClosed, signedVolume } from '../src/core/mesh';
 import { worldMatrix } from '../src/core/docmath';
 
 describe('asset library', () => {
-  it('has the thirteen assets', () => {
-    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon', 'nurse', 'school', 'casual', 'gamenurse', 'firefighter']);
+  it('has the fourteen assets', () => {
+    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon', 'nurse', 'school', 'casual', 'gamenurse', 'firefighter', 'seifuku']);
   });
 
   for (const def of ASSETS) {
