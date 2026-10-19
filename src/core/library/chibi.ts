@@ -174,9 +174,9 @@ export interface HairPalette {
 
 /**
  * The layered bob: a round crown and a full back, two layers of bang strands fanning from a side parting, two locks on
- * each side of the face, curled bob ends and soft shine streaks. Returns the crown, which hats and bands lie on.
+ * each side of the face, curled bob ends (unless `bobEnds` is false) and soft shine streaks. Returns the crown, which hats and bands lie on.
  */
-export function chibiHair(add: Add, step: number, c: HairPalette): PolyMesh {
+export function chibiHair(add: Add, step: number, c: HairPalette, bobEnds = true): PolyMesh {
   const R = (p: Vec3, r: number | [number, number]): Ring => ({ p, r });
   const HAIR_A = c.a;
   const HAIR_B = c.b;
@@ -207,8 +207,8 @@ export function chibiHair(add: Add, step: number, c: HairPalette): PolyMesh {
     strand(`Face Lock ${n}`, [[s * 0.125, 1.32, 0.05, 0.04, 0.025], [s * 0.15, 1.24, 0.1, 0.036, 0.02], [s * 0.152, 1.17, 0.113, 0.03, 0.017], [s * 0.14, 1.12, 0.12, 0.02, 0.012], [s * 0.115, 1.085, 0.118, 0.006, 0.006]], HAIR_C);
     // a thinner wisp beside it
     strand(`Face Wisp ${n}`, [[s * 0.108, 1.3, 0.085, 0.022, 0.012], [s * 0.128, 1.24, 0.118, 0.02, 0.01], [s * 0.126, 1.17, 0.128, 0.015, 0.008], [s * 0.112, 1.12, 0.128, 0.005, 0.005]], HAIR_A);
-    // layered back strands that curl outward at the ends
-    strand(`Bob End ${n}`, [[s * 0.125, 1.11, -0.06, 0.05, 0.03], [s * 0.14, 1.04, -0.085, 0.045, 0.026], [s * 0.162, 0.98, -0.085, 0.022, 0.014], [s * 0.185, 0.95, -0.07, 0.006, 0.006]], HAIR_B);
+    // layered back strands that curl outward at the ends (left out when the hair is tied up)
+    if (bobEnds) strand(`Bob End ${n}`, [[s * 0.125, 1.11, -0.06, 0.05, 0.03], [s * 0.14, 1.04, -0.085, 0.045, 0.026], [s * 0.162, 0.98, -0.085, 0.022, 0.014], [s * 0.185, 0.95, -0.07, 0.006, 0.006]], HAIR_B);
   }
   return crownMesh;
 }

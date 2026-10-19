@@ -66,7 +66,7 @@ The **Assets** button (top bar) opens fourteen ready-made assets, lit with a war
 | **Casual Girl** | ~100 | ~2,500 | a chunky low-poly girl built from bevelled boxes and six-sided tubes: blocky dark hair with a hairband, yellow tube top over a white T-shirt, checked shorts and socks, light-blue sneakers |
 | **Game Nurse** | ~130 | ~3,500 | the game nurse on the same chunky base as the Casual Girl (shared head, sticker face, bob and skeleton from `chibi.ts`): white dress with red trims and a cross, flared skirt, white knee socks and sneakers, chestnut bob and a cross cap |
 | **Firefighter** | ~115 | ~3,800 | the game firefighter on the same chunky base, as a man (square jaw, small eyes, thick brows, short messy hair): tilted red helmet with a gold shield, orange turnout coat and navy trousers with silver reflective bands, gloves and tall boots |
-| **Game Schoolgirl** | ~107 | ~2,700 | the schoolgirl on the same chunky base: Japanese sailor uniform with a navy collar and white stripes, red neck ribbon, pleated navy skirt, navy knee socks, brown loafers, black bob and a red bow clip |
+| **Game Schoolgirl** | ~111 | ~2,700 | the schoolgirl on the same chunky base: Japanese sailor uniform with a navy collar and white stripes, red neck ribbon, pleated navy skirt, navy knee socks, brown loafers, black bob and a red bow clip |
 
 **Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
 gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test

@@ -10,7 +10,7 @@ import { humanSpec } from './rigs';
 /**
  * The schoolgirl of the game: the same chunky base as the Casual Girl in a Japanese sailor uniform (seifuku): a white
  * blouse with a navy sailor collar and white stripes, a red neck ribbon, short sleeves with navy bands, a navy pleated
- * skirt, navy knee socks and brown loafers. Black bob with a red bow clip and violet-blue eyes.
+ * skirt, navy knee socks and brown loafers. Black hair in twin tails with red bobbles and a red bow clip and violet-blue eyes.
  * Left is +X, Right is -X, and she faces +Z.
  */
 
@@ -110,8 +110,17 @@ chibiHead(add, 3, {
   lid: '#241a20', brow: '#3a2a2c', blush: '#f7bdb0', nose: '#efb89c', mouth: '#d6737a',
 });
 
-// ---- 4 black bob and the red bow clip ----
-chibiHair(add, 4, { a: '#2a2630', b: '#1c1920', c: '#48414f', d: '#231f29', shine: '#8f89a6' });
+// ---- 4 black hair in high twin tails, tied with red bobbles, and the red bow clip ----
+const HAIR = { a: '#2a2630', b: '#1c1920', c: '#48414f', d: '#231f29', shine: '#8f89a6' };
+chibiHair(add, 4, HAIR, false);
+for (const s of sides) {
+  const n = nameOf(s);
+  const tie: Vec3 = [s * 0.152, 1.335, -0.03];
+  const tail = (pts: [number, number, number, number, number][]) => sweep(pts.map(([x, y, z, a, d]) => R([s * x, y, z], [a, d])), { sides: 6, end: 'dome' });
+  add(4, `Twin Tail ${n}`, tail([[0.148, 1.33, -0.03, 0.04, 0.04], [0.205, 1.27, -0.05, 0.05, 0.045], [0.24, 1.13, -0.08, 0.054, 0.046], [0.238, 0.98, -0.092, 0.04, 0.034], [0.225, 0.86, -0.085, 0.006, 0.006]]), HAIR.b);
+  add(4, `Twin Tail Front ${n}`, tail([[0.158, 1.325, -0.01, 0.022, 0.018], [0.21, 1.265, -0.03, 0.03, 0.022], [0.245, 1.13, -0.056, 0.032, 0.024], [0.244, 0.99, -0.066, 0.022, 0.016], [0.232, 0.89, -0.066, 0.006, 0.006]]), HAIR.c);
+  add(4, `Hair Tie ${n}`, blob(tie, [0.026, 0.03, 0.03], 8), RED);
+}
 const bowAt: Vec3 = [0.095, 1.372, 0.092];
 add(4, 'Hair Bow Knot', blob(bowAt, [0.015, 0.015, 0.013], 6), RED_D);
 add(4, 'Hair Bow Loop Out', sweep([R(bowAt, [0.012, 0.008]), R([bowAt[0] + 0.026, bowAt[1] + 0.012, bowAt[2] - 0.004], [0.028, 0.01]), R([bowAt[0] + 0.05, bowAt[1] + 0.022, bowAt[2] - 0.012], [0.006, 0.005])], { sides: 5, end: 'dome' }), RED);
@@ -120,7 +129,7 @@ add(4, 'Hair Bow Loop In', sweep([R(bowAt, [0.012, 0.008]), R([bowAt[0] - 0.026,
 applyStyle(parts, [
   [/^(Head|Neck|Ear)/, { smooth: true }],
   [/^(Thigh|Shin|Upper Arm|Forearm|Hand|Thumb)/, { paint: 0.12 }],
-  [/^(Hair|Bang|Face |Bob )/, { smooth: true, paint: 0.4 }],
+  [/^(Hair|Bang|Face |Bob |Twin)/, { smooth: true, paint: 0.4 }],
   [/^(Blouse|Skirt|Pleat|Collar|Sleeve|Sock|Loafer|Sole|Ribbon|Neckline)/, { paint: 0.25 }],
 ]);
 
@@ -137,7 +146,7 @@ export const SEIFUKU: AssetDef = {
     { title: 'Blouse, collar, ribbon and skirt', text: 'The blouse is a white box a little wider at the shoulders. The navy sailor collar is three flat plates: one flap on the back and two on the front that meet in a V, each with two white stripes. A red ribbon sits at the V. The skirt is a navy box that is much wider at the bottom, with a darker band at the waist, a white line near the hem and thin tubes as pleats.', tools: ['Shape: Box', 'Thin boxes for the plates', 'Shape: Cylinder, 4 sides, for pleats'] },
     { title: 'Arms and hands', text: 'Short white sleeves with a navy band sit on the shoulders. The arms and hands are the same as the base.', tools: ['Shape: Cylinder, 6 sides', 'Rotate (E)', 'Duplicate and move'] },
     { title: 'Head and face', text: 'The head and face are exactly the base ones. Only the colours change: violet-blue eyes, dark brows and a soft pink mouth.', tools: ['Color palette', 'Thin plates'] },
-    { title: 'Hair and bow clip', text: 'The black bob is the base bob in dark blue-greys. A small red bow clip sits on her left side of the parting.', tools: ['Color palette', 'Smooth shading'] },
+    { title: 'Hair, twin tails and bow clip', text: 'The black hair keeps the base crown, fringe and face locks, but the bob ends are left out. Instead two long tails hang from red bobbles high on each side of the head, each a dark tapered sweep with a lighter strand on top. A small red bow clip sits on her left side of the parting.', tools: ['Color palette', 'Smooth shading'] },
     { title: 'Skeleton: joints and bones', text: 'A skeleton lets a 3D app bend the character. The white balls are joints (hips, knees, shoulders, elbows, wrists, neck, head) and the lines between them are bones. When you export to GLB, every part is skinned to these joints automatically. Press Pose, pick a joint and turn it with the rings: she bends right in the editor.', tools: ['Skeleton panel (under Layers)', 'Drag a joint', 'Pose mode: turn a joint'], rig: true },
   ],
   challenge: 'Make the winter uniform: a navy jacket with long sleeves, a plain collar and a different ribbon colour, plus black tights.',
