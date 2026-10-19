@@ -5,8 +5,8 @@ import { consistentWinding, isClosed, signedVolume } from '../src/core/mesh';
 import { worldMatrix } from '../src/core/docmath';
 
 describe('asset library', () => {
-  it('has the nineteen assets', () => {
-    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon', 'nurse', 'school', 'casual', 'gamenurse', 'firefighter', 'seifuku', 'japanhouse', 'japanschool', 'japanshrine', 'japanshops', 'japanalley']);
+  it('has the twenty assets', () => {
+    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon', 'nurse', 'school', 'casual', 'gamenurse', 'firefighter', 'seifuku', 'japanhouse', 'japanschool', 'japanshrine', 'japanshops', 'japanalley', 'catstall']);
   });
 
   for (const def of ASSETS) {
@@ -132,6 +132,6 @@ describe('character skeletons', () => {
   });
 
   it('props have no skeleton', () => {
-    for (const id of ['car', 'house', 'japanhouse', 'japanschool', 'japanshrine', 'japanshops', 'japanalley']) expect(instantiateAsset(ASSETS.find((a) => a.id === id)!).joints).toHaveLength(0);
+    for (const id of ['car', 'house', 'japanhouse', 'japanschool', 'japanshrine', 'japanshops', 'japanalley', 'catstall']) expect(instantiateAsset(ASSETS.find((a) => a.id === id)!).joints).toHaveLength(0);
   });
 });

@@ -24,7 +24,7 @@ console.log('# library dialog');
 await page.click('#btn-assets');
 await page.waitForSelector('.acard');
 const cards = await page.$$eval('.acard', (els) => els.map((e) => ({ id: e.dataset.asset, name: e.querySelector('strong').textContent, img: e.querySelector('img')?.src.startsWith('data:image/png') && e.querySelector('img').src.length > 5000, bullets: e.querySelectorAll('li').length, level: e.querySelector('.level').textContent })));
-ok(cards.map((c) => c.id).join() === 'police,car,house,footballer,soldier,island,anime,ribbon,nurse,school,casual,gamenurse,firefighter,seifuku,japanhouse,japanschool,japanshrine,japanshops,japanalley', `nineteen assets: ${cards.map((c) => c.name).join(', ')}`);
+ok(cards.map((c) => c.id).join() === 'police,car,house,footballer,soldier,island,anime,ribbon,nurse,school,casual,gamenurse,firefighter,seifuku,japanhouse,japanschool,japanshrine,japanshops,japanalley,catstall', `twenty assets: ${cards.map((c) => c.name).join(', ')}`);
 ok(cards.every((c) => c.img), 'every card has a rendered 3D preview');
 ok(cards.every((c) => c.bullets === 3), 'every card lists what you will learn');
 await shot('01-library');
