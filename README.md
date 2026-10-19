@@ -49,7 +49,7 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Asset library (use directly, or learn from it)
 
-The **Assets** button (top bar) opens fourteen ready-made assets, lit with a warm backdrop and a soft shadow:
+The **Assets** button (top bar) opens fifteen ready-made assets, lit with a warm backdrop and a soft shadow:
 
 | Asset | Parts | Triangles | What it shows off |
 |---|---|---|---|
@@ -67,6 +67,7 @@ The **Assets** button (top bar) opens fourteen ready-made assets, lit with a war
 | **Game Nurse** | ~130 | ~3,500 | the game nurse on the same chunky base as the Casual Girl (shared head, sticker face, bob and skeleton from `chibi.ts`): white dress with red trims and a cross, flared skirt, white knee socks and sneakers, chestnut bob and a cross cap |
 | **Firefighter** | ~115 | ~3,800 | the game firefighter on the same chunky base, as a man (square jaw, small eyes, thick brows, short messy hair): tilted red helmet with a gold shield, orange turnout coat and navy trousers with silver reflective bands, gloves and tall boots |
 | **Game Schoolgirl** | ~111 | ~2,700 | the schoolgirl on the same chunky base: Japanese sailor uniform with a navy collar and white stripes, red neck ribbon, pleated navy skirt, navy knee socks, brown loafers, black bob and a red bow clip |
+| **Japanese House** | ~261 | ~3,000 | a traditional minka: stone footing, dark timber frame and plaster walls, wide grey-tiled roof with ridge ornaments, shoji doors onto a veranda, a noren entrance, and a garden with a gate, bamboo fence, pond, stone lantern, pine and maple |
 
 **Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
 gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test
@@ -195,3 +196,4 @@ With a skeleton, **Animation** (under Skeleton) makes clips of poses that play o
 `node e2e/gamenurse.mjs` renders the Game Nurse from several angles (`AZS=0,90,180,270`) to `e2e/out/gamenurse/`.
 `node e2e/firefighter.mjs` renders the Firefighter from several angles (`AZS=0,90,180,270`) to `e2e/out/firefighter/`.
 `node e2e/seifuku.mjs` renders the Game Schoolgirl from several angles (`AZS=0,90,180,270`) to `e2e/out/seifuku/`.
+`node e2e/japanhouse.mjs` renders the Japanese House from several angles (`AZS=30,120,210,300 EL=22 FOV=30 VIS=17 TX=0 TY=2.4`) to `e2e/out/japanhouse/`.
