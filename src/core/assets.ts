@@ -19,6 +19,7 @@ import { GAMENURSE } from './library/gamenurse';
 import { SEIFUKU } from './library/seifuku';
 import { JAPANHOUSE } from './library/japanhouse';
 import { JAPANSCHOOL } from './library/japanschool';
+import { JAPANSHRINE } from './library/japanshrine';
 import { FIREFIGHTER } from './library/firefighter';
 
 /**
@@ -62,7 +63,7 @@ export interface AssetStep {
 }
 
 export interface AssetDef {
-  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school' | 'casual' | 'gamenurse' | 'firefighter' | 'seifuku' | 'japanhouse' | 'japanschool';
+  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school' | 'casual' | 'gamenurse' | 'firefighter' | 'seifuku' | 'japanhouse' | 'japanschool' | 'japanshrine';
   name: string;
   tagline: string;
   level: 'Easy' | 'Medium' | 'Detailed';
@@ -79,7 +80,7 @@ export interface AssetDef {
   parts: AssetPart[];
 }
 
-export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL, CASUAL, GAMENURSE, FIREFIGHTER, SEIFUKU, JAPANHOUSE, JAPANSCHOOL];
+export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL, CASUAL, GAMENURSE, FIREFIGHTER, SEIFUKU, JAPANHOUSE, JAPANSCHOOL, JAPANSHRINE];
 
 export function assetById(id: string): AssetDef | undefined {
   return ASSETS.find((a) => a.id === id);

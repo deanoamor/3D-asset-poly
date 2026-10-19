@@ -24,6 +24,7 @@ const SEPARATE: Record<string, RegExp> = {
   seifuku: /^$/,
   japanhouse: /^$/,
   japanschool: /^$/,
+  japanshrine: /^$/,
 };
 
 function boxesOf(id: string) {

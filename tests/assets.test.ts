@@ -5,8 +5,8 @@ import { consistentWinding, isClosed, signedVolume } from '../src/core/mesh';
 import { worldMatrix } from '../src/core/docmath';
 
 describe('asset library', () => {
-  it('has the sixteen assets', () => {
-    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon', 'nurse', 'school', 'casual', 'gamenurse', 'firefighter', 'seifuku', 'japanhouse', 'japanschool']);
+  it('has the seventeen assets', () => {
+    expect(ASSETS.map((a) => a.id)).toEqual(['police', 'car', 'house', 'footballer', 'soldier', 'island', 'anime', 'ribbon', 'nurse', 'school', 'casual', 'gamenurse', 'firefighter', 'seifuku', 'japanhouse', 'japanschool', 'japanshrine']);
   });
 
   for (const def of ASSETS) {
@@ -34,7 +34,7 @@ describe('asset library', () => {
         expect(b.min.y).toBeLessThan(0.02);
         const s = assetStats(def);
         if (def.id === 'car') expect(s.depth).toBeGreaterThan(3.5);
-        if (def.id === 'house' || def.id === 'japanhouse' || def.id === 'japanschool') expect(s.width).toBeGreaterThan(7);
+        if (def.id === 'house' || def.id === 'japanhouse' || def.id === 'japanschool' || def.id === 'japanshrine') expect(s.width).toBeGreaterThan(7);
         if (def.id === 'police' || def.id === 'footballer' || def.id === 'soldier') expect(s.height).toBeGreaterThan(1.6), expect(s.height).toBeLessThan(2.1);
         if (def.id === 'police') expect(b.min.y).toBeLessThan(0.01);
       });
@@ -132,6 +132,6 @@ describe('character skeletons', () => {
   });
 
   it('props have no skeleton', () => {
-    for (const id of ['car', 'house', 'japanhouse', 'japanschool']) expect(instantiateAsset(ASSETS.find((a) => a.id === id)!).joints).toHaveLength(0);
+    for (const id of ['car', 'house', 'japanhouse', 'japanschool', 'japanshrine']) expect(instantiateAsset(ASSETS.find((a) => a.id === id)!).joints).toHaveLength(0);
   });
 });
