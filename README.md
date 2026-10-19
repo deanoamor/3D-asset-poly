@@ -49,7 +49,7 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Asset library (use directly, or learn from it)
 
-The **Assets** button (top bar) opens twenty ready-made assets, lit with a warm backdrop and a soft shadow:
+The **Assets** button (top bar) opens twenty-one ready-made assets, lit with a warm backdrop and a soft shadow:
 
 | Asset | Parts | Triangles | What it shows off |
 |---|---|---|---|
@@ -73,6 +73,7 @@ The **Assets** button (top bar) opens twenty ready-made assets, lit with a warm 
 | **Japanese Shopping Street** | ~432 | ~5,500 | a shotengai: a street with an entrance arch, sidewalks, zebra crossing and eight shops (convenience store, ramen, bakery, flowers, pharmacy, tavern, bookshop, sushi) with awnings, signs, noren and lanterns, plus utility poles with wires, banner poles, vending machines, bicycles and a post box |
 | **Japanese Alley** | ~330 | ~6,000 | a narrow tiled back alley between eight tall plaster shophouses (balconies with railings, glowing windows, air conditioners, drain pipes, green and red signs, sliding doors, a roller shutter, a tavern with a red banner and stools, a corner shop sign, orange lanterns), parked bicycles, tyres, boxes and a utility pole with wires and a lamp; built after a low-poly alley reference |
 | **Cat Sushi Stall** | ~292 | ~4,500 | a street-food cart (yatai) on a round cobblestone plaza: steep blue corrugated roof, wave valance, red sign board, a cat chef, counter with sushi, stockpot, teapot and grill, a big blue spoked wheel, a tall glowing red lantern and three yellow stools on a wooden deck; built after a reference picture |
+| **Japanese Housing Complex** | ~1,040 | ~14,000 | a danchi: two long five-storey concrete apartment blocks facing each other across a lawn; every flat has a balcony (slab, orange underside, solid base, railing), a sliding door and a window; stair cores, pipes and meter boxes, a concrete path, bushes, trees, green street lamps, a no-entry sign, benches, a bicycle shelter, a bin hut and a far block; built after a reference picture |
 
 **Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
 gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test
@@ -207,3 +208,4 @@ With a skeleton, **Animation** (under Skeleton) makes clips of poses that play o
 `node e2e/japanshops.mjs` renders the Japanese Shopping Street from several angles (`AZS=15,165,75,285 EL=16 FOV=26 VIS=26 TX=0 TY=3`) to `e2e/out/japanshops/`.
 `node e2e/japanalley.mjs` renders the Japanese Alley from several angles (`AZS=0,25,-25 EL=5 FOV=40 VIS=14 TX=0 TY=4.2`) to `e2e/out/japanalley/`.
 `node e2e/catstall.mjs` renders the Cat Sushi Stall from several angles (`AZS=-35,35,150,-120 EL=32 FOV=24 VIS=9.5 TX=0 TY=1.9`, dark backdrop, `BG=0xffffff` for white) to `e2e/out/catstall/`.
+`node e2e/danchi.mjs` renders the Japanese Housing Complex from several angles (`AZS=0,18,-18 EL=10 FOV=36 VIS=24 TX=0 TY=7`) to `e2e/out/danchi/`.
