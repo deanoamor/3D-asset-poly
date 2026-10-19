@@ -5,7 +5,7 @@ import validator from 'gltf-validator';
 
 const URL = process.env.URL || 'http://localhost:5199/';
 const OUT = process.env.OUT || 'e2e/out/glb';
-const IDS = (process.env.IDS || 'island,anime,ribbon,nurse,school,casual,gamenurse,firefighter,seifuku,japanhouse,japanschool,japanshrine').split(',');
+const IDS = (process.env.IDS || 'island,anime,ribbon,nurse,school,casual,gamenurse,firefighter,seifuku,japanhouse,japanschool,japanshrine,japanshops').split(',');
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--use-gl=angle', '--enable-unsafe-swiftshader'] });
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
