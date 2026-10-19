@@ -103,7 +103,7 @@ for (const s of sides) {
 chibiHead(add, 3, {
   skin: SKIN, neck: SKIN_D, ear: '#eebb95', eyeWhite: '#efdcc2', iris: '#4a2f1d', irisGlow: '#8a5a30', pupil: '#1c110a',
   lid: '#241812', brow: '#2b1f19', blush: '#f1b9a0', nose: '#e2a583', mouth: '#bf6a5d',
-}, { eye: 0.8, browThick: 1.9, browSlant: 0.02, lash: false, blush: false, jaw: 1.2, neck: 1.3, man: true, stubble: '#e2b48f' });
+}, { eye: 0.8, browThick: 1.9, browSlant: 0.02, lash: false, blush: false, jaw: 1.2, neck: 1.3, man: true });
 
 // ---- 4 short messy hair, and the helmet ----
 add(4, 'Hair Crown', blob([0, 1.265, -0.03], [0.15, 0.12, 0.14], 14), HAIR_A);
