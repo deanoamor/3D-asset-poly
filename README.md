@@ -49,7 +49,7 @@ project creation, onboarding steps and exports so time-to-first-export can be me
 
 ## Asset library (use directly, or learn from it)
 
-The **Assets** button (top bar) opens twelve ready-made assets, lit with a warm backdrop and a soft shadow:
+The **Assets** button (top bar) opens thirteen ready-made assets, lit with a warm backdrop and a soft shadow:
 
 | Asset | Parts | Triangles | What it shows off |
 |---|---|---|---|
@@ -65,6 +65,7 @@ The **Assets** button (top bar) opens twelve ready-made assets, lit with a warm 
 | **School Girl** | ~100 | ~9,000 | a smooth stylised girl in a sailor uniform (T-pose): big amber eyes, auburn hair with two buns in blue cuffs and a braid that turns into a long tail, pleated blue skirt, knee socks and loafers |
 | **Casual Girl** | ~100 | ~2,500 | a chunky low-poly girl built from bevelled boxes and six-sided tubes: blocky dark hair with a hairband, yellow tube top over a white T-shirt, checked shorts and socks, light-blue sneakers |
 | **Game Nurse** | ~130 | ~3,500 | the game nurse on the same chunky base as the Casual Girl (shared head, sticker face, bob and skeleton from `chibi.ts`): white dress with red trims and a cross, flared skirt, white knee socks and sneakers, chestnut bob and a cross cap |
+| **Firefighter** | ~115 | ~3,800 | the game firefighter on the same chunky base, as a man (square jaw, small eyes, thick brows, stubble, short messy hair): tilted red helmet with a gold shield, orange turnout coat and navy trousers with silver reflective bands, gloves and tall boots |
 
 **Seamless by construction.** Limbs are one continuous tube that bends at the joints and runs into the boot, so there are no
 gaps. Faces, pockets, badges, ties and patches are placed by firing a ray at the body they sit on, so nothing floats. A unit test
@@ -191,3 +192,4 @@ With a skeleton, **Animation** (under Skeleton) makes clips of poses that play o
 `node e2e/school.mjs` renders the School Girl from the reference picture's angle (`AZS=34`) to `e2e/out/school/`.
 `node e2e/casual.mjs` renders the Casual Girl from the reference picture's angle (`AZS=36`) to `e2e/out/casual/`.
 `node e2e/gamenurse.mjs` renders the Game Nurse from several angles (`AZS=0,90,180,270`) to `e2e/out/gamenurse/`.
+`node e2e/firefighter.mjs` renders the Firefighter from several angles (`AZS=0,90,180,270`) to `e2e/out/firefighter/`.

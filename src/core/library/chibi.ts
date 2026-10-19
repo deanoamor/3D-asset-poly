@@ -100,20 +100,49 @@ const LID: P2[] = [[0.185, -0.05], [0.225, 0.02], [0.3, 0.06], [0.375, 0.01], [0
 const BROW: P2[] = [[0.19, 0.06], [0.28, 0.1], [0.38, 0.08], [0.4, 0.115], [0.28, 0.145], [0.19, 0.105]];
 const PUPIL: P2[] = [[0.275, -0.1], [0.315, -0.1], [0.325, -0.19], [0.295, -0.215], [0.268, -0.19]];
 const SPARK: P2[] = [[0.318, -0.045], [0.348, -0.05], [0.352, -0.085], [0.32, -0.085]];
+// a man's upper lid: thicker and without the lash wing at the outer corner
+const LID_M: P2[] = [[0.19, -0.05], [0.23, 0.015], [0.3, 0.05], [0.37, 0.015], [0.4, -0.055], [0.385, -0.06], [0.35, -0.02], [0.3, 0.02], [0.24, -0.015], [0.205, -0.065]];
 // the eyes and brows are drawn small; blow them up around the middle of the eye
 const BIG = 2.5;
 const BIGX = 2.9;
-const mirrorX = (pts: P2[], s: 1 | -1): P2[] => pts.map(([x, y]) => [s * (0.57 + (x - 0.29) * BIGX), -0.06 + (y + 0.15) * BIG] as P2);
 const plain = (pts: P2[], s: 1 | -1): P2[] => pts.map(([x, y]) => [s * x, y] as P2);
+
+/** How the face is drawn; the defaults give the girls' face, other values make a man's. */
+export interface FaceStyle {
+  /** Size of the eyes (1 = the girls' big eyes). */
+  eye?: number;
+  /** Thickness of the brows (1 = thin). */
+  browThick?: number;
+  /** How far the inner end of each brow is pulled down toward the nose. */
+  browSlant?: number;
+  /** The wing of the upper lid (the girls' lash); off for a man. */
+  lash?: boolean;
+  /** Soft blush on the cheeks. */
+  blush?: boolean;
+  /** Width of the jaw and chin (1 = soft and small). */
+  jaw?: number;
+  /** Width of the neck. */
+  neck?: number;
+  /** A larger nose and a flat, wide mouth. */
+  man?: boolean;
+  /** A colour for a light shadow of stubble over the jaw and chin (off when not set). */
+  stubble?: string;
+}
 
 /**
  * The round head, the neck, the face and the ears. The face is a set of flat stickers shot onto the head from the front,
  * so it reads the same from every side. Returns the head mesh, which the hair lies on.
  */
-export function chibiHead(add: Add, step: number, c: FacePalette): PolyMesh {
-  const head = hull([...ringH(1.075, 0.07, 0.06, 0.02), ...ringH(1.105, 0.112, 0.092, 0.012), ...ringH(1.15, 0.134, 0.115, 0.005), ...ringH(1.21, 0.142, 0.125), ...ringH(1.28, 0.132, 0.118), ...ringH(1.33, 0.1, 0.092), ...ringH(1.358, 0.06, 0.06)]);
+export function chibiHead(add: Add, step: number, c: FacePalette, style: FaceStyle = {}): PolyMesh {
+  const o = { eye: 1, browThick: 1, browSlant: 0, lash: true, blush: true, jaw: 1, neck: 1, man: false, ...style };
+  const big = BIG * o.eye;
+  const bigx = BIGX * o.eye;
+  const mirrorX = (pts: P2[], s: 1 | -1): P2[] => pts.map(([x, y]) => [s * (0.57 + (x - 0.29) * bigx), -0.06 + (y + 0.15) * big] as P2);
+  const brow = (s: 1 | -1): P2[] => mirrorX(BROW.map(([x, y]) => [x, 0.1 + (y - 0.1) * o.browThick - (o.browSlant * (0.4 - x)) / 0.21] as P2), s);
+  const j = o.jaw;
+  const head = hull([...ringH(1.075, 0.07 * j, 0.06, 0.02), ...ringH(1.105, 0.112 * j, 0.092, 0.012), ...ringH(1.15, 0.134 * (1 + (j - 1) * 0.6), 0.115, 0.005), ...ringH(1.21, 0.142, 0.125), ...ringH(1.28, 0.132, 0.118), ...ringH(1.33, 0.1, 0.092), ...ringH(1.358, 0.06, 0.06)]);
   add(step, 'Head', head, c.skin);
-  add(step, 'Neck', tubeHull([0, 1.0, 0], [0, 1.13, 0.005], 0.052, 0.048, 8, 0), c.neck);
+  add(step, 'Neck', tubeHull([0, 1.0, 0], [0, 1.13, 0.005], 0.052 * o.neck, 0.048 * o.neck, 8, 0), c.neck);
   const hit = (px: number, py: number) => onSurface(head, HC, [px, py, 1], 0);
   const sticker = (name: string, color: string, pts: P2[], lift: number, thick = 0.0016) => add(step, name, decalBy(head, pts, ([u, w]) => hit(u, w), lift, thick, 0.03), color);
   for (const s of sides) {
@@ -123,12 +152,13 @@ export function chibiHead(add: Add, step: number, c: FacePalette): PolyMesh {
     sticker(`Iris Glow ${n}`, c.irisGlow, mirrorX(GLOW, s), 0.0042);
     sticker(`Pupil ${n}`, c.pupil, mirrorX(PUPIL, s), 0.0058);
     sticker(`Eye Highlight ${n}`, '#ffffff', mirrorX(SPARK, s), 0.0074);
-    sticker(`Eye Lid ${n}`, c.lid, mirrorX(LID, s), 0.0074);
-    sticker(`Eyebrow ${n}`, c.brow, mirrorX(BROW, s), 0.0022);
-    sticker(`Blush ${n}`, c.blush, plain([[0.5, -0.62], [0.72, -0.6], [0.78, -0.67], [0.64, -0.72], [0.5, -0.69]], s), 0.0012);
+    sticker(`Eye Lid ${n}`, c.lid, mirrorX(o.lash ? LID : LID_M, s), 0.0074);
+    sticker(`Eyebrow ${n}`, c.brow, brow(s), 0.0022);
+    if (o.blush) sticker(`Blush ${n}`, c.blush, plain([[0.5, -0.62], [0.72, -0.6], [0.78, -0.67], [0.64, -0.72], [0.5, -0.69]], s), 0.0012);
   }
-  sticker('Nose', c.nose, [[-0.03, -0.54], [0.04, -0.54], [0.0, -0.6]], 0.002);
-  sticker('Mouth', c.mouth, [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0.855], [-0.1, -0.83]], 0.0022);
+  sticker('Nose', c.nose, o.man ? [[-0.05, -0.5], [0.06, -0.5], [0.0, -0.62]] : [[-0.03, -0.54], [0.04, -0.54], [0.0, -0.6]], 0.002);
+  if (o.stubble) sticker('Stubble', o.stubble, [[-0.62, -0.6], [-0.3, -0.7], [0, -0.72], [0.3, -0.7], [0.62, -0.6], [0.66, -0.85], [0.42, -1.02], [0, -1.1], [-0.42, -1.02], [-0.66, -0.85]], 0.0008);
+  sticker('Mouth', c.mouth, o.man ? [[-0.14, -0.79], [0.14, -0.79], [0.135, -0.825], [0, -0.835], [-0.135, -0.825]] : [[-0.12, -0.78], [0.12, -0.78], [0.1, -0.83], [0, -0.855], [-0.1, -0.83]], 0.0022);
   for (const s of sides) add(step, `Ear ${nameOf(s)}`, cbox([s * 0.147, 1.15, -0.008], [0.028, 0.058, 0.05], 0.01), c.ear);
   return head;
 }
