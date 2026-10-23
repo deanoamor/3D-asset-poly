@@ -25,7 +25,10 @@ import { JAPANALLEY } from './library/japanalley';
 import { CATSTALL } from './library/catstall';
 import { DANCHI } from './library/danchi';
 import { FIREFIGHTER } from './library/firefighter';
+import { ELDER } from './library/elder';
 import { KONBINI } from './library/konbini';
+import { OFFICE } from './library/office';
+import { SUITMAN } from './library/suit';
 
 /**
  * Ready-made props that double as lessons. Every part belongs to a build step, so the Learn view can add them one
@@ -68,7 +71,7 @@ export interface AssetStep {
 }
 
 export interface AssetDef {
-  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school' | 'casual' | 'gamenurse' | 'firefighter' | 'konbini' | 'seifuku' | 'japanhouse' | 'japanschool' | 'japanshrine' | 'japanshops' | 'japanalley' | 'catstall' | 'danchi';
+  id: 'police' | 'car' | 'house' | 'footballer' | 'soldier' | 'island' | 'anime' | 'ribbon' | 'nurse' | 'school' | 'casual' | 'gamenurse' | 'firefighter' | 'konbini' | 'suit' | 'office' | 'elder' | 'seifuku' | 'japanhouse' | 'japanschool' | 'japanshrine' | 'japanshops' | 'japanalley' | 'catstall' | 'danchi';
   name: string;
   tagline: string;
   level: 'Easy' | 'Medium' | 'Detailed';
@@ -85,7 +88,7 @@ export interface AssetDef {
   parts: AssetPart[];
 }
 
-export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL, CASUAL, GAMENURSE, FIREFIGHTER, KONBINI, SEIFUKU, JAPANHOUSE, JAPANSCHOOL, JAPANSHRINE, JAPANSHOPS, JAPANALLEY, CATSTALL, DANCHI];
+export const ASSETS: AssetDef[] = [POLICE, CAR, HOUSE, FOOTBALLER, SOLDIER, ISLAND, ANIME, RIBBON, NURSE, SCHOOL, CASUAL, GAMENURSE, FIREFIGHTER, KONBINI, SUITMAN, OFFICE, ELDER, SEIFUKU, JAPANHOUSE, JAPANSCHOOL, JAPANSHRINE, JAPANSHOPS, JAPANALLEY, CATSTALL, DANCHI];
 
 export function assetById(id: string): AssetDef | undefined {
   return ASSETS.find((a) => a.id === id);
