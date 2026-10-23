@@ -19,6 +19,17 @@ const VARIANTS = [
   { key: 'street-rin', base: 'casual', groups: [['^Tube Top', '#e87aa0'], ['^Shorts', '#6d8fb8'], [HAIR, '#8a4a2a']] },
   { key: 'street-ken', base: 'konbini', groups: [['^(Polo|Sleeve|Cap)', '#d8782a'], ['^Apron', '#3a3d44'], ['^Collar', '#f4f4f0']] },
   { key: 'street-sora', base: 'casual', groups: [['^Tube Top', '#4aa0e0'], ['^Shorts', '#e8a030'], [HAIR, '#1f1a22'], ['^(Sneaker)', '#e8402a']] },
+  // the second ten
+  { key: 'hoodie', base: 'hoodie', groups: [] },
+  { key: 'street-daichi', base: 'hoodie', groups: [['^(Hoodie|Pocket|Hood|Sleeve|Cuff)', '#6a707c'], ['^Jeans', '#2c2f38'], ['^Sneaker Stripe', '#2f7ae0'], ['^(Hair|Spike|Fringe|Sideburn)', '#5a3d2a']] },
+  { key: 'dress', base: 'dress', groups: [] },
+  { key: 'street-aoi', base: 'dress', groups: [['^(Skirt|Bodice|Sleeve)', '#4a7ac8'], ['^Flower', '#f0a0c0'], [HAIR, '#2a2428']] },
+  { key: 'chef', base: 'chef', groups: [] },
+  { key: 'street-goro', base: 'firefighter', groups: [['^(Coat$|Coat Shade|Coat Chest)', '#4f6f4a'], ['^Sleeve (Left|Right|Lower)', '#4f6f4a'], ['^(Helmet$|Helmet Brim|Helmet Crest)', '#f2c230'], ['^Trouser', '#5a5048']] },
+  { key: 'street-kaito', base: 'suit', groups: [['^(Jacket|Lapel|Sleeve|Trouser|Seat)', '#1f2127'], ['^Tie', '#2a4a8a']] },
+  { key: 'street-jake', base: 'hoodie', groups: [['^(Hoodie|Pocket|Hood|Sleeve|Cuff)', '#4a8a5a'], ['^Jeans', '#5a6a8a'], ['^(Hair|Spike|Fringe|Sideburn)', '#d8b45a'], [SKIN, '#f8dcc8']] },
+  { key: 'street-kiyo', base: 'elder', groups: [['^(Cardigan|Sleeve|Cuff)', '#c8504a'], ['^Skirt', '#3a3a44'], [HAIR, '#7a5a44']] },
+  { key: 'street-riku', base: 'hoodie', groups: [['^(Hoodie|Pocket|Hood|Sleeve|Cuff)', '#e8c230'], ['^Jeans', '#4a6a9a'], ['^(Hair|Spike|Fringe|Sideburn)', '#1f1a22']] },
 ];
 const IDS = (process.env.IDS || VARIANTS.map((v) => v.key).join(',')).split(',');
 fs.mkdirSync(OUT, { recursive: true });
