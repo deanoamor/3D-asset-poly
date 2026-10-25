@@ -9,7 +9,7 @@
 #   Joystick (group)                         step 4, tilts toward the chosen direction
 #   Step Lamp 1..4, Lamp Ok, Lamp Error      indicator lamps (the app makes them glow)
 #   Crank (group)                            turns while the machine works
-#   Paper Roll (group), Paper Tape           output
+#   Paper Spool (group), Paper Tape          output (the group turns around Z, the roll's own axis)
 import json, math
 
 parts, groups = [], []
@@ -139,10 +139,10 @@ P(name='Crank Arm', kind='box', pos=[W / 2 + 0.028, H * 0.62, 0.115], size=[0.01
 P(name='Crank Handle', kind='cylinder', pos=[W / 2 + 0.05, H * 0.62, 0.15], size=[0.018, 0.04, 0.018], rot=[0, 0, 90], segments=10, color=WOOD3, smooth=True, group='Crank')
 
 # ---- output: a paper roll on the left side and the tape running out of a slot at the back
-G('Paper Roll', [-W / 2 - 0.035, H * 0.7, -0.12])
+G('Paper Spool', [-W / 2 - 0.035, H * 0.7, -0.12])
 P(name='Paper Roll Arm', kind='box', pos=[-W / 2 - 0.012, H * 0.6, -0.12], size=[0.026, 0.02, 0.02], color=STEEL2, mat=METAL)
-P(name='Paper Roll', kind='cylinder', pos=[-W / 2 - 0.035, H * 0.7, -0.12], size=[0.06, 0.12, 0.06], rot=[90, 0, 0], segments=18, color='#f4efe2', smooth=True, group='Paper Roll')
-P(name='Paper Roll Core', kind='cylinder', pos=[-W / 2 - 0.035, H * 0.7, -0.12], size=[0.022, 0.124, 0.022], rot=[90, 0, 0], segments=10, color=BRASS2, group='Paper Roll')
+P(name='Paper Roll', kind='cylinder', pos=[-W / 2 - 0.035, H * 0.7, -0.12], size=[0.06, 0.12, 0.06], rot=[90, 0, 0], segments=18, color='#f4efe2', smooth=True, group='Paper Spool')
+P(name='Paper Roll Core', kind='cylinder', pos=[-W / 2 - 0.035, H * 0.7, -0.12], size=[0.022, 0.124, 0.022], rot=[90, 0, 0], segments=10, color=BRASS2, group='Paper Spool')
 P(name='Paper Slot', kind='box', pos=[-0.02, TOP + 0.004, -0.232], size=[0.2, 0.008, 0.01], color=BLACK)
 P(name='Paper Tape', kind='box', pos=[-0.02, TOP + 0.002, -0.265], size=[0.18, 0.002, 0.075], color='#f4efe2')
 P(name='Name Plate', kind='box', pos=[0.02, TOP + 0.003, 0.215], size=[0.2, 0.004, 0.022], color=BRASS, mat=SHINY)

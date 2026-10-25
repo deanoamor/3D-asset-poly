@@ -59,7 +59,7 @@
    ]
   },
   {
-   "name": "Paper Roll",
+   "name": "Paper Spool",
    "pivot": [
     -0.365,
     0.077,
@@ -5078,7 +5078,7 @@
    "segments": 18,
    "color": "#f4efe2",
    "smooth": true,
-   "group": "Paper Roll"
+   "group": "Paper Spool"
   },
   {
    "name": "Paper Roll Core",
@@ -5100,7 +5100,7 @@
    ],
    "segments": 10,
    "color": "#a8842f",
-   "group": "Paper Roll"
+   "group": "Paper Spool"
   },
   {
    "name": "Paper Slot",
