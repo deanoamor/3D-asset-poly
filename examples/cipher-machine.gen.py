@@ -42,22 +42,22 @@ for sx in (1, -1):
         P(name=f'Corner {"L" if sx > 0 else "R"}{"F" if sz > 0 else "B"}', kind='box', pos=[sx * (W / 2 - 0.004), H / 2, sz * (D / 2 - 0.004)], size=[0.03, H + 0.004, 0.03], color=BRASS2, mat=METAL)
 P(name='Face Plate', kind='box', pos=[0, H + 0.006, 0], size=[W - 0.04, 0.012, D - 0.04], color=PLATE, mat=dict(rough=0.6, metal=0.3))
 # plate screws
-for i, (x, z) in enumerate([(-0.3, -0.225), (0.3, -0.225), (-0.3, 0.225), (0.3, 0.225), (0, -0.225), (0, 0.225)]):
+for i, (x, z) in enumerate([(-0.298, -0.22), (0.298, -0.22), (-0.298, 0.22), (0.298, 0.22)]):
     P(name=f'Screw {i+1}', kind='cylinder', pos=[x, TOP + 0.002, z], size=[0.012, 0.005, 0.012], segments=8, color=BRASS, mat=METAL)
 
 # ---- keyboard (front): three staggered QWERTY rows of round typewriter keys, space bar
 KZ0 = 0.035
-PITCH = 0.04
+PITCH = 0.037
 rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM']
-P(name='Key Bed', kind='box', pos=[0, TOP + 0.002, 0.11], size=[0.5, 0.004, 0.2], color=PLATE2)
+P(name='Key Bed', kind='box', pos=[0, TOP + 0.002, 0.11], size=[0.42, 0.004, 0.2], color=PLATE2)
 for r, row in enumerate(rows):
     z = KZ0 + r * 0.047
-    x0 = -(len(row) - 1) * PITCH / 2 + r * 0.012 - 0.01
+    x0 = -(len(row) - 1) * PITCH / 2 + r * 0.012
     for i, ch in enumerate(row):
         x = x0 + i * PITCH
         P(name=f'Key {ch} Stem', kind='cylinder', pos=[x, TOP + 0.01, z], size=[0.008, 0.02, 0.008], segments=6, color=STEEL2, mat=METAL)
-        P(name=f'Key {ch} Rim', kind='cylinder', pos=[x, TOP + 0.022, z], size=[0.036, 0.008, 0.036], segments=14, color=STEEL, mat=SHINY)
-        P(name=f'Key {ch}', kind='cylinder', pos=[x, TOP + 0.026, z], size=[0.03, 0.006, 0.03], segments=14, color=KEYCAP, smooth=True)
+        P(name=f'Key {ch} Rim', kind='cylinder', pos=[x, TOP + 0.022, z], size=[0.033, 0.008, 0.033], segments=14, color=STEEL, mat=SHINY)
+        P(name=f'Key {ch}', kind='cylinder', pos=[x, TOP + 0.026, z], size=[0.028, 0.006, 0.028], segments=14, color=KEYCAP, smooth=True)
 # space bar and enter
 P(name='Key Space Stem', kind='box', pos=[0, TOP + 0.01, 0.185], size=[0.2, 0.02, 0.01], color=STEEL2, mat=METAL)
 P(name='Key Space Rim', kind='box', pos=[0, TOP + 0.02, 0.185], size=[0.25, 0.008, 0.03], color=STEEL, mat=SHINY)
@@ -89,7 +89,7 @@ for i, x in enumerate(RX):
     P(name=f'Rotor {n} Plate', kind='box', pos=[x, TOP + 0.003, RZ - 0.075], size=[0.04, 0.004, 0.018], color=BRASS, mat=METAL)
 
 # ---- step 2: the object dial (back right): a turntable with 50 notches and a pointer
-DX, DZ = 0.165, -0.125
+DX, DZ = 0.165, -0.12
 G('Object Dial', [DX, TOP, DZ])
 P(name='Object Dial Base', kind='cylinder', pos=[DX, TOP + 0.003, DZ], size=[0.19, 0.006, 0.19], segments=32, color=BRASS2, mat=METAL)
 P(name='Object Dial Disc', kind='cylinder', pos=[DX, TOP + 0.01, DZ], size=[0.17, 0.01, 0.17], segments=50, color='#e9e2cf', group='Object Dial')
@@ -101,11 +101,11 @@ for k in range(50):
 P(name='Object Dial Hub', kind='cylinder', pos=[DX, TOP + 0.02, DZ], size=[0.05, 0.012, 0.05], segments=16, color=BRASS, mat=SHINY, group='Object Dial')
 P(name='Object Dial Grip', kind='box', pos=[DX, TOP + 0.03, DZ], size=[0.012, 0.012, 0.05], color=BLACK, group='Object Dial')
 P(name='Object Dial Mark', kind='cylinder', pos=[DX, TOP + 0.017, DZ - 0.058], size=[0.012, 0.004, 0.012], segments=8, color='#b8322a', group='Object Dial')
-P(name='Object Pointer', kind='pyramid', pos=[DX, TOP + 0.016, DZ - 0.1], size=[0.02, 0.012, 0.022], rot=[180, 0, 0], color='#b8322a')
+P(name='Object Pointer', kind='pyramid', pos=[DX, TOP + 0.016, DZ - 0.098], size=[0.018, 0.012, 0.018], rot=[180, 0, 0], color='#b8322a')
 
 # ---- step 3: the colour lamp, a glass dome inside a ring of 24 hues (right middle)
-CX, CZ = 0.262, 0.035
-P(name='Color Ring Base', kind='cylinder', pos=[CX, TOP + 0.003, CZ], size=[0.115, 0.006, 0.115], segments=24, color=BLACK)
+CX, CZ = 0.25, 0.035
+P(name='Color Ring Base', kind='cylinder', pos=[CX, TOP + 0.003, CZ], size=[0.1, 0.006, 0.1], segments=24, color=BLACK)
 for k in range(24):
     a = k / 24 * 2 * math.pi
     h = k / 24
@@ -114,19 +114,19 @@ for k in range(24):
     p_, q_, t_ = v * (1 - s), v * (1 - f * s), v * (1 - (1 - f) * s)
     rgb = [(v, t_, p_), (q_, v, p_), (p_, v, t_), (p_, q_, v), (t_, p_, v), (v, p_, q_)][i6 % 6]
     col = '#%02x%02x%02x' % tuple(int(c * 255) for c in rgb)
-    P(name=f'Color Ring {k+1}', kind='box', pos=[CX + math.sin(a) * 0.047, TOP + 0.008, CZ - math.cos(a) * 0.047], size=[0.011, 0.005, 0.016], rot=[0, -math.degrees(a), 0], color=col)
-P(name='Color Lamp Bezel', kind='cylinder', pos=[CX, TOP + 0.008, CZ], size=[0.064, 0.01, 0.064], segments=20, color=BRASS, mat=SHINY)
-P(name='Color Lamp', kind='sphere', pos=[CX, TOP + 0.014, CZ], size=[0.052, 0.04, 0.052], segments=14, color='#f2efe6', smooth=True, mat=dict(rough=0.15, metal=0.0))
+    P(name=f'Color Ring {k+1}', kind='box', pos=[CX + math.sin(a) * 0.041, TOP + 0.008, CZ - math.cos(a) * 0.041], size=[0.009, 0.005, 0.014], rot=[0, -math.degrees(a), 0], color=col)
+P(name='Color Lamp Bezel', kind='cylinder', pos=[CX, TOP + 0.008, CZ], size=[0.056, 0.01, 0.056], segments=20, color=BRASS, mat=SHINY)
+P(name='Color Lamp', kind='sphere', pos=[CX, TOP + 0.014, CZ], size=[0.046, 0.036, 0.046], segments=14, color='#f2efe6', smooth=True, mat=dict(rough=0.15, metal=0.0))
 
 # ---- step 4: direction joystick with four arrow buttons (left middle)
-JX, JZ = -0.265, 0.02
+JX, JZ = -0.25, 0.02
 P(name='Joystick Base', kind='cylinder', pos=[JX, TOP + 0.006, JZ], size=[0.075, 0.012, 0.075], segments=20, color=BLACK)
 P(name='Joystick Boot', kind='cylinder', pos=[JX, TOP + 0.016, JZ], size=[0.04, 0.014, 0.04], segments=12, taper=0.6, color='#2f3238')
 G('Joystick', [JX, TOP + 0.012, JZ])
 P(name='Joystick Shaft', kind='cylinder', pos=[JX, TOP + 0.04, JZ], size=[0.009, 0.05, 0.009], segments=8, color=STEEL, mat=SHINY, group='Joystick')
 P(name='Joystick Knob', kind='sphere', pos=[JX, TOP + 0.068, JZ], size=[0.028, 0.026, 0.028], segments=12, color='#b8322a', smooth=True, group='Joystick')
 for nm, dx, dz, ry in [('Up', 0, -1, 0), ('Down', 0, 1, 180), ('West', -1, 0, 90), ('East', 1, 0, -90)]:
-    P(name=f'Arrow {nm}', kind='pyramid', pos=[JX + dx * 0.052, TOP + 0.006, JZ + dz * 0.052], size=[0.018, 0.008, 0.018], rot=[90 if dz == 0 else 0, ry, 0], color=BRASS, mat=METAL)
+    P(name=f'Arrow {nm}', kind='pyramid', pos=[JX + dx * 0.05, TOP + 0.006, JZ + dz * 0.05], size=[0.016, 0.008, 0.016], rot=[90 if dz == 0 else 0, ry, 0], color=BRASS, mat=METAL)
 
 # ---- status lamps and the crank (right front)
 for nm, x, col in [('Ok', -0.245, '#1e5a2a'), ('Error', -0.195, '#5a1e1e')]:
@@ -143,9 +143,9 @@ G('Paper Roll', [-W / 2 - 0.035, H * 0.7, -0.12])
 P(name='Paper Roll Arm', kind='box', pos=[-W / 2 - 0.012, H * 0.6, -0.12], size=[0.026, 0.02, 0.02], color=STEEL2, mat=METAL)
 P(name='Paper Roll', kind='cylinder', pos=[-W / 2 - 0.035, H * 0.7, -0.12], size=[0.06, 0.12, 0.06], rot=[90, 0, 0], segments=18, color='#f4efe2', smooth=True, group='Paper Roll')
 P(name='Paper Roll Core', kind='cylinder', pos=[-W / 2 - 0.035, H * 0.7, -0.12], size=[0.022, 0.124, 0.022], rot=[90, 0, 0], segments=10, color=BRASS2, group='Paper Roll')
-P(name='Paper Slot', kind='box', pos=[0.02, TOP + 0.004, -0.205], size=[0.26, 0.008, 0.014], color=BLACK)
-P(name='Paper Tape', kind='box', pos=[0.02, TOP + 0.002, -0.235], size=[0.24, 0.002, 0.05], color='#f4efe2')
-P(name='Name Plate', kind='box', pos=[0.02, TOP + 0.003, 0.225], size=[0.2, 0.004, 0.026], color=BRASS, mat=SHINY)
+P(name='Paper Slot', kind='box', pos=[-0.02, TOP + 0.004, -0.232], size=[0.2, 0.008, 0.01], color=BLACK)
+P(name='Paper Tape', kind='box', pos=[-0.02, TOP + 0.002, -0.265], size=[0.18, 0.002, 0.075], color='#f4efe2')
+P(name='Name Plate', kind='box', pos=[0.02, TOP + 0.003, 0.215], size=[0.2, 0.004, 0.022], color=BRASS, mat=SHINY)
 
 spec = dict(name='Cipher Machine', rig='none', groups=groups, parts=parts)
 for p in spec['parts']:
