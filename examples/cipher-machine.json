@@ -1,0 +1,5195 @@
+{
+ "name": "Cipher Machine",
+ "rig": "none",
+ "groups": [
+  {
+   "name": "Rotor 1 Wheel",
+   "pivot": [
+    -0.235,
+    0.132,
+    -0.135
+   ]
+  },
+  {
+   "name": "Rotor 2 Wheel",
+   "pivot": [
+    -0.175,
+    0.132,
+    -0.135
+   ]
+  },
+  {
+   "name": "Rotor 3 Wheel",
+   "pivot": [
+    -0.115,
+    0.132,
+    -0.135
+   ]
+  },
+  {
+   "name": "Rotor 4 Wheel",
+   "pivot": [
+    -0.055,
+    0.132,
+    -0.135
+   ]
+  },
+  {
+   "name": "Object Dial",
+   "pivot": [
+    0.165,
+    0.122,
+    -0.125
+   ]
+  },
+  {
+   "name": "Joystick",
+   "pivot": [
+    -0.265,
+    0.134,
+    0.02
+   ]
+  },
+  {
+   "name": "Crank",
+   "pivot": [
+    0.342,
+    0.0682,
+    0.08
+   ]
+  },
+  {
+   "name": "Paper Roll",
+   "pivot": [
+    -0.365,
+    0.077,
+    -0.12
+   ]
+  }
+ ],
+ "parts": [
+  {
+   "name": "Case",
+   "kind": "box",
+   "pos": [
+    0,
+    0.055,
+    0
+   ],
+   "size": [
+    0.66,
+    0.11,
+    0.5
+   ],
+   "color": "#6b3f22",
+   "paint": 0.25
+  },
+  {
+   "name": "Case Base",
+   "kind": "box",
+   "pos": [
+    0,
+    0.008,
+    0
+   ],
+   "size": [
+    0.68,
+    0.016,
+    0.52
+   ],
+   "color": "#4e2c17"
+  },
+  {
+   "name": "Case Rim Front",
+   "kind": "box",
+   "pos": [
+    0,
+    0.114,
+    0.24
+   ],
+   "size": [
+    0.66,
+    0.012,
+    0.02
+   ],
+   "color": "#7d4a28"
+  },
+  {
+   "name": "Case Rim Back",
+   "kind": "box",
+   "pos": [
+    0,
+    0.114,
+    -0.24
+   ],
+   "size": [
+    0.66,
+    0.012,
+    0.02
+   ],
+   "color": "#7d4a28"
+  },
+  {
+   "name": "Case Rim Left",
+   "kind": "box",
+   "pos": [
+    0.32,
+    0.114,
+    0
+   ],
+   "size": [
+    0.02,
+    0.012,
+    0.5
+   ],
+   "color": "#7d4a28",
+   "mirror": true
+  },
+  {
+   "name": "Corner LF",
+   "kind": "box",
+   "pos": [
+    0.326,
+    0.055,
+    0.246
+   ],
+   "size": [
+    0.03,
+    0.114,
+    0.03
+   ],
+   "color": "#a8842f",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Corner LB",
+   "kind": "box",
+   "pos": [
+    0.326,
+    0.055,
+    -0.246
+   ],
+   "size": [
+    0.03,
+    0.114,
+    0.03
+   ],
+   "color": "#a8842f",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Corner RF",
+   "kind": "box",
+   "pos": [
+    -0.326,
+    0.055,
+    0.246
+   ],
+   "size": [
+    0.03,
+    0.114,
+    0.03
+   ],
+   "color": "#a8842f",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Corner RB",
+   "kind": "box",
+   "pos": [
+    -0.326,
+    0.055,
+    -0.246
+   ],
+   "size": [
+    0.03,
+    0.114,
+    0.03
+   ],
+   "color": "#a8842f",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Face Plate",
+   "kind": "box",
+   "pos": [
+    0,
+    0.116,
+    0
+   ],
+   "size": [
+    0.62,
+    0.012,
+    0.46
+   ],
+   "color": "#2a2e35",
+   "mat": {
+    "rough": 0.6,
+    "metal": 0.3
+   }
+  },
+  {
+   "name": "Screw 1",
+   "kind": "cylinder",
+   "pos": [
+    -0.3,
+    0.124,
+    -0.225
+   ],
+   "size": [
+    0.012,
+    0.005,
+    0.012
+   ],
+   "segments": 8,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Screw 2",
+   "kind": "cylinder",
+   "pos": [
+    0.3,
+    0.124,
+    -0.225
+   ],
+   "size": [
+    0.012,
+    0.005,
+    0.012
+   ],
+   "segments": 8,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Screw 3",
+   "kind": "cylinder",
+   "pos": [
+    -0.3,
+    0.124,
+    0.225
+   ],
+   "size": [
+    0.012,
+    0.005,
+    0.012
+   ],
+   "segments": 8,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Screw 4",
+   "kind": "cylinder",
+   "pos": [
+    0.3,
+    0.124,
+    0.225
+   ],
+   "size": [
+    0.012,
+    0.005,
+    0.012
+   ],
+   "segments": 8,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Screw 5",
+   "kind": "cylinder",
+   "pos": [
+    0,
+    0.124,
+    -0.225
+   ],
+   "size": [
+    0.012,
+    0.005,
+    0.012
+   ],
+   "segments": 8,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Screw 6",
+   "kind": "cylinder",
+   "pos": [
+    0,
+    0.124,
+    0.225
+   ],
+   "size": [
+    0.012,
+    0.005,
+    0.012
+   ],
+   "segments": 8,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key Bed",
+   "kind": "box",
+   "pos": [
+    0,
+    0.124,
+    0.11
+   ],
+   "size": [
+    0.5,
+    0.004,
+    0.2
+   ],
+   "color": "#353a43"
+  },
+  {
+   "name": "Key Q Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.19,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key Q Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.19,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key Q",
+   "kind": "cylinder",
+   "pos": [
+    -0.19,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key W Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.15,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key W Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.15,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key W",
+   "kind": "cylinder",
+   "pos": [
+    -0.15,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key E Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.11,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key E Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.11,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key E",
+   "kind": "cylinder",
+   "pos": [
+    -0.11,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key R Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.07,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key R Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.07,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key R",
+   "kind": "cylinder",
+   "pos": [
+    -0.07,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key T Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.03,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key T Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.03,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key T",
+   "kind": "cylinder",
+   "pos": [
+    -0.03,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key Y Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.01,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key Y Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.01,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key Y",
+   "kind": "cylinder",
+   "pos": [
+    0.01,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key U Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.05,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key U Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.05,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key U",
+   "kind": "cylinder",
+   "pos": [
+    0.05,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key I Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.09,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key I Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.09,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key I",
+   "kind": "cylinder",
+   "pos": [
+    0.09,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key O Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.13,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key O Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.13,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key O",
+   "kind": "cylinder",
+   "pos": [
+    0.13,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key P Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.17,
+    0.132,
+    0.035
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key P Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.17,
+    0.144,
+    0.035
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key P",
+   "kind": "cylinder",
+   "pos": [
+    0.17,
+    0.148,
+    0.035
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key A Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.158,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key A Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.158,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key A",
+   "kind": "cylinder",
+   "pos": [
+    -0.158,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key S Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.118,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key S Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.118,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key S",
+   "kind": "cylinder",
+   "pos": [
+    -0.118,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key D Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.078,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key D Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.078,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key D",
+   "kind": "cylinder",
+   "pos": [
+    -0.078,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key F Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.038,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key F Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.038,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key F",
+   "kind": "cylinder",
+   "pos": [
+    -0.038,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key G Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.002,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key G Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.002,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key G",
+   "kind": "cylinder",
+   "pos": [
+    0.002,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key H Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.042,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key H Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.042,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key H",
+   "kind": "cylinder",
+   "pos": [
+    0.042,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key J Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.082,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key J Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.082,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key J",
+   "kind": "cylinder",
+   "pos": [
+    0.082,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key K Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.122,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key K Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.122,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key K",
+   "kind": "cylinder",
+   "pos": [
+    0.122,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key L Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.162,
+    0.132,
+    0.082
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key L Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.162,
+    0.144,
+    0.082
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key L",
+   "kind": "cylinder",
+   "pos": [
+    0.162,
+    0.148,
+    0.082
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key Z Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.106,
+    0.132,
+    0.129
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key Z Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.106,
+    0.144,
+    0.129
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key Z",
+   "kind": "cylinder",
+   "pos": [
+    -0.106,
+    0.148,
+    0.129
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key X Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.066,
+    0.132,
+    0.129
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key X Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.066,
+    0.144,
+    0.129
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key X",
+   "kind": "cylinder",
+   "pos": [
+    -0.066,
+    0.148,
+    0.129
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key C Stem",
+   "kind": "cylinder",
+   "pos": [
+    -0.026,
+    0.132,
+    0.129
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key C Rim",
+   "kind": "cylinder",
+   "pos": [
+    -0.026,
+    0.144,
+    0.129
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key C",
+   "kind": "cylinder",
+   "pos": [
+    -0.026,
+    0.148,
+    0.129
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key V Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.014,
+    0.132,
+    0.129
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key V Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.014,
+    0.144,
+    0.129
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key V",
+   "kind": "cylinder",
+   "pos": [
+    0.014,
+    0.148,
+    0.129
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key B Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.054,
+    0.132,
+    0.129
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key B Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.054,
+    0.144,
+    0.129
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key B",
+   "kind": "cylinder",
+   "pos": [
+    0.054,
+    0.148,
+    0.129
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key N Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.094,
+    0.132,
+    0.129
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key N Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.094,
+    0.144,
+    0.129
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key N",
+   "kind": "cylinder",
+   "pos": [
+    0.094,
+    0.148,
+    0.129
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key M Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.134,
+    0.132,
+    0.129
+   ],
+   "size": [
+    0.008,
+    0.02,
+    0.008
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key M Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.134,
+    0.144,
+    0.129
+   ],
+   "size": [
+    0.036,
+    0.008,
+    0.036
+   ],
+   "segments": 14,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key M",
+   "kind": "cylinder",
+   "pos": [
+    0.134,
+    0.148,
+    0.129
+   ],
+   "size": [
+    0.03,
+    0.006,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#ece4d0",
+   "smooth": true
+  },
+  {
+   "name": "Key Space Stem",
+   "kind": "box",
+   "pos": [
+    0,
+    0.132,
+    0.185
+   ],
+   "size": [
+    0.2,
+    0.02,
+    0.01
+   ],
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key Space Rim",
+   "kind": "box",
+   "pos": [
+    0,
+    0.142,
+    0.185
+   ],
+   "size": [
+    0.25,
+    0.008,
+    0.03
+   ],
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key Space",
+   "kind": "box",
+   "pos": [
+    0,
+    0.147,
+    0.185
+   ],
+   "size": [
+    0.24,
+    0.006,
+    0.022
+   ],
+   "color": "#ece4d0"
+  },
+  {
+   "name": "Key Enter Stem",
+   "kind": "cylinder",
+   "pos": [
+    0.205,
+    0.132,
+    0.155
+   ],
+   "size": [
+    0.012,
+    0.02,
+    0.012
+   ],
+   "segments": 6,
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Key Enter Rim",
+   "kind": "cylinder",
+   "pos": [
+    0.205,
+    0.144,
+    0.155
+   ],
+   "size": [
+    0.05,
+    0.008,
+    0.05
+   ],
+   "segments": 16,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Key Enter",
+   "kind": "cylinder",
+   "pos": [
+    0.205,
+    0.148,
+    0.155
+   ],
+   "size": [
+    0.042,
+    0.007,
+    0.042
+   ],
+   "segments": 16,
+   "color": "#b8322a",
+   "smooth": true
+  },
+  {
+   "name": "Rotor Window",
+   "kind": "box",
+   "pos": [
+    -0.145,
+    0.123,
+    -0.135
+   ],
+   "size": [
+    0.25,
+    0.004,
+    0.105
+   ],
+   "color": "#1d1f23"
+  },
+  {
+   "name": "Rotor Frame Front",
+   "kind": "box",
+   "pos": [
+    -0.145,
+    0.128,
+    -0.079
+   ],
+   "size": [
+    0.26,
+    0.01,
+    0.01
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Rotor Frame Back",
+   "kind": "box",
+   "pos": [
+    -0.145,
+    0.128,
+    -0.191
+   ],
+   "size": [
+    0.26,
+    0.01,
+    0.01
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Rotor Axle",
+   "kind": "cylinder",
+   "pos": [
+    -0.145,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.008,
+    0.26,
+    0.008
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 6,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Rotor 1 Drum",
+   "kind": "cylinder",
+   "pos": [
+    -0.235,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.085,
+    0.04,
+    0.085
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 26,
+   "color": "#d9cfb4",
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Rib 1",
+   "kind": "box",
+   "pos": [
+    -0.235,
+    0.132,
+    -0.092
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -0.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Rib 2",
+   "kind": "box",
+   "pos": [
+    -0.235,
+    0.1692,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -60.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Rib 3",
+   "kind": "box",
+   "pos": [
+    -0.235,
+    0.1692,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -120.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Rib 4",
+   "kind": "box",
+   "pos": [
+    -0.235,
+    0.132,
+    -0.178
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -180.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Rib 5",
+   "kind": "box",
+   "pos": [
+    -0.235,
+    0.0948,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -240.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Rib 6",
+   "kind": "box",
+   "pos": [
+    -0.235,
+    0.0948,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -300.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Ring A",
+   "kind": "cylinder",
+   "pos": [
+    -0.212,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Rotor 1 Ring B",
+   "kind": "cylinder",
+   "pos": [
+    -0.258,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 1 Wheel"
+  },
+  {
+   "name": "Step Lamp 1 Bezel",
+   "kind": "cylinder",
+   "pos": [
+    -0.235,
+    0.126,
+    -0.057
+   ],
+   "size": [
+    0.024,
+    0.006,
+    0.024
+   ],
+   "segments": 12,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Step Lamp 1",
+   "kind": "sphere",
+   "pos": [
+    -0.235,
+    0.13,
+    -0.057
+   ],
+   "size": [
+    0.016,
+    0.012,
+    0.016
+   ],
+   "segments": 10,
+   "color": "#5a4a1a",
+   "smooth": true
+  },
+  {
+   "name": "Rotor 1 Plate",
+   "kind": "box",
+   "pos": [
+    -0.235,
+    0.125,
+    -0.21
+   ],
+   "size": [
+    0.04,
+    0.004,
+    0.018
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Rotor 2 Drum",
+   "kind": "cylinder",
+   "pos": [
+    -0.175,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.085,
+    0.04,
+    0.085
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 26,
+   "color": "#d9cfb4",
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Rib 1",
+   "kind": "box",
+   "pos": [
+    -0.175,
+    0.132,
+    -0.092
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -0.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Rib 2",
+   "kind": "box",
+   "pos": [
+    -0.175,
+    0.1692,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -60.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Rib 3",
+   "kind": "box",
+   "pos": [
+    -0.175,
+    0.1692,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -120.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Rib 4",
+   "kind": "box",
+   "pos": [
+    -0.175,
+    0.132,
+    -0.178
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -180.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Rib 5",
+   "kind": "box",
+   "pos": [
+    -0.175,
+    0.0948,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -240.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Rib 6",
+   "kind": "box",
+   "pos": [
+    -0.175,
+    0.0948,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -300.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Ring A",
+   "kind": "cylinder",
+   "pos": [
+    -0.152,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Rotor 2 Ring B",
+   "kind": "cylinder",
+   "pos": [
+    -0.198,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 2 Wheel"
+  },
+  {
+   "name": "Step Lamp 2 Bezel",
+   "kind": "cylinder",
+   "pos": [
+    -0.175,
+    0.126,
+    -0.057
+   ],
+   "size": [
+    0.024,
+    0.006,
+    0.024
+   ],
+   "segments": 12,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Step Lamp 2",
+   "kind": "sphere",
+   "pos": [
+    -0.175,
+    0.13,
+    -0.057
+   ],
+   "size": [
+    0.016,
+    0.012,
+    0.016
+   ],
+   "segments": 10,
+   "color": "#5a4a1a",
+   "smooth": true
+  },
+  {
+   "name": "Rotor 2 Plate",
+   "kind": "box",
+   "pos": [
+    -0.175,
+    0.125,
+    -0.21
+   ],
+   "size": [
+    0.04,
+    0.004,
+    0.018
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Rotor 3 Drum",
+   "kind": "cylinder",
+   "pos": [
+    -0.115,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.085,
+    0.04,
+    0.085
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 26,
+   "color": "#d9cfb4",
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Rib 1",
+   "kind": "box",
+   "pos": [
+    -0.115,
+    0.132,
+    -0.092
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -0.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Rib 2",
+   "kind": "box",
+   "pos": [
+    -0.115,
+    0.1692,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -60.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Rib 3",
+   "kind": "box",
+   "pos": [
+    -0.115,
+    0.1692,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -120.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Rib 4",
+   "kind": "box",
+   "pos": [
+    -0.115,
+    0.132,
+    -0.178
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -180.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Rib 5",
+   "kind": "box",
+   "pos": [
+    -0.115,
+    0.0948,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -240.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Rib 6",
+   "kind": "box",
+   "pos": [
+    -0.115,
+    0.0948,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -300.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Ring A",
+   "kind": "cylinder",
+   "pos": [
+    -0.092,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Rotor 3 Ring B",
+   "kind": "cylinder",
+   "pos": [
+    -0.138,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 3 Wheel"
+  },
+  {
+   "name": "Step Lamp 3 Bezel",
+   "kind": "cylinder",
+   "pos": [
+    -0.115,
+    0.126,
+    -0.057
+   ],
+   "size": [
+    0.024,
+    0.006,
+    0.024
+   ],
+   "segments": 12,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Step Lamp 3",
+   "kind": "sphere",
+   "pos": [
+    -0.115,
+    0.13,
+    -0.057
+   ],
+   "size": [
+    0.016,
+    0.012,
+    0.016
+   ],
+   "segments": 10,
+   "color": "#5a4a1a",
+   "smooth": true
+  },
+  {
+   "name": "Rotor 3 Plate",
+   "kind": "box",
+   "pos": [
+    -0.115,
+    0.125,
+    -0.21
+   ],
+   "size": [
+    0.04,
+    0.004,
+    0.018
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Rotor 4 Drum",
+   "kind": "cylinder",
+   "pos": [
+    -0.055,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.085,
+    0.04,
+    0.085
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 26,
+   "color": "#d9cfb4",
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Rib 1",
+   "kind": "box",
+   "pos": [
+    -0.055,
+    0.132,
+    -0.092
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -0.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Rib 2",
+   "kind": "box",
+   "pos": [
+    -0.055,
+    0.1692,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -60.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Rib 3",
+   "kind": "box",
+   "pos": [
+    -0.055,
+    0.1692,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -120.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Rib 4",
+   "kind": "box",
+   "pos": [
+    -0.055,
+    0.132,
+    -0.178
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -180.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Rib 5",
+   "kind": "box",
+   "pos": [
+    -0.055,
+    0.0948,
+    -0.1565
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -240.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Rib 6",
+   "kind": "box",
+   "pos": [
+    -0.055,
+    0.0948,
+    -0.1135
+   ],
+   "size": [
+    0.042,
+    0.005,
+    0.012
+   ],
+   "rot": [
+    -300.0,
+    0,
+    0
+   ],
+   "color": "#3b3427",
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Ring A",
+   "kind": "cylinder",
+   "pos": [
+    -0.032,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Rotor 4 Ring B",
+   "kind": "cylinder",
+   "pos": [
+    -0.078,
+    0.132,
+    -0.135
+   ],
+   "size": [
+    0.092,
+    0.006,
+    0.092
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   },
+   "group": "Rotor 4 Wheel"
+  },
+  {
+   "name": "Step Lamp 4 Bezel",
+   "kind": "cylinder",
+   "pos": [
+    -0.055,
+    0.126,
+    -0.057
+   ],
+   "size": [
+    0.024,
+    0.006,
+    0.024
+   ],
+   "segments": 12,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Step Lamp 4",
+   "kind": "sphere",
+   "pos": [
+    -0.055,
+    0.13,
+    -0.057
+   ],
+   "size": [
+    0.016,
+    0.012,
+    0.016
+   ],
+   "segments": 10,
+   "color": "#5a4a1a",
+   "smooth": true
+  },
+  {
+   "name": "Rotor 4 Plate",
+   "kind": "box",
+   "pos": [
+    -0.055,
+    0.125,
+    -0.21
+   ],
+   "size": [
+    0.04,
+    0.004,
+    0.018
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Object Dial Base",
+   "kind": "cylinder",
+   "pos": [
+    0.165,
+    0.125,
+    -0.125
+   ],
+   "size": [
+    0.19,
+    0.006,
+    0.19
+   ],
+   "segments": 32,
+   "color": "#a8842f",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Object Dial Disc",
+   "kind": "cylinder",
+   "pos": [
+    0.165,
+    0.132,
+    -0.125
+   ],
+   "size": [
+    0.17,
+    0.01,
+    0.17
+   ],
+   "segments": 50,
+   "color": "#e9e2cf",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 1",
+   "kind": "box",
+   "pos": [
+    0.165,
+    0.138,
+    -0.197
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -0.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 2",
+   "kind": "box",
+   "pos": [
+    0.1745,
+    0.138,
+    -0.2004
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -7.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 3",
+   "kind": "box",
+   "pos": [
+    0.1839,
+    0.138,
+    -0.1986
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -14.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 4",
+   "kind": "box",
+   "pos": [
+    0.193,
+    0.138,
+    -0.1957
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -21.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 5",
+   "kind": "box",
+   "pos": [
+    0.2016,
+    0.138,
+    -0.1916
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -28.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 6",
+   "kind": "box",
+   "pos": [
+    0.2073,
+    0.138,
+    -0.1832
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -36.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 7",
+   "kind": "box",
+   "pos": [
+    0.217,
+    0.138,
+    -0.1804
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -43.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 8",
+   "kind": "box",
+   "pos": [
+    0.2236,
+    0.138,
+    -0.1734
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -50.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 9",
+   "kind": "box",
+   "pos": [
+    0.2292,
+    0.138,
+    -0.1657
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -57.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 10",
+   "kind": "box",
+   "pos": [
+    0.2338,
+    0.138,
+    -0.1574
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -64.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 11",
+   "kind": "box",
+   "pos": [
+    0.2335,
+    0.138,
+    -0.1472
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -72.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 12",
+   "kind": "box",
+   "pos": [
+    0.2397,
+    0.138,
+    -0.1392
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -79.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 13",
+   "kind": "box",
+   "pos": [
+    0.2409,
+    0.138,
+    -0.1298
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -86.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 14",
+   "kind": "box",
+   "pos": [
+    0.2409,
+    0.138,
+    -0.1202
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -93.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 15",
+   "kind": "box",
+   "pos": [
+    0.2397,
+    0.138,
+    -0.1108
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -100.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 16",
+   "kind": "box",
+   "pos": [
+    0.2335,
+    0.138,
+    -0.1028
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -108.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 17",
+   "kind": "box",
+   "pos": [
+    0.2338,
+    0.138,
+    -0.0926
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -115.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 18",
+   "kind": "box",
+   "pos": [
+    0.2292,
+    0.138,
+    -0.0843
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -122.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 19",
+   "kind": "box",
+   "pos": [
+    0.2236,
+    0.138,
+    -0.0766
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -129.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 20",
+   "kind": "box",
+   "pos": [
+    0.217,
+    0.138,
+    -0.0696
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -136.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 21",
+   "kind": "box",
+   "pos": [
+    0.2073,
+    0.138,
+    -0.0668
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -144.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 22",
+   "kind": "box",
+   "pos": [
+    0.2016,
+    0.138,
+    -0.0584
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -151.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 23",
+   "kind": "box",
+   "pos": [
+    0.193,
+    0.138,
+    -0.0543
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -158.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 24",
+   "kind": "box",
+   "pos": [
+    0.1839,
+    0.138,
+    -0.0514
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -165.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 25",
+   "kind": "box",
+   "pos": [
+    0.1745,
+    0.138,
+    -0.0496
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -172.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 26",
+   "kind": "box",
+   "pos": [
+    0.165,
+    0.138,
+    -0.053
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -180.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 27",
+   "kind": "box",
+   "pos": [
+    0.1555,
+    0.138,
+    -0.0496
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -187.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 28",
+   "kind": "box",
+   "pos": [
+    0.1461,
+    0.138,
+    -0.0514
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -194.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 29",
+   "kind": "box",
+   "pos": [
+    0.137,
+    0.138,
+    -0.0543
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -201.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 30",
+   "kind": "box",
+   "pos": [
+    0.1284,
+    0.138,
+    -0.0584
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -208.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 31",
+   "kind": "box",
+   "pos": [
+    0.1227,
+    0.138,
+    -0.0668
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -216.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 32",
+   "kind": "box",
+   "pos": [
+    0.113,
+    0.138,
+    -0.0696
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -223.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 33",
+   "kind": "box",
+   "pos": [
+    0.1064,
+    0.138,
+    -0.0766
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -230.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 34",
+   "kind": "box",
+   "pos": [
+    0.1008,
+    0.138,
+    -0.0843
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -237.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 35",
+   "kind": "box",
+   "pos": [
+    0.0962,
+    0.138,
+    -0.0926
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -244.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 36",
+   "kind": "box",
+   "pos": [
+    0.0965,
+    0.138,
+    -0.1028
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -252.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 37",
+   "kind": "box",
+   "pos": [
+    0.0903,
+    0.138,
+    -0.1108
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -259.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 38",
+   "kind": "box",
+   "pos": [
+    0.0891,
+    0.138,
+    -0.1202
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -266.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 39",
+   "kind": "box",
+   "pos": [
+    0.0891,
+    0.138,
+    -0.1298
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -273.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 40",
+   "kind": "box",
+   "pos": [
+    0.0903,
+    0.138,
+    -0.1392
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -280.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 41",
+   "kind": "box",
+   "pos": [
+    0.0965,
+    0.138,
+    -0.1472
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -288.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 42",
+   "kind": "box",
+   "pos": [
+    0.0962,
+    0.138,
+    -0.1574
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -295.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 43",
+   "kind": "box",
+   "pos": [
+    0.1008,
+    0.138,
+    -0.1657
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -302.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 44",
+   "kind": "box",
+   "pos": [
+    0.1064,
+    0.138,
+    -0.1734
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -309.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 45",
+   "kind": "box",
+   "pos": [
+    0.113,
+    0.138,
+    -0.1804
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -316.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 46",
+   "kind": "box",
+   "pos": [
+    0.1227,
+    0.138,
+    -0.1832
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.016
+   ],
+   "rot": [
+    0,
+    -324.0,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 47",
+   "kind": "box",
+   "pos": [
+    0.1284,
+    0.138,
+    -0.1916
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -331.2,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 48",
+   "kind": "box",
+   "pos": [
+    0.137,
+    0.138,
+    -0.1957
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -338.4,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 49",
+   "kind": "box",
+   "pos": [
+    0.1461,
+    0.138,
+    -0.1986
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -345.6,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Notch 50",
+   "kind": "box",
+   "pos": [
+    0.1555,
+    0.138,
+    -0.2004
+   ],
+   "size": [
+    0.003,
+    0.003,
+    0.008
+   ],
+   "rot": [
+    0,
+    -352.8,
+    0
+   ],
+   "color": "#2b2b2b",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Dial Hub",
+   "kind": "cylinder",
+   "pos": [
+    0.165,
+    0.142,
+    -0.125
+   ],
+   "size": [
+    0.05,
+    0.012,
+    0.05
+   ],
+   "segments": 16,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   },
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Dial Grip",
+   "kind": "box",
+   "pos": [
+    0.165,
+    0.152,
+    -0.125
+   ],
+   "size": [
+    0.012,
+    0.012,
+    0.05
+   ],
+   "color": "#1d1f23",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Dial Mark",
+   "kind": "cylinder",
+   "pos": [
+    0.165,
+    0.139,
+    -0.183
+   ],
+   "size": [
+    0.012,
+    0.004,
+    0.012
+   ],
+   "segments": 8,
+   "color": "#b8322a",
+   "group": "Object Dial"
+  },
+  {
+   "name": "Object Pointer",
+   "kind": "pyramid",
+   "pos": [
+    0.165,
+    0.138,
+    -0.225
+   ],
+   "size": [
+    0.02,
+    0.012,
+    0.022
+   ],
+   "rot": [
+    180,
+    0,
+    0
+   ],
+   "color": "#b8322a"
+  },
+  {
+   "name": "Color Ring Base",
+   "kind": "cylinder",
+   "pos": [
+    0.262,
+    0.125,
+    0.035
+   ],
+   "size": [
+    0.115,
+    0.006,
+    0.115
+   ],
+   "segments": 24,
+   "color": "#1d1f23"
+  },
+  {
+   "name": "Color Ring 1",
+   "kind": "box",
+   "pos": [
+    0.262,
+    0.13,
+    -0.012
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -0.0,
+    0
+   ],
+   "color": "#f22424"
+  },
+  {
+   "name": "Color Ring 2",
+   "kind": "box",
+   "pos": [
+    0.2742,
+    0.13,
+    -0.0104
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -15.0,
+    0
+   ],
+   "color": "#f25724"
+  },
+  {
+   "name": "Color Ring 3",
+   "kind": "box",
+   "pos": [
+    0.2855,
+    0.13,
+    -0.0057
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -30.0,
+    0
+   ],
+   "color": "#f28b24"
+  },
+  {
+   "name": "Color Ring 4",
+   "kind": "box",
+   "pos": [
+    0.2952,
+    0.13,
+    0.0018
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -45.0,
+    0
+   ],
+   "color": "#f2be24"
+  },
+  {
+   "name": "Color Ring 5",
+   "kind": "box",
+   "pos": [
+    0.3027,
+    0.13,
+    0.0115
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -60.0,
+    0
+   ],
+   "color": "#f2f224"
+  },
+  {
+   "name": "Color Ring 6",
+   "kind": "box",
+   "pos": [
+    0.3074,
+    0.13,
+    0.0228
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -75.0,
+    0
+   ],
+   "color": "#bef224"
+  },
+  {
+   "name": "Color Ring 7",
+   "kind": "box",
+   "pos": [
+    0.309,
+    0.13,
+    0.035
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -90.0,
+    0
+   ],
+   "color": "#8bf224"
+  },
+  {
+   "name": "Color Ring 8",
+   "kind": "box",
+   "pos": [
+    0.3074,
+    0.13,
+    0.0472
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -105.0,
+    0
+   ],
+   "color": "#57f224"
+  },
+  {
+   "name": "Color Ring 9",
+   "kind": "box",
+   "pos": [
+    0.3027,
+    0.13,
+    0.0585
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -120.0,
+    0
+   ],
+   "color": "#24f224"
+  },
+  {
+   "name": "Color Ring 10",
+   "kind": "box",
+   "pos": [
+    0.2952,
+    0.13,
+    0.0682
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -135.0,
+    0
+   ],
+   "color": "#24f257"
+  },
+  {
+   "name": "Color Ring 11",
+   "kind": "box",
+   "pos": [
+    0.2855,
+    0.13,
+    0.0757
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -150.0,
+    0
+   ],
+   "color": "#24f28b"
+  },
+  {
+   "name": "Color Ring 12",
+   "kind": "box",
+   "pos": [
+    0.2742,
+    0.13,
+    0.0804
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -165.0,
+    0
+   ],
+   "color": "#24f2be"
+  },
+  {
+   "name": "Color Ring 13",
+   "kind": "box",
+   "pos": [
+    0.262,
+    0.13,
+    0.082
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -180.0,
+    0
+   ],
+   "color": "#24f2f2"
+  },
+  {
+   "name": "Color Ring 14",
+   "kind": "box",
+   "pos": [
+    0.2498,
+    0.13,
+    0.0804
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -195.0,
+    0
+   ],
+   "color": "#24bef2"
+  },
+  {
+   "name": "Color Ring 15",
+   "kind": "box",
+   "pos": [
+    0.2385,
+    0.13,
+    0.0757
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -210.0,
+    0
+   ],
+   "color": "#248bf2"
+  },
+  {
+   "name": "Color Ring 16",
+   "kind": "box",
+   "pos": [
+    0.2288,
+    0.13,
+    0.0682
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -225.0,
+    0
+   ],
+   "color": "#2457f2"
+  },
+  {
+   "name": "Color Ring 17",
+   "kind": "box",
+   "pos": [
+    0.2213,
+    0.13,
+    0.0585
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -240.0,
+    0
+   ],
+   "color": "#2424f2"
+  },
+  {
+   "name": "Color Ring 18",
+   "kind": "box",
+   "pos": [
+    0.2166,
+    0.13,
+    0.0472
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -255.0,
+    0
+   ],
+   "color": "#5724f2"
+  },
+  {
+   "name": "Color Ring 19",
+   "kind": "box",
+   "pos": [
+    0.215,
+    0.13,
+    0.035
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -270.0,
+    0
+   ],
+   "color": "#8b24f2"
+  },
+  {
+   "name": "Color Ring 20",
+   "kind": "box",
+   "pos": [
+    0.2166,
+    0.13,
+    0.0228
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -285.0,
+    0
+   ],
+   "color": "#be24f2"
+  },
+  {
+   "name": "Color Ring 21",
+   "kind": "box",
+   "pos": [
+    0.2213,
+    0.13,
+    0.0115
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -300.0,
+    0
+   ],
+   "color": "#f224f2"
+  },
+  {
+   "name": "Color Ring 22",
+   "kind": "box",
+   "pos": [
+    0.2288,
+    0.13,
+    0.0018
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -315.0,
+    0
+   ],
+   "color": "#f224be"
+  },
+  {
+   "name": "Color Ring 23",
+   "kind": "box",
+   "pos": [
+    0.2385,
+    0.13,
+    -0.0057
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -330.0,
+    0
+   ],
+   "color": "#f2248b"
+  },
+  {
+   "name": "Color Ring 24",
+   "kind": "box",
+   "pos": [
+    0.2498,
+    0.13,
+    -0.0104
+   ],
+   "size": [
+    0.011,
+    0.005,
+    0.016
+   ],
+   "rot": [
+    0,
+    -345.0,
+    0
+   ],
+   "color": "#f22457"
+  },
+  {
+   "name": "Color Lamp Bezel",
+   "kind": "cylinder",
+   "pos": [
+    0.262,
+    0.13,
+    0.035
+   ],
+   "size": [
+    0.064,
+    0.01,
+    0.064
+   ],
+   "segments": 20,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  },
+  {
+   "name": "Color Lamp",
+   "kind": "sphere",
+   "pos": [
+    0.262,
+    0.136,
+    0.035
+   ],
+   "size": [
+    0.052,
+    0.04,
+    0.052
+   ],
+   "segments": 14,
+   "color": "#f2efe6",
+   "smooth": true,
+   "mat": {
+    "rough": 0.15,
+    "metal": 0.0
+   }
+  },
+  {
+   "name": "Joystick Base",
+   "kind": "cylinder",
+   "pos": [
+    -0.265,
+    0.128,
+    0.02
+   ],
+   "size": [
+    0.075,
+    0.012,
+    0.075
+   ],
+   "segments": 20,
+   "color": "#1d1f23"
+  },
+  {
+   "name": "Joystick Boot",
+   "kind": "cylinder",
+   "pos": [
+    -0.265,
+    0.138,
+    0.02
+   ],
+   "size": [
+    0.04,
+    0.014,
+    0.04
+   ],
+   "segments": 12,
+   "taper": 0.6,
+   "color": "#2f3238"
+  },
+  {
+   "name": "Joystick Shaft",
+   "kind": "cylinder",
+   "pos": [
+    -0.265,
+    0.162,
+    0.02
+   ],
+   "size": [
+    0.009,
+    0.05,
+    0.009
+   ],
+   "segments": 8,
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   },
+   "group": "Joystick"
+  },
+  {
+   "name": "Joystick Knob",
+   "kind": "sphere",
+   "pos": [
+    -0.265,
+    0.19,
+    0.02
+   ],
+   "size": [
+    0.028,
+    0.026,
+    0.028
+   ],
+   "segments": 12,
+   "color": "#b8322a",
+   "smooth": true,
+   "group": "Joystick"
+  },
+  {
+   "name": "Arrow Up",
+   "kind": "pyramid",
+   "pos": [
+    -0.265,
+    0.128,
+    -0.032
+   ],
+   "size": [
+    0.018,
+    0.008,
+    0.018
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Arrow Down",
+   "kind": "pyramid",
+   "pos": [
+    -0.265,
+    0.128,
+    0.072
+   ],
+   "size": [
+    0.018,
+    0.008,
+    0.018
+   ],
+   "rot": [
+    0,
+    180,
+    0
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Arrow West",
+   "kind": "pyramid",
+   "pos": [
+    -0.317,
+    0.128,
+    0.02
+   ],
+   "size": [
+    0.018,
+    0.008,
+    0.018
+   ],
+   "rot": [
+    90,
+    90,
+    0
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Arrow East",
+   "kind": "pyramid",
+   "pos": [
+    -0.213,
+    0.128,
+    0.02
+   ],
+   "size": [
+    0.018,
+    0.008,
+    0.018
+   ],
+   "rot": [
+    90,
+    -90,
+    0
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Lamp Ok Bezel",
+   "kind": "cylinder",
+   "pos": [
+    -0.245,
+    0.126,
+    0.2
+   ],
+   "size": [
+    0.03,
+    0.008,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Lamp Ok",
+   "kind": "sphere",
+   "pos": [
+    -0.245,
+    0.132,
+    0.2
+   ],
+   "size": [
+    0.022,
+    0.016,
+    0.022
+   ],
+   "segments": 10,
+   "color": "#1e5a2a",
+   "smooth": true
+  },
+  {
+   "name": "Lamp Error Bezel",
+   "kind": "cylinder",
+   "pos": [
+    -0.195,
+    0.126,
+    0.2
+   ],
+   "size": [
+    0.03,
+    0.008,
+    0.03
+   ],
+   "segments": 14,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Lamp Error",
+   "kind": "sphere",
+   "pos": [
+    -0.195,
+    0.132,
+    0.2
+   ],
+   "size": [
+    0.022,
+    0.016,
+    0.022
+   ],
+   "segments": 10,
+   "color": "#5a1e1e",
+   "smooth": true
+  },
+  {
+   "name": "Crank Hub",
+   "kind": "cylinder",
+   "pos": [
+    0.342,
+    0.0682,
+    0.08
+   ],
+   "size": [
+    0.04,
+    0.024,
+    0.04
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 14,
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   },
+   "group": "Crank"
+  },
+  {
+   "name": "Crank Arm",
+   "kind": "box",
+   "pos": [
+    0.358,
+    0.0682,
+    0.115
+   ],
+   "size": [
+    0.012,
+    0.016,
+    0.08
+   ],
+   "color": "#9aa3ad",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   },
+   "group": "Crank"
+  },
+  {
+   "name": "Crank Handle",
+   "kind": "cylinder",
+   "pos": [
+    0.38,
+    0.0682,
+    0.15
+   ],
+   "size": [
+    0.018,
+    0.04,
+    0.018
+   ],
+   "rot": [
+    0,
+    0,
+    90
+   ],
+   "segments": 10,
+   "color": "#4e2c17",
+   "smooth": true,
+   "group": "Crank"
+  },
+  {
+   "name": "Paper Roll Arm",
+   "kind": "box",
+   "pos": [
+    -0.342,
+    0.066,
+    -0.12
+   ],
+   "size": [
+    0.026,
+    0.02,
+    0.02
+   ],
+   "color": "#6f7882",
+   "mat": {
+    "rough": 0.35,
+    "metal": 0.8
+   }
+  },
+  {
+   "name": "Paper Roll",
+   "kind": "cylinder",
+   "pos": [
+    -0.365,
+    0.077,
+    -0.12
+   ],
+   "size": [
+    0.06,
+    0.12,
+    0.06
+   ],
+   "rot": [
+    90,
+    0,
+    0
+   ],
+   "segments": 18,
+   "color": "#f4efe2",
+   "smooth": true,
+   "group": "Paper Roll"
+  },
+  {
+   "name": "Paper Roll Core",
+   "kind": "cylinder",
+   "pos": [
+    -0.365,
+    0.077,
+    -0.12
+   ],
+   "size": [
+    0.022,
+    0.124,
+    0.022
+   ],
+   "rot": [
+    90,
+    0,
+    0
+   ],
+   "segments": 10,
+   "color": "#a8842f",
+   "group": "Paper Roll"
+  },
+  {
+   "name": "Paper Slot",
+   "kind": "box",
+   "pos": [
+    0.02,
+    0.126,
+    -0.205
+   ],
+   "size": [
+    0.26,
+    0.008,
+    0.014
+   ],
+   "color": "#1d1f23"
+  },
+  {
+   "name": "Paper Tape",
+   "kind": "box",
+   "pos": [
+    0.02,
+    0.124,
+    -0.235
+   ],
+   "size": [
+    0.24,
+    0.002,
+    0.05
+   ],
+   "color": "#f4efe2"
+  },
+  {
+   "name": "Name Plate",
+   "kind": "box",
+   "pos": [
+    0.02,
+    0.125,
+    0.225
+   ],
+   "size": [
+    0.2,
+    0.004,
+    0.026
+   ],
+   "color": "#c9a24a",
+   "mat": {
+    "rough": 0.25,
+    "metal": 0.9
+   }
+  }
+ ]
+}
